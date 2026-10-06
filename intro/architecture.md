@@ -26,7 +26,7 @@ layout: page-with-toc
 
 Зауважте: хоча на певному рівні є кілька протоколів, для свого застосунку ви можете зупинитися на конкретному стеку протоколів. Наприклад, ви можете вирішити використовувати HTTP поверх TCP поверх IP, і вам не потрібні інші протоколи рівнів 7 чи 4. Тоді всі, хто користується вашим застосунком, використовують той самий стек.
 
-<img width="900px" src="/assets/intro/1-31-multi-protocols.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-31-multi-protocols.png">
 
 Подивившись на цю діаграму, ви помітите, що на рівні 3 є лише один протокол. Це і є «вузька талія» (narrow waist), яка забезпечує зв'язність Інтернету. Зрештою всі в Інтернеті мають погодитися говорити мовою IP, щоб пакети можна було пересилати через Інтернет.
 
@@ -37,27 +37,27 @@ layout: page-with-toc
 
 Коли пакет надходить на хост, мережевий стек раз у раз демультиплексує його: заголовок рівня 2 визначає, який протокол рівня 3 має обробити пакет, заголовок рівня 3 визначає, який протокол рівня 4 має його обробити, а порт призначення рівня 4 допомагає ОС визначити, який сокет застосунку має отримати дані.
 
-<img width="900px" src="/assets/intro/1-32-demultiplex.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-32-demultiplex.png">
 
-<img width="500px" src="/assets/intro/1-33-layer3-demultiplex.png">
+<img width="500px" src="{{ site.baseurl }}/assets/intro/1-33-layer3-demultiplex.png">
 
-<img width="700px" src="/assets/intro/1-34-layer4-demultiplex.png">
+<img width="700px" src="{{ site.baseurl }}/assets/intro/1-34-layer4-demultiplex.png">
 
-<img width="700px" src="/assets/intro/1-35-demultiplex-headers.png">
+<img width="700px" src="{{ site.baseurl }}/assets/intro/1-35-demultiplex-headers.png">
 
-<img width="900px" src="/assets/intro/1-36-ports.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-36-ports.png">
 
 Будьте уважні з назвами. У мережах портами називають дві різні речі. Фізичний порт — це реальне фізичне місце, куди ви підключаєте канал до комутатора. Логічний порт — це число в заголовку рівня 4, яке дає змогу розрізнити, якому застосунку належить пакет.
 
-<img width="700px" src="/assets/intro/1-37-logical-physical-port.png">
+<img width="700px" src="{{ site.baseurl }}/assets/intro/1-37-logical-physical-port.png">
 
 Примітка: термін **сокет** (socket) позначає механізм ОС для з'єднання застосунку з мережевим стеком ОС. Коли застосунок відкриває сокет, цей сокет пов'язується з номером логічного порту. Коли ОС отримує пакет, вона використовує номер порту, щоб спрямувати пакет до відповідного сокета.
 
-<img width="900px" src="/assets/intro/1-38-layers-in-os1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-38-layers-in-os1.png">
 
-<img width="900px" src="/assets/intro/1-39-layers-in-os2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-39-layers-in-os2.png">
 
-<img width="900px" src="/assets/intro/1-40-layers-in-os3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-40-layers-in-os3.png">
 
 
 ## Наскрізний принцип
@@ -74,15 +74,15 @@ layout: page-with-toc
 
 У цій новій картині проміжний маршрутизатор мусить надійно надсилати пакет на свій наступний перехід. Він має гарантувати, що наступний перехід отримав усі пакети, а якщо ні — повторно надіслати втрачені пакети. Хости не перевіряють, чи отримано всі пакети, а натомість покладаються на мережу в цьому.
 
-<img width="900px" src="/assets/intro/1-41-reliability-in-network.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-41-reliability-in-network.png">
 
 За такого підходу хости мусять довіряти мережі. Якщо один із маршрутизаторів містить помилку й відкидає пакет, хости фактично нічого не можуть із цим вдіяти.
 
-<img width="900px" src="/assets/intro/1-42-buggy-reliability-in-network.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-42-buggy-reliability-in-network.png">
 
 Інший підхід — наскрізний, коли ми не реалізуємо надійність у мережі, а натомість змушуємо два кінцеві хости забезпечувати надійність. Маршрутизатори можуть відкидати пакети, і саме кінцеві хости мають перевіряти, що всі пакети отримано.
 
-<img width="900px" src="/assets/intro/1-43-reliability-in-endhost.png">
+<img width="900px" src="{{ site.baseurl }}/assets/intro/1-43-reliability-in-endhost.png">
 
 За наскрізного підходу, коли надійність реалізують кінцеві хости, контроль перебуває в руках хостів. Хости однаково можуть містити помилки й відкидати пакети, але цього разу хости самі можуть виправити помилку. Загалом, якщо ви пишете код, краще, коли саме ви контролюєте правильність функції, а не покладаєтеся на інших людей, які можуть помилитися (і чиї помилки ви не можете виправити).
 

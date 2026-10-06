@@ -13,11 +13,11 @@ layout: page-with-toc
 
 Однак тепер ми спробуємо інший підхід, зовсім не схожий на DVMRP.
 
-<img width="900px" src="/assets/beyond-client-server/7-032-cbt-taxonomy.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-032-cbt-taxonomy.png">
 
 У підході **дерев з ядром** (Core-Based Tree, CBT) кожна група-адресат має власне дерево. CBT для групи-адресата — це просто дерево, що торкається кожного члена цієї групи.
 
-<img width="600px" src="/assets/beyond-client-server/7-033-cbt-end-goal.png">
+<img width="600px" src="{{ site.baseurl }}/assets/beyond-client-server/7-033-cbt-end-goal.png">
 
 Думати про дерева CBT і дерева DVMRP одночасно може бути заплутано. Поки що можете вважати їх зовсім різними деревами, що не мають нічого спільного.
 
@@ -30,27 +30,27 @@ layout: page-with-toc
 
 Якщо член хоче приєднатися до групи, він одноадресно надсилає ядру повідомлення про приєднання (join). Цей пакет проходить кілька маршрутизаторів, щоб дістатися ядра. Усі ці маршрутизатори теж приєднуються до дерева, тож тепер дерево має шлях від ядра до нового члена.
 
-<img width="800px" src="/assets/beyond-client-server/7-034-cbt-join-1.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-034-cbt-join-1.png">
 
-<img width="600px" src="/assets/beyond-client-server/7-035-cbt-join-2.png">
+<img width="600px" src="{{ site.baseurl }}/assets/beyond-client-server/7-035-cbt-join-2.png">
 
 Формальніше: якщо ви маршрутизатор і отримали повідомлення про приєднання для певної групи, ви знаєте, що тепер є частиною дерева цієї групи. Вхідний канал повідомлення про приєднання — ваша дитина (канал, що вказує від кореня). Вихідний канал повідомлення про приєднання (наступний перехід до кореня) — ваш батько (канал, що вказує в бік кореня). Ви можете записати свого батька й дітей, щоб пам'ятати, де ви в дереві. Немає глобального «мозку», що пам'ятає дерево; кожен маршрутизатор у дереві відповідає за те, щоб пам'ятати власного батька й дітей.
 
-<img width="900px" src="/assets/beyond-client-server/7-036-cbt-join-recap.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-036-cbt-join-recap.png">
 
 Якщо член хоче покинути групу, він може одноадресно надіслати повідомлення про вихід (quit) своєму безпосередньому батькові в дереві. Якщо всі ваші діти в дереві надіслали повідомлення про вихід, це означає, що ви теж можете покинути дерево, тож можете надіслати повідомлення про вихід своєму безпосередньому батькові. Повідомлення про вихід надсилаються вашому безпосередньому батькові й далі не пересилаються.
 
-<img width="700px" src="/assets/beyond-client-server/7-037-cbt-leave-1.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-037-cbt-leave-1.png">
 
-<img width="600px" src="/assets/beyond-client-server/7-038-cbt-leave-2.png">
+<img width="600px" src="{{ site.baseurl }}/assets/beyond-client-server/7-038-cbt-leave-2.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-039-cbt-quit-recap.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-039-cbt-quit-recap.png">
 
 Пам'ятайте, що ми будуємо по одному дереву на групу. Це означає, що маршрутизатори мають пам'ятати свого батька й дітей для кожного дерева, до якого вони належать. Крім того, повідомлення про приєднання й вихід мають бути пов'язані з конкретною групою, наприклад «Я хочу приєднатися до групи G2».
 
-<img width="600px" src="/assets/beyond-client-server/7-040-multiple-1.png">
+<img width="600px" src="{{ site.baseurl }}/assets/beyond-client-server/7-040-multiple-1.png">
 
-<img width="600px" src="/assets/beyond-client-server/7-041-multiple-2.png">
+<img width="600px" src="{{ site.baseurl }}/assets/beyond-client-server/7-041-multiple-2.png">
 
 Ось кілька дрібних подробиць про ядро, хоча це не головна інтуїція протоколу.
 - Оскільки ядро — маршрутизатор, воно має одноадресну IP-адресу, і всі можуть надсилати ядру одноадресні пакети.
@@ -71,7 +71,7 @@ layout: page-with-toc
 
 Конкретніше, ви починаєте з пересилання пакета своєму батькові в дереві. Потім кожен маршрутизатор у дереві отримує пакет і лавинно розсилає його всіма своїми каналами дерева (і каналами до батька, і каналами до дітей).
 
-<img width="700px" src="/assets/beyond-client-server/7-042-cbt-forwarding-1.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-042-cbt-forwarding-1.png">
 
 Випадок 2: якщо ви не член групи, ви не торкаєтеся дерева, тож стратегія випадку 1 не спрацює. Натомість ви можете одноадресно надіслати пакет ядру. Потім ядро може широкомовно розіслати повідомлення всім у дереві.
 
@@ -79,7 +79,7 @@ layout: page-with-toc
 
 Коли ядро отримує пакет, воно знімає зовнішній заголовок і бачить внутрішній пакет багатоадресної розсилки. Потім ядро може широкомовно розіслати цей пакет уздовж дерева. Як і у випадку 1, кожен маршрутизатор у дереві отримує пакет і лавинно розсилає його всіма своїми каналами дерева (і каналами до батька, і каналами до дітей).
 
-<img width="900px" src="/assets/beyond-client-server/7-043-cbt-forwarding-2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-043-cbt-forwarding-2.png">
 
 
 ## Перевага: краще масштабування
@@ -90,7 +90,7 @@ layout: page-with-toc
 
 Зверніть увагу, що CBT однакове для всіх джерел. На відміну від DVMRP (одне дерево на кожне джерело для кожної групи-адресата), тепер у нас лише одне дерево на групу-адресата.
 
-<img width="900px" src="/assets/beyond-client-server/7-044-dvmrp-cbt-scaling.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-044-dvmrp-cbt-scaling.png">
 
 Корисно порівнювати дерева DVMRP і дерева CBT, щоб побачити, як масштабуються протоколи, але поза цим дерева, які ми будуємо в кожному протоколі, мають зовсім різну семантику. Якщо вас це заплутує, можливо, легше вважати ці дерева цілком окремими концептуальними темами.
 
@@ -107,11 +107,11 @@ CBT обмінює ефективність на масштабованість.
 
 Ефективність CBT дуже залежить від того, який маршрутизатор обрано ядром. Наприклад, розгляньте топологію нижче з різними варіантами вибору ядра.
 
-<img width="700px" src="/assets/beyond-client-server/7-045-core-choice-1.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-045-core-choice-1.png">
 
-<img width="700px" src="/assets/beyond-client-server/7-046-core-choice-2.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-046-core-choice-2.png">
 
-<img width="700px" src="/assets/beyond-client-server/7-047-core-choice-3.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-047-core-choice-3.png">
 
 За будь-якого вибору ядра щонайменше одна пара маршрутизаторів з'єднана неоптимальним шляхом. У нас більше немає гарантованого дерева найкоротших шляхів від одного джерела до всіх членів групи.
 

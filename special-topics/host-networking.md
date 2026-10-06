@@ -6,4 +6,4 @@ layout: page
 
 # Мережева підсистема хоста
 
-[Цю сторінку переміщено.](/datacenter/host-networking)
+[Цю сторінку переміщено.]({{ site.baseurl }}/datacenter/host-networking)

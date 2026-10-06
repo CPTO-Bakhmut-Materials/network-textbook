@@ -19,22 +19,22 @@ layout: page-with-toc
 
 У цьому розділі ми зосередимося на реалізації колективу AllReduce, хоча ці ідеї можна застосувати й до інших колективів. Пригадайте, що AllReduce обчислює поелементну суму векторів, а потім надсилає вектор суми всім вершинам.
 
-<img width="900px" src="/assets/beyond-client-server/7-082-allreduce-reminder.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-082-allreduce-reminder.png">
 
 
 ## Підхід 1: повнозв'язна мережа
 
 Перша топологія, яку ми розглянемо, — повнозв'язна, де кожна вершина має прямий канал до кожної іншої.
 
-<img width="900px" src="/assets/beyond-client-server/7-083-mesh-1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-083-mesh-1.png">
 
 З цією топологією AllReduce можна реалізувати такими кроками: спершу кожен надсилає весь свій вектор безпосередньо кожній іншій вершині.
 
-<img width="900px" src="/assets/beyond-client-server/7-084-mesh-2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-084-mesh-2.png">
 
 Потім кожна вершина підсумовує всі отримані вектори.
 
-<img width="900px" src="/assets/beyond-client-server/7-085-mesh-3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-085-mesh-3.png">
 
 Скільки пропускної здатності використовує цей підхід? Кожна вершина має надіслати весь свій вектор ($$D$$ байтів) усім $$p-1$$ іншим вершинам, тож кожна вершина надсилає $$D(p-1)$$ байтів. Загалом вершин $$p$$, тож загальний обсяг надісланих даних — $$Dp(p-1) = O(D \cdot p^2)$$ байтів.
 
@@ -45,15 +45,15 @@ layout: page-with-toc
 
 У наступній топології нехай усю обчислювальну роботу виконує одна вершина:
 
-<img width="900px" src="/assets/beyond-client-server/7-086-root-1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-086-root-1.png">
 
 Щоб виконати AllReduce: спершу всі (окрім вершини 1) надсилають свій вектор вершині 1.
 
-<img width="800px" src="/assets/beyond-client-server/7-087-root-2.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-087-root-2.png">
 
 Потім вершина 1 обчислює суму й надсилає суму назад усім.
 
-<img width="900px" src="/assets/beyond-client-server/7-088-root-3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-088-root-3.png">
 
 Скільки пропускної здатності використовує цей підхід? Кожна вершина (окрім вершини 1) має надіслати весь свій вектор вершині 1, тобто надсилається $$D$$ байтів. Є $$p-1$$ вершин, що мають надіслати дані, тож загальний обсяг даних, надісланих на першому кроці, — $$D(p-1)$$ байтів.
 
@@ -72,29 +72,29 @@ layout: page-with-toc
 
 У наступній топології ми побудуємо двійкове дерево. Пам'ятайте, що двійкове тут означає, що кожна вершина має щонайбільше 2 дітей.
 
-<img width="800px" src="/assets/beyond-client-server/7-089-tree-1.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-089-tree-1.png">
 
 Щоб виконати AllReduce: починаючи з листків унизу, кожна вершина надсилає свій вектор своєму батькові.
 
-<img width="800px" src="/assets/beyond-client-server/7-090-tree-2.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-090-tree-2.png">
 
 Коли ви отримали вектори всіх своїх дітей, слід підсумувати їх зі своїм вектором.
 
-<img width="800px" src="/assets/beyond-client-server/7-091-tree-3.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-091-tree-3.png">
 
 Потім слід надіслати отриманий вектор суми своєму батькові.
 
-<img width="700px" src="/assets/beyond-client-server/7-092-tree-4.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-092-tree-4.png">
 
 Після повторення цього кроку на всіх рівнях дерева корінь має обчислити загальну суму.
 
-<img width="700px" src="/assets/beyond-client-server/7-093-tree-5.png">
+<img width="700px" src="{{ site.baseurl }}/assets/beyond-client-server/7-093-tree-5.png">
 
 Потім на другому кроці корінь надсилає загальний вектор суми вниз деревом своїм дітям. Коли ви отримуєте вектор суми від свого батька, слід надіслати копію цього вектора суми всім своїм дітям.
 
-<img width="800px" src="/assets/beyond-client-server/7-094-tree-6.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-094-tree-6.png">
 
-<img width="800px" src="/assets/beyond-client-server/7-095-tree-7.png">
+<img width="800px" src="{{ site.baseurl }}/assets/beyond-client-server/7-095-tree-7.png">
 
 Скільки пропускної здатності використовує цей підхід? На кроці 1 кожна вершина отримує до 2 векторів від своїх дітей (пригадайте: дерево двійкове) і надсилає 1 вектор своєму батькові. Це дає верхню межу $$3D$$ байтів на вершину, разом $$3D \cdot p$$ байтів на кроці 1.
 
@@ -113,37 +113,37 @@ layout: page-with-toc
 
 В останніх двох підходах ми побудуємо кільцеву топологію. Зауважте, що в каналі, який замикає кільце від вершини 1 до вершини 5, немає нічого особливого порівняно з іншими каналами (тобто те, що канал довший, нічого не означає).
 
-<img width="900px" src="/assets/beyond-client-server/7-096-naive-ring-1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-096-naive-ring-1.png">
 
 Щоб наївно виконати AllReduce: вершина 5 починає з надсилання свого вектора ліворуч.
 
-<img width="900px" src="/assets/beyond-client-server/7-097-naive-ring-2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-097-naive-ring-2.png">
 
 Коли ви отримуєте вектор від свого сусіда праворуч, слід підсумувати його зі своїм вектором.
 
-<img width="900px" src="/assets/beyond-client-server/7-098-naive-ring-3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-098-naive-ring-3.png">
 
 Потім слід надіслати отриманий вектор суми своєму сусідові ліворуч.
 
-<img width="900px" src="/assets/beyond-client-server/7-099-naive-ring-4.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-099-naive-ring-4.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-100-naive-ring-5.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-100-naive-ring-5.png">
 
 Зрештою цей процес обійде все кільце.
 
-<img width="900px" src="/assets/beyond-client-server/7-101-naive-ring-6.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-101-naive-ring-6.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-102-naive-ring-7.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-102-naive-ring-7.png">
 
 Наостанок вершина 1 обчислить загальну суму.
 
-<img width="900px" src="/assets/beyond-client-server/7-103-naive-ring-8.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-103-naive-ring-8.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-104-naive-ring-9.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-104-naive-ring-9.png">
 
 Потім на другому кроці ми надішлемо загальну суму по кільцю, щоб кожен мав копію. Вершина 5 починає з надсилання загальної суми ліворуч. Коли ви отримуєте загальний вектор суми від свого сусіда праворуч, слід надіслати копію вектора суми своєму сусідові ліворуч. Зрештою цей процес обходить кільце, і кожен отримує копію загальної суми.
 
-<img width="900px" src="/assets/beyond-client-server/7-105-naive-ring-10.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-105-naive-ring-10.png">
 
 Скільки пропускної здатності використовує цей підхід? На кроці 1 кожна вершина отримує вектор від свого сусіда праворуч і надсилає вектор своєму сусідові ліворуч. Це дає верхню межу $$2D$$ байтів на вершину, разом $$2D \cdot p$$ байтів на кроці 1.
 
@@ -164,41 +164,41 @@ layout: page-with-toc
 
 Щоб створити менш пульсуюче, збалансованіше навантаження, можна розподілити в часі кроки наївного кільцевого AllReduce. Надсилання всього вектора ліворуч одразу створює сплеск роботи для вашого сусіда ліворуч. Натомість ви можете надсилати свій вектор ліворуч поступово, по одному елементу за крок часу.
 
-<img width="900px" src="/assets/beyond-client-server/7-106-optimized-ring-1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-106-optimized-ring-1.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-107-optimized-ring-2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-107-optimized-ring-2.png">
 
 Коли ви отримуєте один елемент (зліва), ви можете додати цей елемент до власного відповідного елемента. Потім ви можете надіслати отриману суму (досі один елемент) ліворуч.
 
-<img width="900px" src="/assets/beyond-client-server/7-108-optimized-ring-3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-108-optimized-ring-3.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-109-optimized-ring-4.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-109-optimized-ring-4.png">
 
 Окрім розподілу в часі надсилання кожного вектора, зверніть увагу, що початкові точки теж розподілено. Замість того щоб починати з того, що вершина 5 надсилає всі свої елементи, тепер ми починаємо з того, що $$i$$-та вершина надсилає свій $$i$$-й елемент.
 
-<img width="900px" src="/assets/beyond-client-server/7-110-optimized-ring-5.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-110-optimized-ring-5.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-111-optimized-ring-6.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-111-optimized-ring-6.png">
 
 Розподіляючи операцію за обома цими вимірами (кожна вершина надсилає по одному елементу за раз, і кожна вершина починає з іншого елемента), можна створити збалансованіше навантаження. На кожному кроці часу кожна вершина отримує рівно один елемент справа, обчислює одну суму й надсилає рівно один елемент ліворуч.
 
-<img width="900px" src="/assets/beyond-client-server/7-112-optimized-ring-7.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-112-optimized-ring-7.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-113-optimized-ring-8.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-113-optimized-ring-8.png">
 
 Якщо повторити це $$p$$ разів, кожен елемент обійде все кільце.
 
-<img width="900px" src="/assets/beyond-client-server/7-114-optimized-ring-9.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-114-optimized-ring-9.png">
 
 Однак не кожен знає всі елементи вектора суми, тож нам доведеться обійти кільце ще раз. Як і в наївному підході, у цьому другому обході, коли ви отримуєте елемент загальної суми, ви просто надсилаєте копію праворуч.
 
-<img width="900px" src="/assets/beyond-client-server/7-115-optimized-ring-10.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-115-optimized-ring-10.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-116-optimized-ring-11.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-116-optimized-ring-11.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-117-optimized-ring-12.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-117-optimized-ring-12.png">
 
-<img width="900px" src="/assets/beyond-client-server/7-118-optimized-ring-13.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-118-optimized-ring-13.png">
 
 Переглядаючи цю анімовану демонстрацію, спробуйте зосередитися на двох вимірах, за якими ми розподіляємо операції. Якщо зосередитися на одному стовпці, ви помітите, що ми надсилаємо елементи по одному й отримуємо елементи по одному.
 
@@ -217,7 +217,7 @@ layout: page-with-toc
 
 Відповідь — використовувати накладені мережі. Можна намалювати віртуальні канали, щоб з'єднати хости в кільцеву топологію:
 
-<img width="900px" src="/assets/beyond-client-server/7-119-ring-overlay-1.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-119-ring-overlay-1.png">
 
 Коли вершина D надсилає свій вектор вершині B, з погляду накладеної мережі вершина D надсилає вектор одним (віртуальним) каналом своєму прямому сусідові. З погляду базової мережі цей вектор насправді має пройти кілька переходів, перш ніж дістанеться свого пункту призначення — вершини B.
 
@@ -229,15 +229,15 @@ layout: page-with-toc
 
 Ось дві можливі нумерації вершин:
 
-<img width="900px" src="/assets/beyond-client-server/7-120-ring-overlay-2.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-120-ring-overlay-2.png">
 
 Перший підхід дає середній розтяг 3,5. Зокрема, зверніть увагу, що віртуальні канали C–D і B–A потребують проходження багатьох каналів базової мережі.
 
-<img width="900px" src="/assets/beyond-client-server/7-121-ring-overlay-3.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-121-ring-overlay-3.png">
 
 Натомість другий підхід дає середній розтяг 2,5. Цей набір віртуальних каналів розміщує сусідні канали в кільці ближче один до одного.
 
-<img width="900px" src="/assets/beyond-client-server/7-122-ring-overlay-4.png">
+<img width="900px" src="{{ site.baseurl }}/assets/beyond-client-server/7-122-ring-overlay-4.png">
 
 Загальніше, щоб оптимізувати продуктивність кільцевого AllReduce, ми хотіли б, щоб сусідні вершини (наприклад, вершина $$i$$ і вершина $$i+1$$) були близько одна до одної в мережі.
 

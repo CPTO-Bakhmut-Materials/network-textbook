@@ -7,4 +7,4 @@ layout: page
 
 # Бездротові мережі
 
-[Цю сторінку переміщено.](/wireless/wireless-links)
+[Цю сторінку переміщено.]({{ site.baseurl }}/wireless/wireless-links)

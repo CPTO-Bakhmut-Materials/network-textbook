@@ -6,4 +6,4 @@ layout: page
 
 # Стільникові мережі
 
-[Цю сторінку переміщено.](/wireless/cellular)
+[Цю сторінку переміщено.]({{ site.baseurl }}/wireless/cellular)
