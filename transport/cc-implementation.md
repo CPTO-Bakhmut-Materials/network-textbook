@@ -1,385 +1,384 @@
 ---
-title: Congestion Control Implementation
-parent: Transport
+title: Реалізація керування перевантаженням
+parent: Транспортний рівень
 nav_order: 6
 layout: page-with-toc
 ---
 
-# Congestion Control Implementation
+# Реалізація керування перевантаженням
 
-## Recap: TCP Windows
+## Повторення: вікна TCP
 
-So far, we've designed a conceptual sketch of a dynamic adjustment, host-based algorithm, where each source runs the same algorithm independently to arrive at an efficient, fair share of bandwidth.
+Досі ми спроєктували концептуальний ескіз алгоритму динамічного коригування на основі хоста, де кожне джерело незалежно виконує той самий алгоритм, щоб дійти до ефективної та справедливої частки пропускної здатності.
 
-First, use slow-start (start at low rate, exponentially increase) to discover an initial rate. Then, in each iteration, if we detect congestion (detect loss), we reduce R multiplicatively. If we don't detect congestion, we increase R additively.
+Спершу за допомогою повільного старту (почати з низької швидкості, експоненційно збільшувати) визначаємо початкову швидкість. Потім на кожній ітерації, якщо ми виявляємо перевантаження (виявляємо втрату), ми мультиплікативно зменшуємо R. Якщо перевантаження не виявлено, ми адитивно збільшуємо R.
 
-In this section, we will now see how TCP implements this algorithm. For better or worse, TCP's congestion control mechanisms are very intertwined with TCP's reliability mechanisms. (This is a result of the original design, where TCP was patched to account for congestion.) In this section, we'll see how TCP's implementation works to achieve both reliability and congestion control at the same time.
+У цьому розділі ми побачимо, як TCP реалізує цей алгоритм. Добре це чи погано, але механізми керування перевантаженням TCP тісно переплетені з механізмами надійності TCP. (Це наслідок початкового дизайну, коли TCP залатали, щоб урахувати перевантаження.) У цьому розділі ми побачимо, як реалізація TCP водночас досягає і надійності, і керування перевантаженням.
 
-Recall that in TCP, the sender maintains a sliding window of consecutive bytes/packets in flight. The size of the window is determined by flow control (decided by buffer space at recipient) and congestion control (rate computed by sender).
+Пригадайте, що в TCP відправник підтримує ковзне вікно послідовних байтів/пакетів у дорозі. Розмір вікна визначається керуванням потоком (вирішується вільним місцем у буфері отримувача) і керуванням перевантаженням (швидкість, обчислена відправником).
 
-More specifically, in flow control, the recipient sends an advertised window, indicating how many more bytes can be sent without overflowing the recipient's memory. This advertised window value is sometimes abbreviated **RWND (receiver window)**.
+Конкретніше, у керуванні потоком отримувач надсилає оголошене вікно, що вказує, скільки ще байтів можна надіслати, не переповнивши пам'ять отримувача. Це значення оголошеного вікна іноді скорочують як **RWND** (receiver window, вікно отримувача).
 
-In congestion control, the sender maintains a value, sometimes abbreviated **CWND (congestion window)**, which denotes the rate the sender can send packets without overloading links. This value will be dynamically set and adjusted by the congestion control algorithm.
+У керуванні перевантаженням відправник підтримує значення, яке іноді скорочують як **CWND** (congestion window, вікно перевантаження) і яке позначає швидкість, з якою відправник може надсилати пакети, не перевантажуючи канали. Це значення динамічно встановлює й коригує алгоритм керування перевантаженням.
 
-The sender's window is computed as the minimum of CWND and RWND. For this lecture, we'll assume that RWND is larger than CWND, so the bottleneck is the network, not the recipient's memory. This is usually, but not always true in practice.
+Вікно відправника обчислюється як мінімум із CWND і RWND. У цій лекції ми вважатимемо, що RWND більше за CWND, тож вузьким місцем є мережа, а не пам'ять отримувача. На практиці це зазвичай, але не завжди так.
 
 <img width="900px" src="/assets/transport/3-047-window1.png">
 
-Recall that we can view the sliding window as a range in the bytestream. The left side of the window is the first unacknowledged byte (everything to the left of the window has already been sent and acknowledged). The right side of the window is determined by the window size. Only packets inside this window are allowed to be in-flight.
+Пригадайте, що ковзне вікно можна розглядати як діапазон у потоці байтів. Лівий край вікна — перший непідтверджений байт (усе ліворуч від вікна вже надіслано й підтверджено). Правий край вікна визначається розміром вікна. Лише пакетам усередині цього вікна дозволено бути в дорозі.
 
-When data on the left side of the window is acked, the window slides to the right, and additional data can now be sent.
+Коли дані на лівому краї вікна підтверджено, вікно зсувається праворуч, і тепер можна надіслати додаткові дані.
 
-To detect loss, we maintain a single timer for the left-most packet in the window. If the timer expires without that packet being acked, we re-send the left-most packet in the window. Also, to detect loss, we count the number of duplicate acks, and re-send the left-most packet if we see 3 duplicate acks. This duplicate ack-based approach is sometimes called **fast retransmit**.
-
-
-## Windows and Rates
-
-How do we adjust the rate for congestion control, and how do we compute the congestion window? It turns out that these two values are directly related, and adjusting the window is achieved by adjusting the rate. The window size and the rate of sending data are correlated by the following equation: rate times RTT = window size.
-
-Intuitively, you can think of window size and rate as the same quantity, expressed in two different "units of measurement." An increased window size means we're sending data faster, and vice-versa.
-
-To see why this equation holds, consider the first RTT. We can send [window size] number of packets during this first RTT (before any acks arrive), for a rate of window size / RTT.
-
-Recall that our conceptual TCP design measured data in packets for simplicity, but in practice, TCP thinks in terms of bytes. In a real implementation, the window size is measured in terms of bytes, but for simplicity, we will consider the window size in terms of packets.
-
-To convert between packets and bytes, recall that we defined the Maximum Segment Size (MSS), the number of bytes per packet. This tells us that MSS times number of packets = number of bytes. Again, intuitively, you can think of bytes and packets as two different units of measurement for the same quantity (amount of data).
+Щоб виявляти втрати, ми підтримуємо один таймер для крайнього лівого пакета у вікні. Якщо таймер спливає, а пакет не підтверджено, ми повторно надсилаємо крайній лівий пакет у вікні. Крім того, щоб виявляти втрати, ми рахуємо кількість дублікатів підтверджень і повторно надсилаємо крайній лівий пакет, якщо бачимо 3 дублікати. Цей підхід на основі дублікатів підтверджень іноді називають **швидкою повторною передачею** (fast retransmit).
 
 
-## Event-Driven Updates
+## Вікна та швидкості
 
-In our conceptual model, our goal is to adjust the rate/window once per "iteration," but we haven't formalized how to measure each iteration. We can roughly define each iteration as one RTT, but the RTT itself is a dynamically changing value that we can't accurately measure.
+Як коригувати швидкість для керування перевантаженням і як обчислювати вікно перевантаження? Виявляється, ці два значення безпосередньо пов'язані, і коригування вікна досягається коригуванням швидкості. Розмір вікна і швидкість надсилання даних пов'язані такою рівністю: швидкість помножити на RTT = розмір вікна.
 
-In order to update the window size in a more predictable, measurable way, we can consider the various events that the existing TCP implementation responds to, and update the window each time one of these events occurs. These are called **event-driven updates**.
+Інтуїтивно розмір вікна і швидкість можна вважати тією самою величиною, вираженою у двох різних «одиницях вимірювання». Більший розмір вікна означає, що ми надсилаємо дані швидше, і навпаки.
 
-The three TCP events where we need to update the window size are: new ack, 3 duplicate acks, and timeout.
+Щоб побачити, чому виконується ця рівність, розгляньте перший RTT. Протягом цього першого RTT (до надходження будь-яких підтверджень) ми можемо надіслати [розмір вікна] пакетів, тобто швидкість дорівнює розміру вікна / RTT.
 
-When we see a new ack (for data that was previously not acknowledged), this is a sign that our data made it through the network without loss. In our model, we detect congestion by checking for loss, so a new ack is a sign that the network is not congested. Therefore, when we see a new ack, we can increase the window size (either during slow-start discovery, or AIMD adjustment).
+Пригадайте, що наш концептуальний дизайн TCP для простоти вимірював дані в пакетах, але на практиці TCP мислить байтами. У реальній реалізації розмір вікна вимірюється в байтах, але для простоти ми розглядатимемо розмір вікна в пакетах.
 
-When we see 3 duplicate acks, we mark a packet lost. This is a signal of isolated loss, which indicates mild congestion. We lost a packet, but subsequent packets are still being received. To react to this loss, we will decrease the window size (during AIMD adjustment).
-
-When we encounter a timeout, we mark a packet lost. The fact that we detected the loss after a timeout, not duplicate acks, is a signal of many packets being lost (heavy congestion). To see why, consider a window size of 100 packets. If we encounter a timeout, this means we didn't get an ack for the left-most packet in the window. But it also means that we failed to get 3 duplicate acks for any other packets in the window during the entire duration of the timer. A timeout means that very few, if any, packets are being received, and something bad has happened.
-
-If we discover a timeout, something unexpected has happened (e.g. network changed), and we should no longer trust our current window size. To react, we should go back to the slow-start phase and re-discover a good window size. This isn't the only way to react to timeout, but this is what TCP decided.
+Щоб перетворювати пакети на байти й навпаки, пригадайте, що ми визначили максимальний розмір сегмента (MSS) — кількість байтів у пакеті. Звідси MSS помножити на кількість пакетів = кількість байтів. Знову ж таки, інтуїтивно байти й пакети можна вважати двома різними одиницями вимірювання тієї самої величини (обсягу даних).
 
 
-## Event-Driven Slow Start
+## Оновлення за подіями
 
-In our conceptual model, we implemented slow start by choosing a slow rate, and increasing the rate exponentially (e.g. doubling on each iteration) until we encounter the first loss. We now need an event-driven way to double the window once per RTT.
+У нашій концептуальній моделі мета полягає в тому, щоб коригувати швидкість/вікно раз на «ітерацію», але ми не формалізували, як вимірювати кожну ітерацію. Грубо кажучи, кожну ітерацію можна визначити як один RTT, але сам RTT — значення, що динамічно змінюється й яке ми не можемо точно виміряти.
 
-TCP starts with a small window of 1 packet. Recall, we can convert packet to bytes with the maximum segment size (MSS), and then convert bytes to rate by dividing MSS/RTT.
+Щоб оновлювати розмір вікна передбачуванішим і вимірюваним способом, можна розглянути різні події, на які реагує наявна реалізація TCP, і оновлювати вікно щоразу, коли трапляється одна з цих подій. Це називається **оновленнями за подіями** (event-driven updates).
 
-Every time we get an acknowledgement, we will increase the window size by 1 packet. The intuition for what will happen is:
+Три події TCP, за яких нам треба оновлювати розмір вікна: нове підтвердження, 3 дублікати підтверджень і тайм-аут.
 
-Initially, the window size is 1 packet. We send 1 packet, and after an RTT, get 1 ack back. The ack lets us increase the window to 2 packets.
+Коли ми бачимо нове підтвердження (для даних, які раніше не було підтверджено), це ознака того, що наші дані пройшли мережею без втрат. У нашій моделі ми виявляємо перевантаження, перевіряючи втрати, тож нове підтвердження — ознака того, що мережа не перевантажена. Тому, коли ми бачимо нове підтвердження, можна збільшити розмір вікна (або під час виявлення в повільному старті, або під час коригування AIMD).
 
-We now send 2 packets, and after an RTT, we get 2 acks back. The 2 acks let us increase the window by another 2 packets, for a new window size of 4 packets.
+Коли ми бачимо 3 дублікати підтверджень, ми позначаємо пакет як втрачений. Це сигнал поодинокої втрати, що вказує на помірне перевантаження. Ми втратили пакет, але наступні пакети й далі отримуються. Реагуючи на цю втрату, ми зменшимо розмір вікна (під час коригування AIMD).
 
-We now send 4 packets, and after an RTT, we get 4 acks back. The 4 acks let us increase the window by another 4 packets, for a new window size of 8 packets.
+Коли ми стикаємося з тайм-аутом, ми позначаємо пакет як втрачений. Те, що ми виявили втрату за тайм-аутом, а не за дублікатами підтверджень, — сигнал втрати багатьох пакетів (сильне перевантаження). Щоб побачити чому, розгляньте розмір вікна 100 пакетів. Якщо ми стикаємося з тайм-аутом, це означає, що ми не отримали підтвердження для крайнього лівого пакета у вікні. Але це також означає, що протягом усього часу роботи таймера ми не отримали 3 дублікатів підтверджень для жодних інших пакетів у вікні. Тайм-аут означає, що отримується дуже мало пакетів (якщо взагалі отримується), і сталося щось погане.
+
+Якщо ми виявили тайм-аут, сталося щось несподіване (наприклад, змінилася мережа), і ми більше не повинні довіряти поточному розміру вікна. Реагуючи, ми маємо повернутися до фази повільного старту й заново визначити добрий розмір вікна. Це не єдиний спосіб реагувати на тайм-аут, але саме так вирішили в TCP.
+
+
+## Повільний старт за подіями
+
+У нашій концептуальній моделі ми реалізували повільний старт, обираючи низьку швидкість і експоненційно збільшуючи її (наприклад, подвоюючи на кожній ітерації), доки не зіткнемося з першою втратою. Тепер нам потрібен спосіб на основі подій подвоювати вікно раз на RTT.
+
+TCP починає з невеликого вікна в 1 пакет. Пригадайте, що пакети можна перетворити на байти за допомогою максимального розміру сегмента (MSS), а потім байти — на швидкість, поділивши MSS/RTT.
+
+Щоразу, отримуючи підтвердження, ми збільшуватимемо розмір вікна на 1 пакет. Інтуїтивно відбуватиметься таке:
+
+Спочатку розмір вікна — 1 пакет. Ми надсилаємо 1 пакет і через RTT отримуємо 1 підтвердження. Підтвердження дає нам змогу збільшити вікно до 2 пакетів.
+
+Тепер ми надсилаємо 2 пакети й через RTT отримуємо 2 підтвердження. 2 підтвердження дають нам змогу збільшити вікно ще на 2 пакети, тож новий розмір вікна — 4 пакети.
+
+Тепер ми надсилаємо 4 пакети й через RTT отримуємо 4 підтвердження. 4 підтвердження дають нам змогу збільшити вікно ще на 4 пакети, тож новий розмір вікна — 8 пакетів.
 
 <img width="500px" src="/assets/transport/3-071-event-driven-ss.png">
 
-This intuitive picture assumes we are sending all 4 packets and receiving all 4 acks simultaneously, though. In practice, the sliding window behavior causes our window to increase by 1 each time we receive an ack, though the end behavior (doubling the window every RTT) is the same.
+Утім, ця інтуїтивна картина припускає, що ми надсилаємо всі 4 пакети й отримуємо всі 4 підтвердження одночасно. На практиці через поведінку ковзного вікна наше вікно збільшується на 1 щоразу, коли ми отримуємо підтвердження, хоча кінцева поведінка (подвоєння вікна кожен RTT) та сама.
 
-As before, we start with a window size of 1 packet. We send 1 packet (A), and after an RTT, get the ack for A back. The ack lets us increase the window to 2 packets, and there are zero packets in flight.
+Як і раніше, ми починаємо з розміру вікна 1 пакет. Ми надсилаємо 1 пакет (A) і через RTT отримуємо підтвердження для A. Підтвердження дає змогу збільшити вікно до 2 пакетів, і в дорозі немає жодного пакета.
 
-Next, we can send out 2 packets (B and C). When we get the ack for B, we increase the window to 3 packets. There is still 1 packet in flight (C), so we can send 2 more packets (D and E).
+Далі ми можемо надіслати 2 пакети (B і C). Коли ми отримуємо підтвердження для B, ми збільшуємо вікно до 3 пакетів. У дорозі досі 1 пакет (C), тож ми можемо надіслати ще 2 пакети (D і E).
 
-When we get the ack for C, we can increase the window to 4 packets. There are still 2 packets in flight (D and E), so we can send 2 more packets (F and G).
+Коли ми отримуємо підтвердження для C, ми можемо збільшити вікно до 4 пакетів. У дорозі досі 2 пакети (D і E), тож ми можемо надіслати ще 2 пакети (F і G).
 
-In general, assuming no loss and no re-ordering, every time we receive an ack, the sliding window allows us to send one more packet, and the increased window allows us to send another packet. Because every ack leads to 2 packets being sent, we get the behavior where the window doubles every RTT. For example, within an RTT interval where we receive 16 acks, each ack triggers to packets being sent, for a total of 32 packets. Then, in the next RTT interval, those 32 packets will be acked, triggering 64 packets being sent.
+Загалом, за відсутності втрат і переупорядкувань, щоразу, коли ми отримуємо підтвердження, ковзне вікно дає нам змогу надіслати ще один пакет, а збільшене вікно — ще один. Оскільки кожне підтвердження призводить до надсилання 2 пакетів, ми отримуємо поведінку, за якої вікно подвоюється кожен RTT. Наприклад, протягом інтервалу RTT, у якому ми отримуємо 16 підтверджень, кожне підтвердження ініціює надсилання двох пакетів, тобто загалом 32 пакетів. Потім у наступному інтервалі RTT ці 32 пакети буде підтверджено, що ініціює надсилання 64 пакетів.
 
-Eventually, after some time spent doubling the window every RTT (increasing the window by 1 for every ack), we'll encounter loss. This also means we've learned the maximum allowable "safe" rate for sending packets without encountering loss. We'll remember this rate in a new parameter called SSTHRESH (slow start threshold). Specifically, as soon as we encounter packet loss, we'll set SSTHRESH to half the window size. For example, if a window of 16 packets doesn't cause loss, but a window of 32 packets does cause loss, then we would set SSTHRESH to 16.
+Зрештою, після певного часу подвоєння вікна кожен RTT (збільшення вікна на 1 за кожне підтвердження), ми зіткнемося з втратою. Це також означає, що ми дізналися максимально допустиму «безпечну» швидкість надсилання пакетів без втрат. Ми запам'ятаємо цю швидкість у новому параметрі SSTHRESH (slow start threshold, поріг повільного старту). Конкретно, щойно ми стикаємося з втратою пакета, ми встановлюємо SSTHRESH рівним половині розміру вікна. Наприклад, якщо вікно в 16 пакетів не спричиняє втрат, а вікно в 32 пакети спричиняє, то ми встановимо SSTHRESH рівним 16.
 
 <img width="700px" src="/assets/transport/3-072-ssthresh-ss.png">
 
-Recall that after slow start, we will continually adjust the window size (AIMD). SSTHRESH lets us remember the safe rate we learned from slow start, even as the rate starts changing later.
+Пригадайте, що після повільного старту ми постійно коригуватимемо розмір вікна (AIMD). SSTHRESH дає змогу запам'ятати безпечну швидкість, яку ми дізналися з повільного старту, навіть коли швидкість згодом почне змінюватися.
 
 
-## Implementing Additive Increasing
+## Реалізація адитивного збільшення
 
-In our conceptual model, after slow start, we want to slowly (additively) increase the rate when there's no loss. We need an event-driven way to increase the window by 1 packet for each RTT.
+У нашій концептуальній моделі після повільного старту ми хочемо повільно (адитивно) збільшувати швидкість, коли немає втрат. Нам потрібен спосіб на основі подій збільшувати вікно на 1 пакет за кожен RTT.
 
-We don't have an exact number for the RTT, but we do know that within a single RTT, we expect a window's worth of packets to be acked. For example, with window size 10, we receive 10 acks per RTT. If we increase the window by 1/10 packet per ack, then across a RTT, the window should increase by 1 packet, as desired.
+У нас немає точного значення RTT, але ми знаємо, що протягом одного RTT очікуємо підтвердження пакетів на ціле вікно. Наприклад, за розміру вікна 10 ми отримуємо 10 підтверджень за RTT. Якщо збільшувати вікно на 1/10 пакета за кожне підтвердження, то за RTT вікно збільшиться на 1 пакет, як і бажано.
 
-Each time we receive an acknowledgement, we will take the current window size CWND and reassign it to CWND + (1/CWND). This increases the window by a fraction of a packet on each ack. After a full window's worth of packets (i.e. after one RTT), the window increases by 1 packet.
+Щоразу, отримуючи підтвердження, ми беремо поточний розмір вікна CWND і перепризначаємо його як CWND + (1/CWND). Це збільшує вікно на частку пакета за кожне підтвердження. Після цілого вікна пакетів (тобто після одного RTT) вікно збільшується на 1 пакет.
 
-Formally, TCP measures the window in bytes, not packets, so (1/CWND) is equivalent to MSS * (MSS/CWND) in bytes. In (1/CWND), the numerator is 1 packet (total increase in an RTT), and the denominator is CWND measured in packets. Since the denominator is now measured in packets, we also have to measure the numerator in packets: 1 packet = MSS bytes.
+Формально TCP вимірює вікно в байтах, а не в пакетах, тож (1/CWND) у байтах еквівалентне MSS * (MSS/CWND). У (1/CWND) чисельник — 1 пакет (загальне збільшення за RTT), а знаменник — CWND, виміряне в пакетах. Оскільки знаменник тепер вимірюється в пакетах, чисельник теж треба виміряти в пакетах: 1 пакет = MSS байтів.
 
-But the fraction 1/CWND or MSS/CWND is still a ratio (dimensionless), representing the fraction to be increased on each ack. The total increase we want is 1 packet = MSS bytes, so we have to multiply this fraction by MSS bytes.
+Але дріб 1/CWND або MSS/CWND однаково є відношенням (безрозмірним), що позначає частку, на яку треба збільшувати за кожне підтвердження. Загальне бажане збільшення — 1 пакет = MSS байтів, тож цей дріб треба помножити на MSS байтів.
 
-As an example, suppose our CWND was 3 packets = 150 bytes (assuming MSS = 50 bytes). In the packet view, we would add 1/3 packets to the window each time, for a total increase of 1 packet.
+Як приклад, припустімо, наш CWND дорівнює 3 пакетам = 150 байтів (за MSS = 50 байтів). У поданні пакетами ми щоразу додавали б до вікна 1/3 пакета, загалом збільшивши його на 1 пакет.
 
-In the byte view, we can divide MSS/CWND = 50/150 to get the same 1/3 ratio that we need to step by each time, for a total increase of 1. But we still need to multiply by MSS so that the total increase is MSS instead of 1.
+У поданні байтами можна поділити MSS/CWND = 50/150 і отримати те саме відношення 1/3, на яке треба щоразу збільшувати, загалом на 1. Але нам однаково треба помножити на MSS, щоб загальне збільшення становило MSS, а не 1.
 
 <img width="900px" src="/assets/transport/3-073-event-driven-aimd.png">
 
-Note that the increase isn't perfectly linear, but provides a good enough approximation. For example, starting with CWND = 4, the first update is 4 + 1/4 = 4.25, and the second increase is 4.25 + 1/4.25 = 4.49. After four updates, the window size would be 4.92 in this approximation (we wanted it to be 5 in the exact model).
+Зауважте, що збільшення не ідеально лінійне, але дає досить добре наближення. Наприклад, починаючи з CWND = 4, перше оновлення — 4 + 1/4 = 4,25, а друге — 4,25 + 1/4,25 = 4,49. Після чотирьох оновлень розмір вікна в цьому наближенні становитиме 4,92 (у точній моделі ми хотіли 5).
 
 
-## Implementing Multiplicative Decrease
+## Реалізація мультиплікативного зменшення
 
-If we detect loss from 3 duplicate acks, we divide the window size by 2.
+Якщо ми виявляємо втрату за 3 дублікатами підтверджень, ми ділимо розмір вікна на 2.
 
-Recall that if the retransmission timer expires, we interpret the timeout as multiple packets being lost (we didn't even get duplicate acks). We assume that the current window might be way off, and in order to be cautious, we'll rediscover a good rate from scratch.
+Пригадайте: якщо спливає таймер повторної передачі, ми інтерпретуємо тайм-аут як втрату кількох пакетів (ми навіть не отримали дублікатів підтверджень). Ми припускаємо, що поточне вікно може бути дуже далеким від правильного, і з обережності заново визначимо добру швидкість з нуля.
 
-First, we'll make a note that the current rate is too high, and the best known safe rate is half of our current rate (following the multiplicative decrease principle). To record this safe rate, we'll set SSTHRESH to half the current window.
+Спершу ми зазначимо, що поточна швидкість зависока, а найкраща відома безпечна швидкість — половина поточної (за принципом мультиплікативного зменшення). Щоб зафіксувати цю безпечну швидкість, ми встановимо SSTHRESH рівним половині поточного вікна.
 
-Then, we'll set the window size back to 1 packet, and repeat the slow start process again.
+Потім ми повернемо розмір вікна до 1 пакета й знову повторимо процес повільного старту.
 
-Note that when we re-try slow start, we need to be careful not to return to the dangerous rate with timeouts from earlier. Fortunately, we set SSTHRESH to be just below the dangerous rate. Therefore, in subsequent slow start re-trys (where SSTHRESH is set), as soon as our window exceeds SSTHRESH, we should switch from multiplicative to additive increasing. On the first slow start, SSTHRESH is unset (or infinity).
+Зауважте, що коли ми повторюємо повільний старт, треба стежити, щоб не повернутися до небезпечної швидкості, за якої раніше були тайм-аути. На щастя, ми встановили SSTHRESH трохи нижче небезпечної швидкості. Тому в подальших повторах повільного старту (коли SSTHRESH встановлено), щойно наше вікно перевищує SSTHRESH, слід перемикатися з мультиплікативного збільшення на адитивне. Під час першого повільного старту SSTHRESH не встановлено (або він дорівнює нескінченності).
 
-To summarize: In slow-start, we increase the window by 1 packet for each ack (results in doubling the rate on each RTT). When in AIMD, we increase the window by a fraction of the window size for each ack (results in increasing by 1 for each window's worth of data). We decrease the window by halving it when receiving 3 duplicate acks, and changing it to 1 on a timeout.
+Підсумуємо: під час повільного старту ми збільшуємо вікно на 1 пакет за кожне підтвердження (що дає подвоєння швидкості кожен RTT). У режимі AIMD ми збільшуємо вікно на частку розміру вікна за кожне підтвердження (що дає збільшення на 1 за кожне вікно даних). Ми зменшуємо вікно вдвічі, коли отримуємо 3 дублікати підтверджень, і змінюємо його на 1 у разі тайм-ауту.
 
-Note that when decreasing, we never drop the window size to less than 1 packet. In the worst case, we need to allow 1 packet to be in-flight.
+Зауважте, що, зменшуючи, ми ніколи не опускаємо розмір вікна нижче 1 пакета. У найгіршому разі ми маємо дозволяти 1 пакету бути в дорозі.
 
 
-## TCP Sawtooth
+## Пилкоподібна крива TCP
 
 <img width="900px" src="/assets/transport/3-074-sawtooth-ssthresh.png">
 
-If we plot rate over time, we see the initial exponential growth (slow start). As soon as we experience loss, we cut the rate in half, and switch to AIMD mode. Now, we increase linearly until we encounter loss, and we halve the rate each time we encounter loss.
+Якщо побудувати графік швидкості в часі, ми бачимо початкове експоненційне зростання (повільний старт). Щойно ми стикаємося з втратою, ми зменшуємо швидкість удвічі й переходимо в режим AIMD. Тепер ми лінійно збільшуємо швидкість, доки не зіткнемося з втратою, і щоразу, стикаючись із втратою, зменшуємо швидкість удвічі.
 
 
-## Fast Recovery: Running Example
+## Швидке відновлення: наскрізний приклад
 
-There's one final problem we have to deal with in our congestion control implementation. When we encounter an isolated packet loss, the congestion window is halved, as intended. However, this has the unintended side effect of causing the sender to stall for some time before it can continue sending packets.
+Є ще одна, остання проблема, з якою нам доведеться впоратися в нашій реалізації керування перевантаженням. Коли ми стикаємося з поодинокою втратою пакета, вікно перевантаження зменшується вдвічі, як і задумано. Однак це має непередбачений побічний ефект: відправник на деякий час зупиняється, перш ніж зможе продовжити надсилати пакети.
 
-To see this in action, let's consider a running example. We send 10 packets, numbered 101 through 110. The first packet (101) is dropped.
+Щоб побачити це в дії, розгляньмо наскрізний приклад. Ми надсилаємо 10 пакетів із номерами від 101 до 110. Перший пакет (101) відкидається.
 
-As a result, the other 9 packets, 102 through 110, are all acked as ack(101), because the next expected byte is still 101.
+Як наслідок, інші 9 пакетів, від 102 до 110, усі підтверджуються як ack(101), бо наступний очікуваний байт досі 101.
 
-After the third duplicate ack(101) (generated by receiving 102, 103, and 104), the sender re-sends 101.
+Після третього дубліката ack(101) (згенерованого отриманням 102, 103 і 104) відправник повторно надсилає 101.
 
-Eventually, the ack for the re-sent 101 arrives. It says ack(111), because packets 102 through 110 were all received earlier, and with the receipt of 101, the next expected byte is 111.
+Зрештою надходить підтвердження для повторно надісланого 101. Воно каже ack(111), бо пакети від 102 до 110 усі отримано раніше, і з отриманням 101 наступний очікуваний байт — 111.
 
 <img width="700px" src="/assets/transport/3-075-fastrecovery1.png">
 
-To summarize: At the sender's end, we send 101 through 110, and 101 gets dropped. We get ack(101) from 102, ack(101) from 103, and ack(101) from 104. At this point, we re-send 101. Then, we get ack(101) from 105 through 110. Finally, we eventually get ack(111) from 101.
+Підсумуємо. На боці відправника: ми надсилаємо від 101 до 110, і 101 відкидається. Ми отримуємо ack(101) від 102, ack(101) від 103 і ack(101) від 104. На цьому етапі ми повторно надсилаємо 101. Потім ми отримуємо ack(101) від пакетів 105–110. Нарешті ми зрештою отримуємо ack(111) від 101.
 
-At the recipient's end, we receive 102 through 110, and send back ack(101) each time, since the next unreceived byte is still 101. Eventually, we receive the re-sent 101, and we send back ack(111) because the next unreceived byte is 111.
+На боці отримувача: ми отримуємо від 102 до 110 і щоразу надсилаємо назад ack(101), бо наступний неотриманий байт досі 101. Зрештою ми отримуємо повторно надісланий 101 і надсилаємо назад ack(111), бо наступний неотриманий байт — 111.
 
-What does CWND look like during this running example? Remember that the window starts at the first unacknowledged byte, and extends for CWND contiguous bytes. The only way to shift the window forward is to receive the first unacked byte. If we receive acks for some other bytes in the window, the window stays the same, because the window is determined by the first unacked byte.
+Як виглядає CWND під час цього наскрізного прикладу? Пам'ятайте, що вікно починається з першого непідтвердженого байта й простягається на CWND суміжних байтів. Єдиний спосіб зсунути вікно вперед — отримати перший непідтверджений байт. Якщо ми отримуємо підтвердження для якихось інших байтів у вікні, вікно залишається тим самим, бо вікно визначається першим непідтвердженим байтом.
 
 
-## Fast Recovery: The Problem
+## Швидке відновлення: проблема
 
-Let's assume that CWND starts at 10. Packets 101 through 110 are allowed to be in flight. The sender sends 101 through 110, but 101 is dropped.
+Припустімо, що CWND спочатку дорівнює 10. Пакетам від 101 до 110 дозволено бути в дорозі. Відправник надсилає від 101 до 110, але 101 відкидається.
 
 <img width="900px" src="/assets/transport/3-076-fastrecovery2.png">
 
-The sender sees ack(101), generated from the other side receiving 102. At this point, the first unacked byte is still 101, so the window stays unchanged. The only packets allowed to be in flights are still 101 through 110, and the sender cannot send anything new (e.g. 111 can't be sent).
+Відправник бачить ack(101), згенероване отриманням 102 іншою стороною. На цьому етапі перший непідтверджений байт досі 101, тож вікно не змінюється. Пакетами, яким дозволено бути в дорозі, досі є від 101 до 110, і відправник не може надіслати нічого нового (наприклад, 111 надіслати не можна).
 
-Next, the sender sees ack(101), generated from the other side receiving 103. Again, the first unacked byte is still 101, so the window is unchanged. The window still starts at 101 and extends to 110, and the sender can't send anything new.
+Далі відправник бачить ack(101), згенероване отриманням 103 іншою стороною. Знову перший непідтверджений байт досі 101, тож вікно не змінюється. Вікно досі починається з 101 і простягається до 110, і відправник не може надіслати нічого нового.
 
-Next, the sender sees ack(101), generated from the other side receiving 104. This is the third duplicate ack, so we must decrease CWND to 5. The first unacked byte is still 101, and CWND is 5, so packets 101 through 105 are allowed to be in flight. The sender still can't send anything new. We re-send 101 (left-most packet in window) because we saw the third duplicate ack.
+Далі відправник бачить ack(101), згенероване отриманням 104 іншою стороною. Це третій дублікат підтвердження, тож ми мусимо зменшити CWND до 5. Перший непідтверджений байт досі 101, а CWND дорівнює 5, тож пакетам від 101 до 105 дозволено бути в дорозі. Відправник однаково не може надіслати нічого нового. Ми повторно надсилаємо 101 (крайній лівий пакет у вікні), бо побачили третій дублікат підтвердження.
 
-Next, the sender sees ack(101), generated from the other side receiving 105. The window is still 101 (first unacked byte) through 105 (CWND bytes later), so we can't send anything new.
+Далі відправник бачить ack(101), згенероване отриманням 105 іншою стороною. Вікно досі від 101 (перший непідтверджений байт) до 105 (на CWND байтів далі), тож ми не можемо надіслати нічого нового.
 
 <img width="800px" src="/assets/transport/3-077-fastrecovery3.png">
 
-Next, the sender sees ack(101), generated from the other side receiving 106. Again, the window doesn't change, and we can't send anything new.
+Далі відправник бачить ack(101), згенероване отриманням 106 іншою стороною. Знову вікно не змінюється, і ми не можемо надіслати нічого нового.
 
-The sender gets ack(101), ack(101), ack(101), ack(101) from the other side receiving 107, 108, 109, 110. In every case, 101 is still the first unacked byte, so the window is still 101 through 105, and the sender can't send anything new.
+Відправник отримує ack(101), ack(101), ack(101), ack(101) внаслідок отримання іншою стороною 107, 108, 109, 110. У кожному випадку 101 досі перший непідтверджений байт, тож вікно досі від 101 до 105, і відправник не може надіслати нічого нового.
 
-What happened here? Only a single packet was dropped, but as a result, the sender had to completely stop sending for a long time.
+Що тут сталося? Було відкинуто лише один пакет, але внаслідок цього відправникові довелося надовго повністю припинити надсилання.
 
-The window is defined by the first unacked byte, so the window refuses to move forward until 101 is re-sent and acked. Even though all the other packets (102 through 110) arrive, the window is still stuck at 101, and later packets (111 onward) can't be sent. The sender is stalled!
+Вікно визначається першим непідтвердженим байтом, тож вікно відмовляється рухатися вперед, доки 101 не буде повторно надіслано й підтверджено. Хоча всі інші пакети (від 102 до 110) надходять, вікно досі застрягло на 101, і пізніші пакети (від 111 і далі) надіслати не можна. Відправник простоює!
 
-Eventually, the sender receives ack(111) from the re-sent 101. This causes the window to leap forward and slide to the new first unacked packet, 111. CWND is still 5, so the sender is now able to send 111 through 115.
+Зрештою відправник отримує ack(111) від повторно надісланого 101. Це змушує вікно стрибнути вперед і зсунутися до нового першого непідтвердженого пакета, 111. CWND досі дорівнює 5, тож тепер відправник може надіслати від 111 до 115.
 
 <img width="800px" src="/assets/transport/3-078-fastrecovery4.png">
 
-What happened here? We now have a secondary problem. The sender stalled for a long time, but as soon as 101 was acked with ack(111), the window leapt forward all the way to 111-115, and the sender suddenly has to scramble to send 111-115 all at the same time.
+Що тут сталося? Тепер у нас є додаткова проблема. Відправник довго простоював, але щойно 101 було підтверджено через ack(111), вікно стрибнуло вперед аж до 111–115, і відправникові раптом доводиться поспіхом надсилати 111–115 усі водночас.
 
-The sender stalled for a long time, sending nothing, and then suddenly scrambled to send 111-115 at the same time. Now, the sender has to wait another full round-trip for 111-115 to get acked, before it can send 116 and beyond.
+Відправник довго простоював, нічого не надсилаючи, а потім раптом поспіхом надіслав 111–115 одночасно. Тепер відправникові доводиться чекати ще цілий круговий обіг, поки 111–115 буде підтверджено, перш ніж він зможе надіслати 116 і далі.
 
 <img width="900px" src="/assets/transport/3-079-fastrecovery5.png">
 
-In summary: The isolated packet loss caused the window to get stuck, which causes the sender to stall and send nothing. Eventually, when that packet is re-sent and acked, the window leaps forward, causing the sender to scramble and send a bunch of new packets at once. The sender now has to wait another round-trip for those new packets to get acked, before it can resume business as usual.
+Підсумуємо: поодинока втрата пакета спричинила застрягання вікна, через що відправник простоює й нічого не надсилає. Зрештою, коли цей пакет повторно надіслано й підтверджено, вікно стрибає вперед, змушуючи відправника поспіхом надіслати купу нових пакетів одразу. Тепер відправникові доводиться чекати ще один круговий обіг, поки ці нові пакети буде підтверджено, перш ніж він зможе повернутися до звичайної роботи.
 
 <img width="900px" src="/assets/transport/3-080-fastrecovery6.png">
 
-A few notes about this problem:
+Кілька зауважень щодо цієї проблеми:
 
-If the problem is still kind of hard to grasp, it might help to note that this problem is more due to the TCP sliding window scheme, and not really due to the congestion control scheme. Congestion control causes the window to shrink, but even if the window didn't shrink, the sender would still be forced to stall until 101 is received and the window leaps forward.
+Якщо проблему досі складно зрозуміти, можливо, допоможе зауваження, що вона спричинена радше схемою ковзного вікна TCP, а не схемою керування перевантаженням. Керування перевантаженням спричиняє зменшення вікна, але навіть якби вікно не зменшувалося, відправник однаково був би змушений простоювати, доки 101 не буде отримано і вікно не стрибне вперед.
 
-When we think about this problem intuitively, it helps to draw the diagrams of the sender's window, marking off the bytes that have been acked. For example, after the triple duplicate acks, we mark 102, 103, 104 as received, and the window allows 101 (first unacked byte) through 105 to be in flight.
+Інтуїтивно міркуючи про цю проблему, корисно малювати діаграми вікна відправника, позначаючи підтверджені байти. Наприклад, після трьох дублікатів підтверджень ми позначаємо 102, 103, 104 як отримані, а вікно дозволяє бути в дорозі пакетам від 101 (перший непідтверджений байт) до 105.
 
-However, this isn't really what the sender sees. Remember, the sender only sees cumulative acks, so it doesn't actually know that 102, 103, and 104 were received. The sender can deduce that 3 packets in the window (that are not 101) were received, but it doesn't know which 3 packets exactly.
+Однак насправді відправник бачить не це. Пам'ятайте, що відправник бачить лише кумулятивні підтвердження, тож насправді не знає, що 102, 103 і 104 отримано. Відправник може зробити висновок, що отримано 3 пакети у вікні (що не є 101), але не знає, які саме 3 пакети.
 
-Finally, note that after we get 3 duplicate ack(101) messages, we re-send 101, and we never re-send 101 again, even if more duplicate ack(101) messages come in. This is just the TCP rule for re-sending on duplicate acks.
+Нарешті, зауважте, що після отримання 3 дублікатів повідомлень ack(101) ми повторно надсилаємо 101 і більше ніколи не надсилаємо 101 повторно, навіть якщо надходять нові дублікати ack(101). Це просто правило TCP щодо повторного надсилання за дублікатами підтверджень.
+
+## Швидке відновлення: ідея
+
+Отже, як розв'язати цю проблему? В ідеалі ми не хочемо, щоб відправник простоював, і хочемо, щоб він і далі надсилав пізніші пакети (від 111 і далі), навіть якщо 101 втрачено.
+
+Зверніть увагу: хоча відправник не може точно визначити, які пакети надходять, він може зробити висновок, що пізніші пакети (не 101) отримуються.
+
+Коли ми бачимо ack(101), згенероване отриманням 102, ми насправді не знаємо, що отримано саме 102, але знаємо, що отримано якийсь пакет (не 101). Отже, у дорозі залишається лише 9 пакетів.
+
+Коли ми бачимо ще одне ack(101), згенероване отриманням 103, ми знову не знаємо, що отримано саме 103, але знаємо, що отримано ще один пакет (не 101). Отже, у дорозі залишається лише 8 пакетів.
+
+Продовжуючи отримувати дублікати повідомлень ack(101), ми можемо робити висновок, що в дорозі залишається дедалі менше пакетів:
+
+Після ack(101) від 102: 9 пакетів у дорозі.
+
+Після ack(101) від 103: 8 пакетів у дорозі.
+
+Після ack(101) від 104: 7 пакетів у дорозі.
+
+Після ack(101) від 105: 6 пакетів у дорозі.
+
+Після ack(101) від 106: 5 пакетів у дорозі.
+
+Після ack(101) від 107: 4 пакети в дорозі.
+
+Після ack(101) від 108: 3 пакети в дорозі.
+
+Після ack(101) від 109: 2 пакети в дорозі.
+
+Після ack(101) від 110: 1 пакет у дорозі.
+
+Зрештою, отримавши ack(101) дев'ять разів (від отримання пакетів 102–110), ми знаємо, що в дорозі залишається лише 1 пакет, а саме 101.
+
+Після поодинокої втрати ми справді хочемо, щоб CWND дорівнював 5, тобто хочемо, щоб у будь-який момент у дорозі було 5 пакетів. На момент, коли ми отримуємо ack(101) від 107, можна зробити висновок, що в дорозі залишилося лише 4 пакети. (Насправді це 101, 108, 109, 110, хоча відправник цього не знає.)
+
+На цьому етапі ми хотіли б мати змогу надіслати 111, щоб загалом у дорозі було 5 пакетів. Але вікно не дозволяє цього зробити, бо вікно досі застрягло від 101 (перший непідтверджений байт) до 105 (на CWND байтів далі).
+
+Ключова ідея, яка виведе відправника з простою: надаймо відправникові тимчасовий кредит за кожен дублікат підтвердження.
+
+Коли надходить дублікат підтвердження, можна зробити висновок, що в дорозі на один пакет менше, хоча ми не знаємо, на який саме. Щоб це врахувати, ми штучно розширимо вікно на 1 пакет, дозволивши відправникові надіслати ще один пакет.
 
 
-## Fast Recovery: The Idea
+## Швидке відновлення: розв'язок
 
-So, how do we solve this problem? Ideally, we don't want the sender to stall, and we want the sender to keep sending later packets (111 onwards), even if 101 gets lost.
+Візьмімо цю ідею штучного розширення вікна за кожен дублікат підтвердження й застосуймо її до попереднього прикладу.
 
-Notice that even though the sender can't deduce exactly which packets arrive, the sender can deduce that later (non-101) packets are getting received.
-
-When we see ack(101), generated from 102 being received, we don't actually know that 102 was received, but we know some packet (non-101) got received. Therefore, only 9 packets remain in flight.
-
-When we see another ack(101), generated from 103 being received, we again don't know that 103 specifically was received, but we know that another packet (non-101) got received. Therefore, only 8 packets remain in flight.
-
-As we keep receiving duplicate ack(101) messages, we can deduce that fewer packets remain in flight:
-
-After ack(101) from 102: 9 packets in flight.
-
-After ack(101) from 103: 8 packets in flight.
-
-After ack(101) from 104: 7 packets in flight.
-
-After ack(101) from 105: 6 packets in flight.
-
-After ack(101) from 106: 5 packets in flight.
-
-After ack(101) from 107: 4 packets in flight.
-
-After ack(101) from 108: 3 packets in flight.
-
-After ack(101) from 109: 2 packets in flight.
-
-After ack(101) from 110: 1 packet in flight. 
-
-Eventually, after we get ack(101) nine times (from 102 through 110 being received), we know that only 1 packet remains in flight, namely 101.
-
-After the isolated loss, we really want CWND to be 5, which means we want 5 packets in flight at any given time. By the time we get ack(101) from 107, we can deduce that only 4 packets remain in flight. (In reality, they are 101, 108, 109, 110, though the sender doesn't know that.)
-
-At this point, we'd like to be able to send 111, for a total of 5 packets in flight. But the window won't let us do that, because the window is still stuck at 101 (first unacked byte) through 105 (CWND bytes later).
-
-The key idea that will un-stall the sender is: Let's grant the sender temporary credit for each duplicate ack.
-
-When a duplicate ack arrives, we can deduce that one fewer packet is in flight, though we don't know which one. To account for this, we will artificially extend the window by 1 packet, to allow the sender to send one more packet.
-
-
-## Fast Recovery: The Solution
-
-Let's take this idea of artificially extending the window for each duplicate ack, and apply it to the example from before.
-
-As before, the window starts at 101 through 110, and we send out 10 packets.
+Як і раніше, вікно спочатку охоплює від 101 до 110, і ми надсилаємо 10 пакетів.
 
 <img width="900px" src="/assets/transport/3-081-fastrecovery7.png">
 
-As before, we get ack(101) from 102, the window stays unchanged, and we can't send anything new.
+Як і раніше, ми отримуємо ack(101) від 102, вікно не змінюється, і ми не можемо надіслати нічого нового.
 
-As before, we get ack(101) from 103, the window stays unchanged, and we can't send anything new.
+Як і раніше, ми отримуємо ack(101) від 103, вікно не змінюється, і ми не можемо надіслати нічого нового.
 
 <img width="900px" src="/assets/transport/3-082-fastrecovery8.png">
 
-As before, we get ack(101) from 104, the window stays unchanged, and we can't send anything new.
+Як і раніше, ми отримуємо ack(101) від 104, вікно не змінюється, і ми не можемо надіслати нічого нового.
 
-The third duplicate ack means we decrease CWND to 5, so the window is now 101 through 105.
+Третій дублікат підтвердження означає, що ми зменшуємо CWND до 5, тож вікно тепер від 101 до 105.
 
-However, we got 3 acks, so we artificially extend the window by 3 to account for those acks. Thus, CWND is actually set to 5 + 3 = 8.
+Однак ми отримали 3 підтвердження, тож штучно розширюємо вікно на 3, щоб урахувати ці підтвердження. Таким чином, CWND фактично встановлюється рівним 5 + 3 = 8.
 
-Next, we get ack(101) from 105. This allows us to extend the window again, to 9. Now the window spans 101 through 109, so we still can't send new packets.
+Далі ми отримуємо ack(101) від 105. Це дає змогу знову розширити вікно, до 9. Тепер вікно охоплює від 101 до 109, тож ми однаково не можемо надсилати нові пакети.
 
 <img width="900px" src="/assets/transport/3-083-fastrecovery9.png">
 
-Next, we get ack(101) from 106. We extend the window again to 10, spanning 101 through 110, and we can't send anything new.
+Далі ми отримуємо ack(101) від 106. Ми знову розширюємо вікно до 10, що охоплює від 101 до 110, і не можемо надіслати нічого нового.
 
-Next, we get ack(101) from 107. We extend the window again to 11, spanning 101 through 111. We can now send out 111!
+Далі ми отримуємо ack(101) від 107. Ми знову розширюємо вікно до 11, що охоплює від 101 до 111. Тепер ми можемо надіслати 111!
 
-Next, we get ack(101) from 108. We extend the window again to 12, spanning 101 through 112. We can now send out 112!
+Далі ми отримуємо ack(101) від 108. Ми знову розширюємо вікно до 12, що охоплює від 101 до 112. Тепер ми можемо надіслати 112!
 
-Next, we get ack(101) from 109. We extend the window again to 13, spanning 101 through 113. We can now send out 113!
+Далі ми отримуємо ack(101) від 109. Ми знову розширюємо вікно до 13, що охоплює від 101 до 113. Тепер ми можемо надіслати 113!
 
-Next, we get ack(101) from 110. We extend the window again to 14, spanning 101 through 114. We can now send out 114!
+Далі ми отримуємо ack(101) від 110. Ми знову розширюємо вікно до 14, що охоплює від 101 до 114. Тепер ми можемо надіслати 114!
 
 <img width="900px" src="/assets/transport/3-084-fastrecovery10.png">
 
-Eventually, we get ack(111) from the re-sent 101. At this point, we can reset CWND to its original intended value of 5, so that the window spans 111 through 115. This allows us to send out 115!
+Зрештою ми отримуємо ack(111) від повторно надісланого 101. На цьому етапі ми можемо скинути CWND до його початкового задуманого значення 5, тож вікно охоплює від 111 до 115. Це дає змогу надіслати 115!
 
-With this fix, we have solved our problem of the stalled sender. Originally, the sender had to wait for the re-sent 101 to be acked before sending new packets. Now, the sender is now able to keep sending packets before the re-sent 101 is acked.
+З цим виправленням ми розв'язали проблему простою відправника. Спочатку відправник мусив чекати, поки повторно надісланий 101 буде підтверджено, перш ніж надсилати нові пакети. Тепер відправник може й далі надсилати пакети ще до підтвердження повторно надісланого 101.
 
 <img width="900px" src="/assets/transport/3-085-fastrecovery11.png">
 
-We also solved the secondary problem from earlier, where the window leapt forward and we sent a burst of new packets (111 through 115). Now, 111 through 114 were sent out earlier, and when the window leapt forward, we only had to send out 115.
+Ми також розв'язали попередню додаткову проблему, коли вікно стрибало вперед і ми надсилали сплеск нових пакетів (від 111 до 115). Тепер пакети від 111 до 114 надіслано раніше, і коли вікно стрибнуло вперед, нам довелося надіслати лише 115.
 
-Without this fix, we had to stall for another round-trip while waiting for the burst of 111 through 115 to be acked. Now, because we stayed busy earlier and sent out 111 through 114, they'll get acked earlier, and we can keep sending 116 and beyond without that entire RTT of stalling.
+Без цього виправлення нам доводилося простоювати ще один круговий обіг, чекаючи, поки сплеск від 111 до 115 буде підтверджено. Тепер, оскільки ми були зайняті раніше й надіслали від 111 до 114, їх буде підтверджено раніше, і ми зможемо й далі надсилати 116 і далі без цілого RTT простою.
 
 <img width="900px" src="/assets/transport/3-086-fastrecovery12.png">
 
-Another way to look at this fix is to focus on the packets in the artificially-extended window.
+Ще один погляд на це виправлення — зосередитися на пакетах у штучно розширеному вікні.
 
-When we get the third duplicate ack, the CWND shrinks to 5, but we artificially extend for the 3 duplicate acks for a CWND of 8. If you look at this extended window, 3 of the packets are acked (102, 103, 104, though we don't know it's these), and the other 5 are in-flight. This achieves our intended window of 5 packets in-flight.
+Коли ми отримуємо третій дублікат підтвердження, CWND зменшується до 5, але ми штучно розширюємо його на 3 дублікати підтверджень, отримуючи CWND 8. Якщо подивитися на це розширене вікно, 3 пакети в ньому підтверджено (102, 103, 104, хоча ми не знаємо, що саме ці), а інші 5 у дорозі. Так досягається задумане вікно з 5 пакетами в дорозі.
 
-Next, when we get another ack(101) from 105, the window extends to 9. Again, if you look in this window, 4 of the packets are acked (we don't know which), and the other 5 are in-flight, giving us our intended window of 5 in-flight packets.
+Далі, коли ми отримуємо ще одне ack(101) від 105, вікно розширюється до 9. Знову, якщо подивитися на це вікно, 4 пакети в ньому підтверджено (ми не знаємо, які), а інші 5 у дорозі, що дає нам задумане вікно з 5 пакетами в дорозі.
 
-When we get ack(101) from 106, the window extends to 10, including 5 received packets (from 5 duplicate acks), plus 5 in-flight packets (intended window size).
+Коли ми отримуємо ack(101) від 106, вікно розширюється до 10, включаючи 5 отриманих пакетів (від 5 дублікатів підтверджень) плюс 5 пакетів у дорозі (задуманий розмір вікна).
 
-At every step, in our extended window, if you don't count the packets that have been acked, there are exactly 5 packets in-flight in the window. Again, we don't know exactly which packets in the window are acked, but we can use the duplicate acks to count how many packets were acked, and use that count to keep 5 in-flight packets.
+На кожному кроці в нашому розширеному вікні, якщо не рахувати підтверджених пакетів, у вікні рівно 5 пакетів у дорозі. Знову ж таки, ми не знаємо точно, які пакети у вікні підтверджено, але можемо за дублікатами підтверджень порахувати, скільки пакетів підтверджено, і використати цю кількість, щоб підтримувати 5 пакетів у дорозі.
 
-When we get ack(101) from 107, the window extends to 11, including 6 received packets (from 6 duplicate acks). The other 5 packets in the window are allowed to be in-flight.
+Коли ми отримуємо ack(101) від 107, вікно розширюється до 11, включаючи 6 отриманих пакетів (від 6 дублікатів підтверджень). Іншим 5 пакетам у вікні дозволено бути в дорозі.
 
-At this point, we sent 10 packets originally, and we got 6 duplicate acks, which tells us that only 4 packets remain in flight. This allows us to send out 111. The artificially-extending window captures this reasoning, because it extends the window to include 111.
+На цьому етапі ми спочатку надіслали 10 пакетів і отримали 6 дублікатів підтверджень, що каже нам, що в дорозі залишилося лише 4 пакети. Це дає змогу надіслати 111. Штучне розширення вікна відображає це міркування, бо розширює вікно, щоб воно включало 111.
 
-When we get ack(101) from 108, we deduce that now, one fewer packet is in flight. So we artificially extend the window again to 12, which allows 112 to be sent.
-
-
-## Fast Recovery: Implementation
-
-When we detect packet loss from duplicate acks, we temporarily enter the **fast recovery** mode, where additional duplicate acks artificially extend the window to prevent stalling.
-
-Fast recovery mode is triggered when we receive 3 duplicate acks. Instead of just halving CWND, as we did before, we now set CWND to CWND/2 + 3, where the window is artificially extended by 3 for the 3 duplicate acks we got. We also set SSTHRESH to CWND/2, so that we remember the new safe rate for later.
-
-While in fast recovery mode, every additional duplicate ack causes CWND to increase by 1, allowing the window to artificially extend.
-
-Eventually, when we receive a new, non-duplicate ack, we leave fast recovery mode and set CWND to SSTHRESH. Note that while we were artificially extending the window, SSTHRESH always helped us remember the original halved rate that we want to ultimately send at.
+Коли ми отримуємо ack(101) від 108, ми робимо висновок, що тепер у дорозі на один пакет менше. Тож ми знову штучно розширюємо вікно до 12, що дає змогу надіслати 112.
 
 
-## TCP State Machine
+## Швидке відновлення: реалізація
 
-We are finally ready to put all the pieces together and implement TCP, with congestion control.
+Коли ми виявляємо втрату пакета за дублікатами підтверджень, ми тимчасово переходимо в режим **швидкого відновлення** (fast recovery), у якому додаткові дублікати підтверджень штучно розширюють вікно, щоб запобігти простою.
 
-The sender maintains 5 values:
+Режим швидкого відновлення вмикається, коли ми отримуємо 3 дублікати підтверджень. Замість просто зменшувати CWND удвічі, як раніше, ми тепер встановлюємо CWND рівним CWND/2 + 3, де вікно штучно розширено на 3 за 3 отримані дублікати підтверджень. Ми також встановлюємо SSTHRESH рівним CWND/2, щоб запам'ятати нову безпечну швидкість на потім.
 
-The duplicate ack count helps us detect loss earlier than timeouts. It's initialized to 0.
+У режимі швидкого відновлення кожен додатковий дублікат підтвердження збільшує CWND на 1, даючи змогу штучно розширювати вікно.
 
-The timer is used to detect loss. There's just a single timer.
+Зрештою, коли ми отримуємо нове підтвердження, що не є дублікатом, ми виходимо з режиму швидкого відновлення й встановлюємо CWND рівним SSTHRESH. Зауважте, що поки ми штучно розширювали вікно, SSTHRESH завжди допомагав нам пам'ятати початкову зменшену вдвічі швидкість, з якою ми зрештою хочемо надсилати.
 
-RWND is used for flow control (don't overwhelm recipient buffer).
 
-CWND is used for congestion control. It's initialized to 1 packet.
+## Скінченний автомат TCP
 
-SSTHRESH helps the congestion control algorithm remember the latest safe rate. It's initialized to infinity.
+Нарешті ми готові зібрати всі частини разом і реалізувати TCP з керуванням перевантаженням.
 
-The recipient maintains a buffer of out-of-order packets.
+Відправник підтримує 5 значень:
 
-The sender responds to 3 events: Ack for new data (not previously acked), duplicate ack, and timeout.
+Лічильник дублікатів підтверджень допомагає виявляти втрати раніше за тайм-аути. Ініціалізується значенням 0.
 
-The recipient responds to receiving a packet, by replying with an ack and a RWND value.
+Таймер використовується для виявлення втрат. Таймер лише один.
 
-Let's see how the sender responds to each of the 3 events.
+RWND використовується для керування потоком (не перевантажувати буфер отримувача).
 
-When we receive an ack for new data, not previously acked: If in slow-start mode, we increase CWND by 1. This allows the CWND to double each RTT. If we're in fast-recovery mode, we set CWND to SSTHRESH, so that we leave fast recovery (since we just got a new ack). If we're in congestion avoidance mode, we add 1/CWND to CWND, so that CWND increases by 1 per RTT (additive increase). We also reset the timer, reset the duplicate ack count, and, if the window allows, send new data.
+CWND використовується для керування перевантаженням. Ініціалізується значенням 1 пакет.
 
-When we receive a duplicate ack, we increment the duplicate ack count. If the count reaches 3, we re-send the left-most packet in the window. This is sometimes called fast retransmit. We also enter fast-recovery mode by setting SSTHRESH to CWND/2 (remember last safe rate) and set CWND to CWND/2 + 3 (adding 3 to artifically extend the window for duplicate acks). If the count exceeds 3, we stay in fast-recovery mode and artificially extend the CWND by 1 for every subsequent duplicate ack.
+SSTHRESH допомагає алгоритму керування перевантаженням пам'ятати останню безпечну швидкість. Ініціалізується значенням «нескінченність».
 
-When the timer expires, we re-send the left-most packet in the window. We also go back to slow-start mode, setting SSTHRESH to CWND/2 (remembering the last safe rate), and resetting CWND back to 1 packet.
+Отримувач підтримує буфер пакетів, що надійшли не по порядку.
 
-The congestion control state machine shows the 3 possible modes that TCP can be in, and the conditions that trigger transitions between the modes.
+Відправник реагує на 3 події: підтвердження нових даних (раніше не підтверджених), дублікат підтвердження і тайм-аут.
+
+Отримувач реагує на отримання пакета, відповідаючи підтвердженням і значенням RWND.
+
+Подивімося, як відправник реагує на кожну з 3 подій.
+
+Коли ми отримуємо підтвердження нових, раніше не підтверджених даних: якщо ми в режимі повільного старту, збільшуємо CWND на 1. Це дає CWND змогу подвоюватися кожен RTT. Якщо ми в режимі швидкого відновлення, встановлюємо CWND рівним SSTHRESH, щоб вийти зі швидкого відновлення (бо щойно отримали нове підтвердження). Якщо ми в режимі уникнення перевантаження (congestion avoidance), додаємо до CWND 1/CWND, щоб CWND збільшувався на 1 за RTT (адитивне збільшення). Ми також перезапускаємо таймер, скидаємо лічильник дублікатів підтверджень і, якщо вікно дозволяє, надсилаємо нові дані.
+
+Коли ми отримуємо дублікат підтвердження, ми збільшуємо лічильник дублікатів підтверджень. Якщо лічильник досягає 3, ми повторно надсилаємо крайній лівий пакет у вікні. Це іноді називають швидкою повторною передачею. Ми також переходимо в режим швидкого відновлення, встановлюючи SSTHRESH рівним CWND/2 (запам'ятовуючи останню безпечну швидкість) і CWND рівним CWND/2 + 3 (додаючи 3, щоб штучно розширити вікно на дублікати підтверджень). Якщо лічильник перевищує 3, ми залишаємося в режимі швидкого відновлення й штучно розширюємо CWND на 1 за кожен наступний дублікат підтвердження.
+
+Коли таймер спливає, ми повторно надсилаємо крайній лівий пакет у вікні. Ми також повертаємося в режим повільного старту, встановлюючи SSTHRESH рівним CWND/2 (запам'ятовуючи останню безпечну швидкість) і скидаючи CWND назад до 1 пакета.
+
+Скінченний автомат керування перевантаженням показує 3 можливі режими, у яких може перебувати TCP, і умови, що ініціюють переходи між режимами.
 
 <img width="900px" src="/assets/transport/3-087-state-machine.png">
 
-We enter fast-recovery mode if we receive 3 duplicate acks. Once we're in this mode, any further duplicate acks keep us in fast-recovery mode (keep artificially extending window). To leave fast-recovery mode, either a timeout switches us back to slow-start mode, or a new ack lets us go back to congestion-avoidance mode.
+Ми переходимо в режим швидкого відновлення, якщо отримуємо 3 дублікати підтверджень. Щойно ми в цьому режимі, будь-які подальші дублікати підтверджень утримують нас у режимі швидкого відновлення (продовжуємо штучно розширювати вікно). Щоб вийти з режиму швидкого відновлення, або тайм-аут повертає нас у режим повільного старту, або нове підтвердження дає змогу повернутися в режим уникнення перевантаження.
 
-A timeout triggers slow-start mode. Any further acks (duplicate or new) keep us in slow-start. Eventually, if CWND exceeds SSTHRESH (the safe rate), we enter congestion avoidance mode. Or, if we detect loss, we halve the rate and enter fast-recovery mode for a bit before going to congestion-avoidance mode.
+Тайм-аут вмикає режим повільного старту. Будь-які подальші підтвердження (дублікати чи нові) утримують нас у повільному старті. Зрештою, якщо CWND перевищує SSTHRESH (безпечну швидкість), ми переходимо в режим уникнення перевантаження. Або, якщо ми виявляємо втрату, ми зменшуємо швидкість удвічі й ненадовго переходимо в режим швидкого відновлення, перш ніж перейти в режим уникнення перевантаження.
 
-In congestion avoidance mode, new acks keep us in this mode (additive increase), but duplicate acks send us to fast-recovery mode, and timeouts send us to slow-start mode.
+У режимі уникнення перевантаження нові підтвердження утримують нас у цьому режимі (адитивне збільшення), але дублікати підтверджень переводять нас у режим швидкого відновлення, а тайм-аути — у режим повільного старту.
 
 
-## TCP Congestion Control Variants
+## Варіанти керування перевантаженням TCP
 
-There are several variants of the TCP congestion control algorithm, all implemented in the end host's operating system. Fun fact: The names are related to the Berkeley Software Distribution (BSD) operating system.
+Існує кілька варіантів алгоритму керування перевантаженням TCP, і всі вони реалізовані в операційній системі кінцевого хоста. Цікавий факт: назви пов'язані з операційною системою Berkeley Software Distribution (BSD).
 
-In TCP Tahoe, if we get three duplicate acks, we reset CWND to 1, instead of halving CWND.
+У TCP Tahoe, якщо ми отримуємо три дублікати підтверджень, ми скидаємо CWND до 1, а не зменшуємо його вдвічі.
 
-In TCP Reno, if we get three duplicate acks, we halve CWND. On timeout, we reset CWND to 1.
+У TCP Reno, якщо ми отримуємо три дублікати підтверджень, ми зменшуємо CWND удвічі. У разі тайм-ауту ми скидаємо CWND до 1.
 
-TCP New Reno is the same as Reno, but adds fast recovery. This is what we just implemented.
+TCP New Reno такий самий, як Reno, але додає швидке відновлення. Саме це ми щойно реалізували.
 
-Other variants exist too. In TCP-SACK, we add selective acknowledgments where acks contain more detail (e.g. received all up to 13, and 18 too).
+Існують і інші варіанти. У TCP-SACK ми додаємо вибіркові підтвердження, де підтвердження містять більше подробиць (наприклад, отримано все до 13, а також 18).
 
-How can all these different variants co-exist? Why don't we need a single uniform protocol that everybody speaks? Remember, congestion control is implemented at the end hosts, so the sender can do whatever they want to adjust their rate. Ultimately, the network and the other end hosts just see TCP packets being sent at a (hopefully reasonable) rate, and they don't care how the rate is being computed. The underlying TCP packet format doesn't change with the different congestion control algorithms.
+Як усі ці різні варіанти можуть співіснувати? Чому нам не потрібен єдиний уніфікований протокол, яким усі говорять? Пам'ятайте: керування перевантаженням реалізовано на кінцевих хостах, тож відправник може робити все, що хоче, щоб коригувати свою швидкість. Зрештою мережа й інші кінцеві хости просто бачать пакети TCP, що надсилаються з (сподіваємося, розумною) швидкістю, і їм байдуже, як ця швидкість обчислюється. Базовий формат пакетів TCP не змінюється з різними алгоритмами керування перевантаженням.
 
-Not all protocols are compatible, though. If you use the TCP-SACK variant with selective acknowledgements, and I use TCP Tahoe, we have a problem. You expect selective acks, but I'm only providing cumulative acks.
+Утім, не всі протоколи сумісні. Якщо ви використовуєте варіант TCP-SACK з вибірковими підтвердженнями, а я — TCP Tahoe, у нас проблема. Ви очікуєте вибіркових підтверджень, а я надаю лише кумулятивні.

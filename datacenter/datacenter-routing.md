@@ -1,85 +1,85 @@
 ---
-title: Routing
-parent: Datacenters
+title: Маршрутизація
+parent: Дата-центри
 nav_order: 3
 layout: page-with-toc
 ---
 
-# Datacenter Routing
+# Маршрутизація в дата-центрах
 
-## Why are Datacenters Different?
+## Чим відрізняються дата-центри?
 
-In the previous section, we designed Clos networks, which created many paths between servers. Servers can communicate simultaneously at high bandwidth by using different paths through the network.
+У попередньому розділі ми спроєктували мережі Клоза, що створюють багато шляхів між серверами. Сервери можуть одночасно спілкуватися з високою пропускною здатністю, використовуючи різні шляхи через мережу.
 
-What problems occur if we apply our standard routing algorithms to these network topologies?
+Які проблеми виникають, якщо застосувати наші стандартні алгоритми маршрутизації до цих мережевих топологій?
 
-So far, our routing protocols pick a single path between a source and destination. If all our traffic uses the same path, we aren't taking advantage of all the extra links in the Clos network. Ideally, we'd like to modify our routing protocols so that a packet can use multiple paths between the same endpoints.
+Досі наші протоколи маршрутизації обирали один шлях між джерелом і пунктом призначення. Якщо весь наш трафік використовує той самий шлях, ми не використовуємо переваг усіх додаткових каналів мережі Клоза. В ідеалі ми хотіли б змінити свої протоколи маршрутизації так, щоб пакет міг використовувати кілька шляхів між тими самими кінцевими точками.
 
 <img width="400px" src="/assets/datacenter/6-033-dcrouting1.png">
 
-Suppose that A and B have 200 Gbps uplink bandwidth, and the switch-to-switch links have 100 Gbps bandwidth. If all traffic between A and B is forced to take the green path, we're leaving the red path unused. We could have sent data at full rate, if we allowed packets to take different paths.
+Припустімо, що A і B мають висхідні канали на 200 Гбіт/с, а канали між комутаторами — 100 Гбіт/с. Якщо весь трафік між A і B змушений іти зеленим шляхом, червоний шлях залишається невикористаним. Ми могли б надсилати дані на повній швидкості, якби дозволили пакетам іти різними шляхами.
 
-Also, if there are multiple simultaneous connections, we'd like those connections to use different paths in order to maximize bandwidth.
+Крім того, якщо є кілька одночасних з'єднань, ми хотіли б, щоб ці з'єднання використовували різні шляхи, щоб максимізувати пропускну здатність.
 
 <img width="400px" src="/assets/datacenter/6-034-dcrouting2.png">
 
-Suppose that all links have 100 Gbps bandwidth. In this example, multiple connections are competing for bandwidth. If the A-B and C-D connections both pick the same path, the R1-R2 and R2-R4 links are overused (200 Gbps on 100 Gbps capacity). We could have sent data at full rate, if A-B and C-D used different paths.
+Припустімо, що всі канали мають пропускну здатність 100 Гбіт/с. У цьому прикладі кілька з'єднань конкурують за пропускну здатність. Якщо з'єднання A–B і C–D обидва оберуть той самий шлях, канали R1–R2 і R2–R4 буде перевикористано (200 Гбіт/с на 100 Гбіт/с пропускної здатності). Ми могли б надсилати дані на повній швидкості, якби A–B і C–D використовували різні шляхи.
 
 
-## Equal Cost Multi-Path (ECMP) Routing
+## Маршрутизація ECMP
 
-In **equal cost multi-path** routing, our goal is to find all of the shortest paths (with equal cost), and load-balance packets across those paths.
+У маршрутизації **за кількома шляхами однакової вартості** (equal cost multi-path, ECMP) наша мета — знайти всі найкоротші шляхи (з однаковою вартістю) і балансувати навантаження пакетів між цими шляхами.
 
-If a packet arrives at a router, but there are multiple outgoing links that are all valid shortest paths, which link should the router choose? The router needs some function (think of it like a piece of code) that takes a packet, and outputs a choice of link. The function should properly load-balance traffic across the equal-cost paths.
+Якщо пакет надходить до маршрутизатора, а є кілька вихідних каналів, усі з яких — коректні найкоротші шляхи, який канал має обрати маршрутизатор? Маршрутизаторові потрібна певна функція (уявляйте її як фрагмент коду), що приймає пакет і видає вибір каналу. Функція має належно балансувати трафік між шляхами однакової вартості.
 
 <img width="900px" src="/assets/datacenter/6-035-ecmp1.png">
 
-One possible strategy is round-robin. If there are two shortest-path outgoing links, our function could say: send all odd packets along Link 1 and all even packets along Link 2.
+Одна можлива стратегія — по колу (round-robin). Якщо є два вихідні канали найкоротшого шляху, наша функція може сказати: надсилати всі непарні пакети каналом 1, а всі парні — каналом 2.
 
-What are some problems with this approach? Equal-cost paths doesn't necessarily mean all paths have the same latency. (Remember, the costs are defined by the operator using whatever metric they like.) If we send all odd packets along a slow link, and all even packets along a fast link, then the TCP recipient might end up receiving all the even packets before the odd packets. TCP cares about reordering packets, so the recipient would be forced to buffer the even packets until the missing odd packets arrive, resulting in poor performance.
+Які проблеми має цей підхід? Однакова вартість шляхів не обов'язково означає, що всі шляхи мають однакову латентність. (Пам'ятайте, вартості визначає оператор за будь-якою метрикою, яка йому подобається.) Якщо ми надсилаємо всі непарні пакети повільним каналом, а всі парні — швидким, отримувач TCP може зрештою отримати всі парні пакети раніше за непарні. Для TCP важливе переупорядкування пакетів, тож отримувач буде змушений буферизувати парні пакети, доки не надійдуть пропущені непарні, що призведе до поганої продуктивності.
 
-A smarter strategy would involve looking at some of the packet header fields, and using those fields to make some deterministic choice of link. What fields could we look at?
+Розумніша стратегія полягала б у тому, щоб дивитися на деякі поля заголовка пакета й використовувати їх для певного детермінованого вибору каналу. На які поля можна дивитися?
 
-We could use the destination IP to select between shortest links. (We're already using the destination IP in routing anyway.) But, what if lots of sources send packets to the same destination? All the packets have the same destination IP, so they all get mapped to the same shortest link. We aren't load-balancing packets across the various shortest links.
+Можна використати IP-адресу призначення, щоб обирати між найкоротшими каналами. (Ми однаково вже використовуємо IP-адресу призначення в маршрутизації.) Але що, як багато джерел надсилають пакети тому самому адресатові? Усі пакети мають ту саму IP-адресу призначення, тож усі вони відображаються на той самий найкоротший канал. Ми не балансуємо навантаження пакетів між різними найкоротшими каналами.
 
 <img width="400px" src="/assets/datacenter/6-036-ecmp2.png">
 
-What if we used the source IP to select between shortest links? We have a similar problem, if one source is sending packets to lost of destinations. All the packets have the same source, so they all get mapped to the same shortest link.
+А що, як використати IP-адресу джерела, щоб обирати між найкоротшими каналами? У нас схожа проблема, якщо одне джерело надсилає пакети багатьом адресатам. Усі пакети мають те саме джерело, тож усі вони відображаються на той самий найкоротший канал.
 
 <img width="400px" src="/assets/datacenter/6-037-ecmp3.png">
 
-Instead of looking at only one field, we could look at both the source and destination IP. To load-balance between shortest links, we could hash the source and destination IP and map the resulting hash to a link (similar to how hash tables work). The source and destination IP together contain enough entropy to avoid our problems from earlier, where many connections with the same source or the same destination get mapped to the same link.
+Замість дивитися лише на одне поле, можна дивитися і на IP-адресу джерела, і на IP-адресу призначення. Щоб балансувати навантаження між найкоротшими каналами, можна гешувати IP-адреси джерела й призначення і відображати отриманий геш на канал (подібно до того, як працюють геш-таблиці). IP-адреси джерела й призначення разом містять достатньо ентропії, щоб уникнути наших попередніх проблем, коли багато з'єднань із тим самим джерелом чи тим самим пунктом призначення відображаються на той самий канал.
 
 <img width="400px" src="/assets/datacenter/6-038-ecmp4.png">
 
-We still have one more problem: What if there are multiple large connections between the same source and destination? We don't want all these connections to map to the same link. To solve this, we can additionally look at the source and destination ports in the TCP or UDP header.
+У нас лишається ще одна проблема: що, як між тим самим джерелом і пунктом призначення є кілька великих з'єднань? Ми не хочемо, щоб усі ці з'єднання відображалися на той самий канал. Щоб розв'язати це, можна додатково дивитися на порти джерела й призначення в заголовку TCP чи UDP.
 
-More generally, all of the problems we've described (reordering in a TCP connection, too many connections on one link) can be solved if we place each connection on a separate link. To uniquely identify a connection, we need a 5-tuple of: (source IP, destination IP, protocol, source port, destination port). Note that we need the protocol to distinguish between TCP and UDP connections using the same IPs/ports. Two packets are part of the same connection if and only if they have the same 5-tuple.
+Загальніше, усі описані нами проблеми (переупорядкування в з'єднанні TCP, забагато з'єднань на одному каналі) можна розв'язати, якщо розміщувати кожне з'єднання на окремому каналі. Щоб однозначно ідентифікувати з'єднання, нам потрібна п'ятірка: (IP-адреса джерела, IP-адреса призначення, протокол, порт джерела, порт призначення). Зауважте, що протокол потрібен, щоб розрізняти з'єднання TCP і UDP, що використовують ті самі IP-адреси/порти. Два пакети належать до того самого з'єднання тоді й лише тоді, коли мають однакову п'ятірку.
 
 <img width="400px" src="/assets/datacenter/6-039-ecmp5.png">
 
-By hashing all 5 values, we can ensure packets in the same connection use the same path (avoiding reordering problems), and we can load-balance connections across different paths. This approach is sometimes called **per-flow load balancing**. Modern commodity routers usually have built-in support to read these 5 values.
+Гешуючи всі 5 значень, ми можемо гарантувати, що пакети того самого з'єднання використовують той самий шлях (уникаючи проблем переупорядкування), і можемо балансувати навантаження з'єднань між різними шляхами. Такий підхід іноді називають **балансуванням навантаження на рівні потоків** (per-flow load balancing). Сучасні серійні маршрутизатори зазвичай мають вбудовану підтримку читання цих 5 значень.
 
-Per-flow load balancing ensures that each link is being used by roughly the same number of connections, though it doesn't account for connections being different sizes. Accounting for connection size is technically possible, though it's more expensive (routers would have to do more work) without a lot of benefit (per-flow does a pretty good job balancing different-sized connections), so this is not done in practice.
+Балансування на рівні потоків гарантує, що кожен канал використовує приблизно однакова кількість з'єднань, хоча воно не враховує різних розмірів з'єднань. Урахування розміру з'єднань технічно можливе, але дорожче (маршрутизаторам довелося б виконувати більше роботи) без особливої вигоди (балансування на рівні потоків доволі добре балансує з'єднання різних розмірів), тож на практиці цього не роблять.
 
 
-## Multi-Path Distance-Vector Protocols
+## Дистанційно-векторні протоколи з кількома шляхами
 
-To maximize bandwidth, we should send packets along different paths, even if they're going to the same destination (e.g. if the packets are part of different connections). This means we have to modify our routing protocols so that routers learn about all the shortest paths, not just one.
+Щоб максимізувати пропускну здатність, слід надсилати пакети різними шляхами, навіть якщо вони йдуть до того самого пункту призначення (наприклад, якщо пакети належать до різних з'єднань). Це означає, що нам треба змінити наші протоколи маршрутизації так, щоб маршрутизатори дізнавалися про всі найкоротші шляхи, а не лише про один.
 
-In standard distance-vector protocols, if we receive an advertisement for a new path with cost equal to the best-known cost, we don't accept that new path. But, in order to remember all least-cost paths, we should actually accept that equal-cost path, and store both paths in the forwarding table. In the forwarding table, a destination can now be mapped to multiple next hops, as long as they all have the same minimal cost.
+У стандартних дистанційно-векторних протоколах, якщо ми отримуємо оголошення нового шляху з вартістю, що дорівнює найкращій відомій, ми не приймаємо цей новий шлях. Але щоб пам'ятати всі шляхи з найменшою вартістю, ми насправді маємо приймати такий шлях однакової вартості й зберігати обидва шляхи в таблиці пересилання. У таблиці пересилання пункт призначення тепер може відображатися на кілька наступних переходів, якщо всі вони мають однакову мінімальну вартість.
 
 <img width="600px" src="/assets/datacenter/6-040-ecmp6.png">
 
-In this example, R1 receives advertisements from both R4 and R3, both advertising that they can reach B in 2 hops. Our forwarding table stores both R4 and R3 as possible next hops, both with equal minimal cost of 3.
+У цьому прикладі R1 отримує оголошення і від R4, і від R3, обидва з яких оголошують, що можуть дістатися B за 2 переходи. Наша таблиця пересилання зберігає і R4, і R3 як можливі наступні переходи, обидва з однаковою мінімальною вартістю 3.
 
 <img width="600px" src="/assets/datacenter/6-041-ecmp7.png">
 
-When forwarding packets, the router hashes the 5-tuple to forward roughly half the connections to R3, and the other half to R2.
+Пересилаючи пакети, маршрутизатор гешує п'ятірку, щоб пересилати приблизно половину з'єднань до R3, а іншу половину — до R2.
 
 
-## Multi-Path Link-State Protocols
+## Протоколи стану каналів із кількома шляхами
 
-In link-state protocols, we flood advertisements so that everybody has a full picture of the network. Normally, each node calculates a shortest path to each destination to populate the forwarding table. To support multiple paths, we need each node to instead compute all of the shortest paths for each destination.
+У протоколах стану каналів ми лавинно розсилаємо оголошення, щоб кожен мав повну картину мережі. Зазвичай кожна вершина обчислює найкоротший шлях до кожного пункту призначення, щоб заповнити таблицю пересилання. Щоб підтримувати кілька шляхів, нам потрібно, щоб кожна вершина натомість обчислювала всі найкоротші шляхи до кожного пункту призначення.
 
-As in the modified distance-vector protocol, the forwarding table can now contain multiple next-hops for a given destination.
+Як і в зміненому дистанційно-векторному протоколі, таблиця пересилання тепер може містити кілька наступних переходів для певного пункту призначення.

@@ -1,179 +1,179 @@
 ---
-title: Designing Resource Sharing
-parent: Introduction
+title: Проєктування спільного використання ресурсів
+parent: Вступ
 nav_order: 5
 layout: page-with-toc
 ---
 
-# Designing Resource Sharing
+# Проєктування спільного використання ресурсів
 
-## Sharing Resources: Statistical Multiplexing
+## Спільне використання ресурсів: статистичне мультиплексування
 
-Links and switches on the Internet have finite capacity. One key design problem we need to solve is: How do we share these resources between different Internet users?
+Канали та комутатори в Інтернеті мають скінченну пропускну здатність. Одна з ключових проєктних задач, яку нам потрібно розв'язати: як розподіляти ці ресурси між різними користувачами Інтернету?
 
-Let's formalize the problem a bit more. Recall that a flow is a stream of packets exchanged between two end hosts (e.g. a video call between you and a friend). The Internet needs to support many simultaneous flows at the same time, despite limited capacity.
+Сформулюймо задачу трохи формальніше. Пригадайте, що потік (flow) — це послідовність пакетів, якими обмінюються два кінцеві хости (наприклад, відеодзвінок між вами та другом). Інтернет має підтримувати багато одночасних потоків, попри обмежену пропускну здатність.
 
 <img width="600px" src="/assets/intro/1-44-multiple-flows.png">
 
-We often say that the network resources are **statistically multiplexed**, which means that we'll dynamically allocate resources to users based on their demand, instead of partitioning a fixed share of resources to users.
+Часто кажуть, що мережеві ресурси **статистично мультиплексуються** (statistically multiplexed). Це означає, що ми динамічно виділяємо ресурси користувачам відповідно до їхнього попиту, а не відводимо кожному фіксовану частку ресурсів.
 
 <img width="900px" src="/assets/intro/1-45-statistical-multiplex.png">
 
-As an analogy, consider your personal computer. It's not the case that your computer preemptively allocates half its CPU to Firefox, and half its CPU to Zoom, and only allows each application to use its half of the CPU. Instead, your computer dynamically allocates resources to different applications depending on their needs.
+Як аналогію розгляньте ваш персональний комп'ютер. Ваш комп'ютер не виділяє заздалегідь половину процесора Firefox, а половину — Zoom, дозволяючи кожному застосунку використовувати лише свою половину. Натомість комп'ютер динамічно розподіляє ресурси між застосунками залежно від їхніх потреб.
 
-Statistical multiplexing is now everywhere in computer science. For example, in cloud computing, different companies might dynamically share resources in a datacenter.
+Статистичне мультиплексування тепер трапляється в комп'ютерних науках усюди. Наприклад, у хмарних обчисленнях різні компанії можуть динамічно спільно використовувати ресурси дата-центру.
 
-Statistical multiplexing is a great way to efficiently share network resources, because user demand changes over time. You probably aren't using a constant 10 Mbps of bandwidth every second, 24 hours a day. You probably have more demand while you're awake, and less while you're sleeping.
+Статистичне мультиплексування — чудовий спосіб ефективно розподіляти мережеві ресурси, бо попит користувачів змінюється з часом. Ви, найімовірніше, не використовуєте постійно 10 Мбіт/с пропускної здатності щосекунди, 24 години на добу. Імовірно, коли ви не спите, попит у вас більший, а коли спите — менший.
 
-The premise that makes statistical multiplexing work is: In practice, the peak of aggregate demand is much less than the aggregate of peak demands.
+Передумова, завдяки якій працює статистичне мультиплексування, така: на практиці пік сукупного попиту набагато менший за суму пікових попитів.
 
-Let's unpack what this means. Suppose we have two users, A and B. We can plot each user's demand over time.
+Розберімо, що це означає. Припустімо, у нас є два користувачі, A і B. Ми можемо побудувати графік попиту кожного користувача в часі.
 
 <img width="700px" src="/assets/intro/1-46-demand-over-time.png">
 
-How much capacity do we need to allocate in order to fully meet both users' demands?
+Скільки пропускної здатності потрібно виділити, щоб повністю задовольнити попит обох користувачів?
 
-The bad strategy (no statistical multiplexing) is to compute the aggregate of peak demands. We find A's peak demand and B's peak demand, and add them together.
+Погана стратегія (без статистичного мультиплексування) — обчислити суму пікових попитів. Ми знаходимо піковий попит A і піковий попит B і додаємо їх.
 
 <img width="900px" src="/assets/intro/1-47-sum-of-peak1.png">
 
-If we allocate this much capacity, we can definitely meet their demands. A's peak demand is X, so we allocate X to A, and likewise, we allocate Y to B. However, this approach is wasteful, because A's peak and B's peak didn't happen at the same time.
+Якщо виділити стільки пропускної здатності, ми напевно задовольнимо їхній попит. Піковий попит A дорівнює X, тож ми виділяємо X для A, і так само Y для B. Однак такий підхід марнотратний, бо пік A і пік B не припадали на той самий час.
 
 <img width="400px" src="/assets/intro/1-48-sum-of-peak2.png">
 
-The better strategy (statistical multiplexing) is to first compute the aggregate demand by graphing their combined demand over time. For example, the 10am demand in the new graph is the A's 10am demand, plus B's 10am demand. Then, we compute the peak of the aggregate demand. 
+Краща стратегія (статистичне мультиплексування) — спершу обчислити сукупний попит, побудувавши графік їхнього спільного попиту в часі. Наприклад, попит о 10:00 на новому графіку — це попит A о 10:00 плюс попит B о 10:00. Потім ми обчислюємо пік сукупного попиту.
 
 <img width="900px" src="/assets/intro/1-49-peak-of-sum1.png">
 
-If we allocate this much capacity, we can no longer statically allocate a portion to each user. However, by dynamically changing the amount we allocate to each user over time, we can still successfully meet their demands, even while having less capacity.
+Якщо виділити стільки пропускної здатності, ми вже не зможемо статично відвести частку кожному користувачеві. Однак, динамічно змінюючи з часом обсяг, виділений кожному користувачеві, ми все одно зможемо успішно задовольнити їхній попит, навіть маючи меншу пропускну здатність.
 
 <img width="400px" src="/assets/intro/1-50-peak-of-sum2.png">
 
-The statistical multiplexing approach allows us to support the same users with less capacity (cheaper for us, more efficient use of resources). For many distributions, we can show that the peak of the aggregate is actually closer to the sum of the average demands, which is much less than the sum of the peak demands.
+Підхід статистичного мультиплексування дає змогу обслуговувати тих самих користувачів з меншою пропускною здатністю (дешевше для нас, ефективніше використання ресурсів). Для багатьох розподілів можна показати, що пік суми насправді ближчий до суми середніх попитів, яка набагато менша за суму пікових попитів.
 
-In practice, in the network, we don't provision for the absolute worst case, when everything peaks at the same time. Instead, we share resources dynamically and hope that peaks don't occur at the same time. Peaks could still happen at the same time, which would cause packets to be delayed or dropped (recall the link queue). Nevertheless, we made the design choice to statistically multiplex and use resources more efficiently, while dealing with the consequences (occasional simultaneous peaks).
+На практиці в мережі ресурси не закладають на абсолютно найгірший випадок, коли все досягає піку одночасно. Натомість ми розподіляємо ресурси динамічно й сподіваємося, що піки не збігатимуться в часі. Піки все одно можуть збігтися, що спричинить затримку чи відкидання пакетів (пригадайте чергу каналу). Попри це, ми ухвалили проєктне рішення статистично мультиплексувати й ефективніше використовувати ресурси, миряючись із наслідками (час від часу одночасні піки).
 
-At the end of the day, statistical multiplexing is a design choice with trade-offs, and different users might make different choices. For example, financial exchanges sometimes decide to build their own dedicated networks to support peak demand, because they care more about ensuring network connectivity during peak periods, and they can afford the extra cost.
+Зрештою статистичне мультиплексування — це проєктне рішення з компромісами, і різні користувачі можуть вирішувати по-різному. Наприклад, фінансові біржі іноді вирішують будувати власні виділені мережі, розраховані на піковий попит, бо для них важливіше гарантувати мережеву зв'язність у пікові періоди, і вони можуть дозволити собі додаткові витрати.
 
 
-## Sharing Resources: Circuit Switching vs. Packet Switching
+## Спільне використання ресурсів: комутація каналів і комутація пакетів
 
-We now know that we can use statistical multiplexing to decide how much capacity to build. Our next question is: How do we actually dynamically allocate resources between users?
+Тепер ми знаємо, що можемо використовувати статистичне мультиплексування, щоб вирішити, скільки пропускної здатності будувати. Наступне питання: як насправді динамічно розподіляти ресурси між користувачами?
 
-As an analogy, consider a popular restaurant with many customers and a limited supply of tables. There are two ways we could imagine allocating tables to customers. We could have customers make reservations, or we could seat customers first-come first-serve.
+Як аналогію розгляньте популярний ресторан із багатьма відвідувачами та обмеженою кількістю столиків. Можна уявити два способи розподілу столиків між відвідувачами. Можна просити відвідувачів бронювати столики, або садити їх у порядку черги.
 
-The two approaches to sharing resources in the network are similar. One approach is **best-effort**. Everybody sends their data into the network, without making any reservations, and hopes for the best. There's no guarantee that there will be enough bandwidth to meet your demand.
+Два підходи до спільного використання ресурсів у мережі схожі. Один підхід — **без гарантій** (best-effort). Кожен надсилає свої дані в мережу, нічого не бронюючи, і сподівається на краще. Немає гарантії, що пропускної здатності вистачить для вашого попиту.
 
-The canonical design for best-effort is called **packet switching**. The switch looks at each packet independently and forwards the packet closer to its destination. The switches don't think about flows or reservations.
+Канонічна реалізація підходу без гарантій називається **комутацією пакетів** (packet switching). Комутатор розглядає кожен пакет незалежно й пересилає його ближче до пункту призначення. Комутатори не думають про потоки чи бронювання.
 
-In addition to packets being independent from each other, the switches are also independent from each other. As a packet hops across switches, every switch considers the packet independently (the switches don't coordinate).
+Окрім того, що пакети незалежні один від одного, комутатори також незалежні один від одного. Коли пакет перестрибує між комутаторами, кожен комутатор розглядає пакет незалежно (комутатори не координують дій).
 
 <img width="700px" src="/assets/intro/1-51-best-effort.png">
 
-The other approach is based on **reservations**. At the start of a flow, users explicitly request and reserve the bandwidth they need. After the data is sent, the resources can be released for others to reserve.
+Інший підхід ґрунтується на **бронюванні** (reservations). На початку потоку користувачі явно запитують і бронюють потрібну їм пропускну здатність. Після надсилання даних ресурси можна звільнити, щоб їх забронювали інші.
 
-The canonical design for reservations, explored in both research and industry, is called **circuit switching**.
+Канонічна реалізація бронювання, досліджувана як у науці, так і в промисловості, називається **комутацією каналів** (circuit switching).
 
-At the start of a flow, the end hosts identify a path (sequence of switches and links) through the network, using some routing algorithm. (We haven't discussed routing algorithms to find this path yet, so you can assume it happens by magic for now.)
+На початку потоку кінцеві хости визначають шлях (послідовність комутаторів і каналів) через мережу за допомогою певного алгоритму маршрутизації. (Ми ще не обговорювали алгоритмів маршрутизації для пошуку цього шляху, тож поки можете вважати, що це відбувається магічним чином.)
 
-Then, the source sends a special reservation request message to the destination. Along the way, every switch hears about this request as well. If every switch accepts the request, then the reservation is made, and a circuit of switches has been established between the source and destination.
+Потім джерело надсилає адресатові спеціальне повідомлення із запитом на бронювання. Дорогою кожен комутатор також отримує цей запит. Якщо кожен комутатор приймає запит, бронювання виконано, і між джерелом та адресатом встановлено канал (circuit) із комутаторів.
 
 <img width="700px" src="/assets/intro/1-52-reservations.png">
 
-Once the reservation is confirmed by every switch, data can be sent. Eventually, when the flow ends, the source sends a teardown message to the recipient. Along the way, every switch sees this message and releases its capacity.
+Щойно бронювання підтверджено кожним комутатором, можна надсилати дані. Зрештою, коли потік завершується, джерело надсилає отримувачеві повідомлення про розірвання. Дорогою кожен комутатор бачить це повідомлення й звільняє свою пропускну здатність.
 
 <img width="700px" src="/assets/intro/1-53-reservation-teardown.png">
 
-Note: We use the term circuit here because this idea came from the phone network, which uses this same idea to allow two people to call each other.
+Примітка: ми використовуємо тут термін «канал» (circuit), бо ця ідея походить із телефонної мережі, яка використовує ту саму ідею, щоб двоє людей могли зателефонувати один одному.
 
-Remember, both circuit switching and packet switching are embodying statistical multiplexing. The main difference is the granularity at which we're allocating resources: per-flow with reservations, or per-packet with best-effort. Even in circuit switching, we're dynamically allocating resources based on reservations. We are not preemptively reserving for all flows that might ever exist.
+Пам'ятайте: і комутація каналів, і комутація пакетів є втіленнями статистичного мультиплексування. Головна відмінність — у гранулярності, з якою ми розподіляємо ресурси: на рівні потоку з бронюванням чи на рівні пакета без гарантій. Навіть за комутації каналів ми розподіляємо ресурси динамічно на основі бронювань. Ми не бронюємо заздалегідь для всіх потоків, які будь-коли можуть існувати.
 
 <img width="600px" src="/assets/intro/1-54-circuit-packet-multiplexing.png">
 
 
-## Circuit Switching vs. Packet Switching Trade-offs
+## Компроміси комутації каналів і комутації пакетів
 
-We now have two approaches to sharing resources on the Internet. Which is better? It depends on the criteria we're using to evaluate each approach.
+Тепер у нас є два підходи до спільного використання ресурсів в Інтернеті. Який кращий? Це залежить від критеріїв, за якими ми оцінюємо кожен підхід.
 
-There are four dimensions we can use to compare the two approaches.
+Є чотири виміри, за якими можна порівнювати ці два підходи.
 
-1. Is this a good abstraction (or API) for the network to offer to an application developer?
+1. Чи це добра абстракція (або API), яку мережа може запропонувати розробникові застосунків?
 
-Circuit switching offers a more useful abstraction to developers, because there's a guarantee of reserved bandwidth. This gives the developer more predictable and understandable behavior (assuming all goes well). As an analogy, consider reserving a machine in the cloud to run some task. It's easier for the developer to reason about performance if they know the specs of the machine they're getting. If the developer had no idea what machine they were using, the task could still run, but the performance is less predictable.
+Комутація каналів пропонує розробникам кориснішу абстракцію, бо є гарантія забронюваної пропускної здатності. Це дає розробникові передбачуванішу й зрозумілішу поведінку (за умови, що все йде добре). Як аналогію розгляньте бронювання машини в хмарі для виконання певного завдання. Розробникові легше міркувати про продуктивність, якщо він знає характеристики машини, яку отримує. Якби розробник гадки не мав, яку машину використовує, завдання все одно могло б виконатися, але продуктивність була б менш передбачуваною.
 
-Circuit switching is also a useful abstraction if you're a network operator who has to distribute resources to users. You know exactly how much bandwidth each user is requesting, and you can charge them the appropriate amount of money. It's a little harder to implement an intuitive business model if there are no guarantees about what you're offering to a client.
+Комутація каналів також корисна абстракція, якщо ви оператор мережі, який має розподіляти ресурси між користувачами. Ви точно знаєте, скільки пропускної здатності запитує кожен користувач, і можете стягнути з нього відповідну суму. Інтуїтивну бізнес-модель реалізувати дещо складніше, якщо немає гарантій щодо того, що ви пропонуєте клієнтові.
 
-2. Is the approach efficient at scale? Does the approach use all the available bandwidth on the network, or is some bandwidth wasted?
+2. Чи ефективний підхід у масштабі? Чи використовує підхід усю доступну пропускну здатність мережі, чи частина її марнується?
 
-Packet switching is typically more efficient. Exactly how much better depends on the burstiness of the traffic sources.
+Комутація пакетів зазвичай ефективніша. Наскільки саме — залежить від пульсуючості (burstiness) джерел трафіку.
 
-If each sender sends data at a constant rate throughout time, then both circuit switching and packet switching makes full use of the capacity.
+Якщо кожен відправник надсилає дані з постійною швидкістю протягом усього часу, то і комутація каналів, і комутація пакетів повністю використовують пропускну здатність.
 
 <img width="900px" src="/assets/intro/1-55-smooth.png">
 
-By contrast, if each sender's rate varies over time, then packet switching gives us a better use of bandwidth.
+Натомість якщо швидкість кожного відправника змінюється з часом, комутація пакетів дає краще використання пропускної здатності.
 
 <img width="900px" src="/assets/intro/1-56-bursty.png">
 
-Here's an example of demand varying over time. With reservations, the three flows must reserve 12, 11, and 13 Mbps. One of the reservations will be rejected, since we can only distribute 30 Mbps.
+Ось приклад попиту, що змінюється в часі. За бронювання три потоки мають забронювати 12, 11 і 13 Мбіт/с. Одне з бронювань буде відхилено, бо ми можемо розподілити лише 30 Мбіт/с.
 
-This approach is wasting bandwidth in two different ways. The flow reserving 12 Mbps is not actually using its bandwidth for most of its time. Also, if the 12 Mbps and 11 Mbps flows get reservations, we have 7 Mbps left over that isn't being reserved by anybody.
+Такий підхід марнує пропускну здатність двома різними способами. Потік, що бронює 12 Мбіт/с, більшу частину часу насправді не використовує свою пропускну здатність. Крім того, якщо бронювання отримають потоки на 12 і 11 Мбіт/с, у нас залишиться 7 Мбіт/с, які ніхто не бронює.
 
-By contrast, in the packet switching approach, where we just send packets as they arrive, the total amount of bandwidth being used at any time never exceeds 30 Mbps. We can support every flow with the bandwidth we have.
+Натомість за комутації пакетів, коли ми просто надсилаємо пакети в міру їх надходження, загальна пропускна здатність, що використовується в будь-який момент, ніколи не перевищує 30 Мбіт/с. Ми можемо обслужити кожен потік наявною пропускною здатністю.
 
-Formally, the burstiness of a flow is defined by the ratio between its peak rate and its average rate. There's no clear threshold for when something is smooth or bursty (they're more descriptive terms).
+Формально пульсуючість потоку визначається як відношення його пікової швидкості до середньої. Чіткої межі між рівномірним і пульсуючим трафіком немає (це радше описові терміни).
 
-Voice calls usually have smoother ratios like 3:1, while web browsing usually has burstier ratios like 100:1. (Voice calls having a smooth ratio is also why the phone network used reservations!)
+Голосові дзвінки зазвичай мають рівномірніші відношення, як-от 3:1, а перегляд вебсторінок — більш пульсуючі, як-от 100:1. (Рівномірне відношення голосових дзвінків — також причина, чому телефонна мережа використовувала бронювання!)
 
-Another reason why packet switching is more efficient is: Circuit switching spends additional time setting up and tearing down a circuit. This is especially inefficient for very short flows (e.g. downloading a tiny file).
+Ще одна причина, чому комутація пакетів ефективніша: комутація каналів витрачає додатковий час на встановлення й розірвання каналу. Це особливо неефективно для дуже коротких потоків (наприклад, завантаження крихітного файлу).
 
-3. How well does each approach handle failure at scale?
+3. Наскільки добре кожен підхід справляється з відмовами в масштабі?
 
-Packet switching is better at handling failure at scale. If a router fails, we can just send packets along a different path in the network. (We haven't discussed how yet, but it turns out routing algorithms are good at adjusting to failure.) The end host doesn't have to do anything different.
+Комутація пакетів краще справляється з відмовами в масштабі. Якщо маршрутизатор відмовляє, ми можемо просто надсилати пакети іншим шляхом у мережі. (Ми ще не обговорювали, як саме, але виявляється, що алгоритми маршрутизації добре пристосовуються до відмов.) Кінцевому хостові не треба робити нічого іншого.
 
-By contrast, in circuit switching, if a router along the path fails, the network still has to find a new path, but there's more for the end host to do. The host has to somehow detect failure, and it has to resend a reservation request. It also has to free up the reservation along the old path somehow. What if the new reservation request is rejected?
+Натомість за комутації каналів, якщо маршрутизатор на шляху відмовляє, мережа так само має знайти новий шлях, але кінцевому хостові доводиться робити більше. Хост має якось виявити відмову й повторно надіслати запит на бронювання. Він також має якось звільнити бронювання на старому шляху. А що, як новий запит на бронювання відхилять?
 
-This failure mode scales poorly. If a single router goes down, but millions of flows were using that router, then millions of reservation requests have to be simultaneously re-established.
+Такий режим відмови погано масштабується. Якщо відмовить один маршрутизатор, а ним користувалися мільйони потоків, то мільйони запитів на бронювання доведеться одночасно встановлювати заново.
 
-We won't solve these problems in detail, but hopefully you're getting a sense that handling failures in circuit switching is a pretty hard problem.
+Ми не розв'язуватимемо ці проблеми детально, але, сподіваємося, ви відчуваєте, що обробка відмов за комутації каналів — доволі складна задача.
 
-4. How complex is it to implement each approach at scale?
+4. Наскільки складно реалізувати кожен підхід у масштабі?
 
-If you actually tried to design circuit switching, a lot of additional design questions start to make the protocol really complicated, really quickly.
+Якщо ви справді спробуєте спроєктувати комутацію каналів, безліч додаткових проєктних питань дуже швидко зроблять протокол справді складним.
 
-How do the routers know that the reservation was successful? When 2 sees the request and agrees, how does it know that 3 and 4 also agreed? (Possible approach: We send a confirmation back in the other direction, indicating that the reservation is confirmed.)
+Як маршрутизатори дізнаються, що бронювання було успішним? Коли 2 бачить запит і погоджується, як він дізнається, що 3 і 4 також погодилися? (Можливий підхід: надіслати підтвердження у зворотному напрямку, яке вказує, що бронювання підтверджено.)
 
-What if the reservation request is lost along the way? 1 and 2 agree, but the request packet is dropped before it reaches 3 and 4. (Possible approach: Set a timer, and if the reservation isn't confirmed in time, delete the reservation. Now the end host has to try again.)
+Що, як запит на бронювання загубиться дорогою? 1 і 2 погоджуються, але пакет із запитом відкидається, перш ніж дійде до 3 і 4. (Можливий підхід: встановити таймер і, якщо бронювання не підтверджено вчасно, видалити бронювання. Тепер кінцевий хост мусить спробувати ще раз.)
 
-What if the request is sent and everybody agrees, but the confirmation on the way back is dropped? 4 and 3 see the confirmation, but the confirmation packet is dropped before it reaches 2 and 1.
+Що, як запит надіслано й усі погодилися, але підтвердження на зворотному шляху відкинуто? 4 і 3 бачать підтвердження, але пакет підтвердження відкидається, перш ніж дійде до 2 і 1.
 
-What if the reservation is declined? Should the end host try again and request less? Should the end host wait a bit and try again with the same request? Should the router say in the rejection, "I can't do 10 Mbps, but I can give you 8 Mbps?"
+Що, як бронювання відхилено? Чи має кінцевий хост спробувати ще раз і запросити менше? Чи має кінцевий хост трохи зачекати й спробувати знову з тим самим запитом? Чи має маршрутизатор у відмові сказати: «Я не можу дати 10 Мбіт/с, але можу дати 8 Мбіт/с»?
 
-We won't solve every design problem, but hopefully you're noticing that circuit switching is harder to implement than it first seemed.
+Ми не розв'язуватимемо кожну проєктну задачу, але, сподіваємося, ви помічаєте, що комутацію каналів складніше реалізувати, ніж здавалося спочатку.
 
-The fundamental problem that makes circuit switching complicated is state consensus. All the routers have to keep track of extra state, and they all have to agree on what that state is.
+Фундаментальна проблема, яка ускладнює комутацію каналів, — консенсус щодо стану. Усі маршрутизатори мають відстежувати додатковий стан і всі мають погоджуватися щодо того, яким є цей стан.
 
-You might have heard of the Paxos protocols, which are extremely complicated protocols for getting multiple processors to agree on state. In practice, people to run these algorithms on a group of 4-5 servers. With circuit switching, we're basically asking the Internet to run that on Internet scale, with millions of routers and flows.
+Ви, можливо, чули про протоколи Paxos — надзвичайно складні протоколи, які змушують кілька процесорів дійти згоди щодо стану. На практиці ці алгоритми запускають на групі з 4–5 серверів. За комутації каналів ми, по суті, просимо Інтернет запускати таке в масштабі Інтернету, з мільйонами маршрутизаторів і потоків.
 
-In summary: Circuit switching gives the application better performance with reserved bandwidth. It also gives the developer more predictable behavior.
+Підсумуємо: комутація каналів дає застосункові кращу продуктивність завдяки забронюваній пропускній здатності. Вона також дає розробникові передбачуванішу поведінку.
 
-However, packet switching gives us more efficient sharing of bandwidth, and avoids startup time. It also gives us easier recovery from failure, and is generally simpler to implement (less for routers to think about).
+Однак комутація пакетів дає нам ефективніше спільне використання пропускної здатності й уникає часу на встановлення. Вона також полегшує відновлення після відмов і загалом простіша в реалізації (маршрутизаторам доводиться думати про менше).
 
 
-## Circuit Switching vs. Packet Switching In Practice
+## Комутація каналів і комутація пакетів на практиці
 
-In the modern Internet, packet switching is the default approach.
+У сучасному Інтернеті комутація пакетів є підходом за замовчуванням.
 
-There are limited cases where circuit switching is used. For example, RSVP (Resource Reservation Protocol) can be used within a small local network, to allow routers (not end hosts) to reserve bandwidth between themselves.
+Є обмежені випадки, коли використовується комутація каналів. Наприклад, RSVP (Resource Reservation Protocol, протокол резервування ресурсів) може використовуватися в межах невеликої локальної мережі, щоб маршрутизатори (а не кінцеві хости) бронювали пропускну здатність між собою.
 
-Another use of circuit switching in the modern Internet is dedicated circuits (e.g. MPLS circuits, leased lines). As a company, you can specifically buy some Internet bandwidth (possibly including physical infrastructure) dedicated to your business. This is very expensive compared to a standard Internet connection.
+Ще одне застосування комутації каналів у сучасному Інтернеті — виділені канали (наприклад, канали MPLS, орендовані лінії). Як компанія, ви можете спеціально придбати певну інтернет-пропускну здатність (можливо, разом із фізичною інфраструктурою), виділену для вашого бізнесу. Це дуже дорого порівняно зі стандартним інтернет-підключенням.
 
-Dedicated circuits are deployed at less ambitious scales than hypothetical full-Internet circuit switching. Someone usually manually sets up the reservation. The reservation is long-lived (e.g. years). The reservation is at the granularity of companies, not individual flows.
+Виділені канали розгортаються в менш амбітних масштабах, ніж гіпотетична комутація каналів у всьому Інтернеті. Зазвичай бронювання налаштовує хтось уручну. Бронювання довготривале (наприклад, на роки). Бронювання здійснюється на рівні компаній, а не окремих потоків.
 
-Brief history: When the Internet was first designed in the 1970s-1980s as a smaller-scale, government-funded research project, it was packet switched.
+Коротка історія: коли Інтернет уперше проєктували в 1970–1980-х роках як невеликий державний дослідницький проєкт, він використовував комутацію пакетів.
 
-In the 1990s, when the government stopped funding the Internet and control passed over to commercial enterprises, research and industry thought we would need to change to circuit switching. The designers predicted that voice and live TV would be the main heavy-duty uses of the Internet. Both of these applications have smooth bandwidth demand, well-suited for circuit switching. Also, because ISPs had to make money off the new commercialized Internet, they thought that circuit switching would offer a more intuitive business model.
+У 1990-х роках, коли уряд припинив фінансувати Інтернет і контроль перейшов до комерційних підприємств, науковці та промисловість вважали, що доведеться перейти на комутацію каналів. Проєктувальники передбачали, що головними ресурсоємними застосуваннями Інтернету стануть голос і пряме телебачення. Обидва ці застосування мають рівномірний попит на пропускну здатність, що добре підходить для комутації каналів. Крім того, оскільки провайдерам треба було заробляти на новому комерціалізованому Інтернеті, вони вважали, що комутація каналів запропонує інтуїтивнішу бізнес-модель.
 
-There was a lot of work in research and standards bodies to implement circuit switching, but ultimately, this was a failed vision, for many of the reasons we discussed. Also, the main applications driving Internet growth were email and the web, not voice calls and TV, which is another reason why circuit switching vision didn't work out.
+У науці та органах стандартизації велося багато роботи над реалізацією комутації каналів, але зрештою це бачення провалилося — з багатьох причин, які ми обговорили. Крім того, головними застосунками, що рухали зростання Інтернету, стали електронна пошта й веб, а не голосові дзвінки й телебачення, — ще одна причина, чому бачення комутації каналів не справдилося.
 
-An interesting consequence of these design choices is, users and developers adapted to the realities of packet switching. If you watch a video and the connection is poor, you're used to the application adapting and the video quality decreasing. (Contrast with broadcast TV, which wouldn't do this.) This is a lesson in how technology can transform user behavior!
+Цікавий наслідок цих проєктних рішень полягає в тому, що користувачі й розробники пристосувалися до реалій комутації пакетів. Якщо ви дивитеся відео, а з'єднання погане, ви звикли, що застосунок пристосовується й якість відео знижується. (Порівняйте з ефірним телебаченням, яке так не робить.) Це урок того, як технології можуть змінювати поведінку користувачів!

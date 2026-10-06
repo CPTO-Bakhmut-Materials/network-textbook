@@ -1,160 +1,160 @@
 ---
-title: "End-to-End Connectivity"
-parent: End-to-End
+title: "Наскрізна зв'язність"
+parent: "Наскрізне з'єднання"
 nav_order: 7
 layout: page-with-toc
 ---
 
-# End-to-End Connectivity
+# Наскрізна зв'язність
 
-## Motivation
+## Мотивація
 
-In this section, we'll do a step-by-step walkthrough of what happens when we turn on our computer, plug it into an Ethernet network, and type `www.berkeley.edu` in our web browser. In the process of doing so, we'll see how all the different pieces of the network work together to process the user's request.
+У цьому розділі ми крок за кроком розберемо, що відбувається, коли ми вмикаємо комп'ютер, під'єднуємо його до мережі Ethernet і вводимо у веббраузері `www.berkeley.edu`. Водночас ми побачимо, як усі різні частини мережі спільно обробляють запит користувача.
 
-We'll assume that we don't need to turn on the Internet from scratch. For example, routers are already actively running routing protocols and have populated their forwarding tables accordingly.
+Ми вважатимемо, що нам не треба вмикати Інтернет з нуля. Наприклад, маршрутизатори вже активно виконують протоколи маршрутизації й відповідно заповнили свої таблиці пересилання.
 
 <img width="900px" src="/assets/end-to-end/5-074-end1.png">
 
 
-## Step 1: DHCP
+## Крок 1: DHCP
 
-We turn on our computer and plug it into an Ethernet network. We don't have any information about the network yet, so we broadcast a DHCP request.
+Ми вмикаємо комп'ютер і під'єднуємо його до мережі Ethernet. У нас ще немає жодної інформації про мережу, тож ми широкомовно розсилаємо запит DHCP.
 
-We'll assume the home router is the DHCP server, which is common in home networks. The router/server unicasts an offer back to us. The offer contains information about the network: the subnet mask, the IP address of the default gateway, and the IP address of the DNS server. The offer also gives us an IP address we can use.
+Вважатимемо, що сервером DHCP є домашній маршрутизатор, що поширено в домашніх мережах. Маршрутизатор/сервер одноадресно надсилає нам пропозицію. Пропозиція містить інформацію про мережу: маску підмережі, IP-адресу шлюзу за замовчуванням та IP-адресу сервера DNS. Пропозиція також дає нам IP-адресу, яку ми можемо використовувати.
 
-To complete the DHCP protocol, we send the request message confirming we'd like to use the offered configuration, and the router/server responds with an acknowledgement.
+Щоб завершити протокол DHCP, ми надсилаємо повідомлення-запит, що підтверджує, що ми хочемо використовувати запропоновану конфігурацію, і маршрутизатор/сервер відповідає підтвердженням.
 
 <img width="900px" src="/assets/end-to-end/5-075-end2.png">
 
 
-## Step 2: Find Router at Layer 2
+## Крок 2: пошук маршрутизатора на рівні 2
 
-From DHCP, we learned about the IP address of the router, and our forwarding table now says that all non-local packets should be forwarded to this router. We're about to send some packets to the DNS server (to look up the IP address of `www.berkeley.edu`), and to the Berkeley server itself, both of which may be non-local.
+З DHCP ми дізналися IP-адресу маршрутизатора, і наша таблиця пересилання тепер каже, що всі нелокальні пакети слід пересилати цьому маршрутизатору. Ми збираємося надіслати кілька пакетів серверу DNS (щоб знайти IP-адресу `www.berkeley.edu`) і самому серверу Берклі, і обидва можуть бути нелокальними.
 
-Before we can forward IP packets to the router, though, we need to figure out the router's Layer 2 MAC address, so that we can send the packet to the router inside the local network.
+Однак, перш ніж пересилати IP-пакети маршрутизатору, нам треба з'ясувати MAC-адресу маршрутизатора рівня 2, щоб надіслати пакет маршрутизатору всередині локальної мережі.
 
-First, we can verify that the router's IP address, 192.168.1.1, belongs to the local subnet, 192.168.1.2/24. This tells us that the router is in the local network, and by sending an Ethernet packet to the router's MAC address, we'll reach the router.
+Спершу ми можемо перевірити, що IP-адреса маршрутизатора 192.168.1.1 належить до локальної підмережі 192.168.1.2/24. Це каже нам, що маршрутизатор у локальній мережі, і, надіславши пакет Ethernet на MAC-адресу маршрутизатора, ми дістанемося маршрутизатора.
 
-To find the router's MAC address, we broadcast an ARP request, asking for the MAC address of 192.168.1.1 (router's IP address). The router hears this request and replies, saying, "I'm 192.168.1.1, and my MAC address is 01:ab:cd:ef:42:01."
+Щоб знайти MAC-адресу маршрутизатора, ми широкомовно розсилаємо запит ARP, питаючи MAC-адресу 192.168.1.1 (IP-адреси маршрутизатора). Маршрутизатор чує цей запит і відповідає: «Я — 192.168.1.1, і моя MAC-адреса — 01:ab:cd:ef:42:01».
 
-We can now cache this IP-to-MAC mapping, and we now know the router's MAC address. As long as this entry stays in the cache, we won't have to make the same ARP request again. All future requests to the outside Internet can be forwarded to the router's MAC address.
+Тепер ми можемо закешувати це відображення IP–MAC і знаємо MAC-адресу маршрутизатора. Доки цей запис залишається в кеші, нам не доведеться знову робити той самий запит ARP. Усі майбутні запити до зовнішнього Інтернету можна пересилати на MAC-адресу маршрутизатора.
 
 <img width="900px" src="/assets/end-to-end/5-076-end3.png">
 
 
-## Step 3: DNS Lookup
+## Крок 3: пошук DNS
 
-Next, we need to look up IP address of `www.berkeley.edu`. This is all done in the operating system, after the browser code calls something like `getaddrinfo` to trigger the DNS lookup.
+Далі нам треба знайти IP-адресу `www.berkeley.edu`. Усе це виконується в операційній системі, після того як код браузера викликає щось на кшталт `getaddrinfo`, щоб ініціювати пошук DNS.
 
-From DHCP, we learned the IP address of the DNS server, 8.8.8.8. We also learned that we're in the subnet 192.168.1.2/24. The DNS server isn't in our local network, so we need to forward the DNS packet to the router.
+З DHCP ми дізналися IP-адресу сервера DNS — 8.8.8.8. Ми також дізналися, що перебуваємо в підмережі 192.168.1.2/24. Сервер DNS не в нашій локальній мережі, тож нам треба переслати пакет DNS маршрутизатору.
 
-We can now build up our DNS request packet, from the top down.
+Тепер ми можемо зібрати наш пакет запиту DNS згори донизу.
 
-Layer 7: In the Question section, we add a DNS record requesting the A record with `www.berkeley.edu`'s IP address. We add the DNS header with the ID, number of records, and so on.
+Рівень 7: у розділ питань ми додаємо запис DNS, що запитує запис A з IP-адресою `www.berkeley.edu`. Ми додаємо заголовок DNS з ID, кількістю записів тощо.
 
-Layer 4: DNS runs on top of UDP. We pick any random source port, since we're the client. We pick Port 53 for the destination port, since this is where resolvers and name servers listen for DNS queries.
+Рівень 4: DNS працює поверх UDP. Ми обираємо будь-який випадковий порт джерела, бо ми клієнт. Як порт призначення ми обираємо порт 53, бо саме на ньому резолвери й сервери імен слухають DNS-запити.
 
-Layer 3: The source IP is our own IP, as assigned by DHCP. The destination IP is 8.8.8.8, the IP address of the DNS server, which we learned from DHCP.
+Рівень 3: IP-адреса джерела — наша власна IP-адреса, призначена DHCP. IP-адреса призначення — 8.8.8.8, IP-адреса сервера DNS, яку ми дізналися з DHCP.
 
-Layer 2: The source MAC is our own MAC address, which is burned into our hardware. The destination MAC is the MAC address of the router (the next hop), which we learned from ARP.
+Рівень 2: MAC-адреса джерела — наша власна MAC-адреса, «впалена» в наше обладнання. MAC-адреса призначення — MAC-адреса маршрутизатора (наступного переходу), яку ми дізналися з ARP.
 
-With the packet fully built, we can send the bits along the wire (Layer 1).
+Повністю зібравши пакет, ми можемо надіслати біти дротом (рівень 1).
 
 <img width="800px" src="/assets/end-to-end/5-077-end4.png">
 
-When the packet reaches the router, if the network is using NAT, the router might rewrite the UDP/IP headers to translate our private IP address into a public IP address. However, as the end host, we don't have to worry about NAT. The router should be doing all the translation for us, giving us the illusion that we can use our own IP address (from DHCP).
+Коли пакет дістається маршрутизатора, якщо мережа використовує NAT, маршрутизатор може переписати заголовки UDP/IP, щоб перетворити нашу приватну IP-адресу на публічну. Однак як кінцевому хосту нам не треба перейматися NAT. Маршрутизатор має виконувати всю трансляцію за нас, створюючи ілюзію, що ми можемо використовувати власну IP-адресу (з DHCP).
 
-When our packet reaches the recursive resolver at 8.8.8.8, if the resolver doesn't have our answer cached already, it might need to perform some additional lookups and ask the authoritative name servers for the records. Eventually, the recursive resolver finds the answer, and sends the A record back to us. We now have `www.berkeley.edu`'s IP address.
+Коли наш пакет дістається рекурсивного резолвера за адресою 8.8.8.8, якщо резолвер ще не має нашої відповіді в кеші, йому може знадобитися виконати додаткові пошуки й запитати записи в повноважних серверів імен. Зрештою рекурсивний резолвер знаходить відповідь і надсилає нам запис A. Тепер у нас є IP-адреса `www.berkeley.edu`.
 
 <img width="900px" src="/assets/end-to-end/5-078-end5.png">
 
 
-## Step 4: Connect to Website
+## Крок 4: під'єднання до вебсайту
 
-Now that we have `www.berkeley.edu`'s IP address, we can send packets to Berkeley. We're using a web browser, so our goal is to make an HTTP request to this server.
+Тепер, коли в нас є IP-адреса `www.berkeley.edu`, ми можемо надсилати пакети до Берклі. Ми використовуємо веббраузер, тож наша мета — зробити запит HTTP до цього сервера.
 
-HTTP runs on top of TCP, so we first have to make a TCP handshake to open a connection with the Berkeley server. The browser will call something like `connect` on a particular socket to open this connection, and the operating system (where TCP is running) will perform the handshake and pass packets to and from the browser.
+HTTP працює поверх TCP, тож спершу нам треба виконати рукостискання TCP, щоб відкрити з'єднання із сервером Берклі. Браузер викличе щось на кшталт `connect` на певному сокеті, щоб відкрити це з'єднання, а операційна система (де працює TCP) виконає рукостискання й передаватиме пакети до браузера й від нього.
 
-The TCP handshake is performed: We send a SYN, Berkeley sends a SYN-ACK, and we send an ACK. We now have a bytestream between our computer and the Berkeley server.
+Виконується рукостискання TCP: ми надсилаємо SYN, Берклі надсилає SYN-ACK, ми надсилаємо ACK. Тепер у нас є потік байтів між нашим комп'ютером і сервером Берклі.
 
 <img width="900px" src="/assets/end-to-end/5-079-end6.png">
 
-Now, we can build up or HTTP packet, from the top down.
+Тепер ми можемо зібрати наш пакет HTTP згори донизу.
 
-Layer 7: The HTTP method is GET. The resource we want is `/` (the homepage). The version is HTTP/1.1.
+Рівень 7: метод HTTP — GET. Ресурс, який ми хочемо, — `/` (головна сторінка). Версія — HTTP/1.1.
 
-Layer 4: HTTP runs on top of TCP. The browser can pick any source port, since it's the client. In general, this port could be manually specified by the application, or the application could specify "Port 0," which is shorthand for asking the operating system to pick a random ephemeral port that's currently unused. (As an aside, thinking back to NAT, allowing applications to manually specify ports is why two users might choose the same source port.) The destination port is 80, the fixed port number for HTTP.
+Рівень 4: HTTP працює поверх TCP. Браузер може обрати будь-який порт джерела, бо він клієнт. Загалом цей порт може вручну вказати застосунок, або застосунок може вказати «порт 0», що є скороченням для прохання до операційної системи обрати випадковий ефемерний порт, який зараз не використовується. (До речі, згадуючи NAT: саме те, що застосунки можуть вручну вказувати порти, пояснює, чому два користувачі можуть обрати той самий порт джерела.) Порт призначення — 80, фіксований номер порту для HTTP.
 
-Layer 3: The source IP is our own IP, as assigned by DHCP. The destination IP is 141.193.213.21, the IP address of `www.berkeley.edu` that was returned from our DNS query earlier.
+Рівень 3: IP-адреса джерела — наша власна IP-адреса, призначена DHCP. IP-адреса призначення — 141.193.213.21, IP-адреса `www.berkeley.edu`, повернена нашим попереднім DNS-запитом.
 
-Layer 2: This is the same as our DNS packet earlier. The source MAC is our own (burned into hardware), and the destination MAC is the router's (discovered and cached from ARP).
+Рівень 2: так само, як у нашому попередньому пакеті DNS. MAC-адреса джерела — наша власна («впалена» в обладнання), а MAC-адреса призначення — маршрутизатора (виявлена й закешована за допомогою ARP).
 
 <img width="800px" src="/assets/end-to-end/5-080-end7.png">
 
-The HTTP response comes back with status code 200 OK, and the content of the response has the HTML code of the website. The browser calls `read` on the socket to fetch the bytes of the HTTP payload, with the status code and the response, and processes them accordingly.
+Відповідь HTTP повертається з кодом стану 200 OK, а вміст відповіді містить HTML-код вебсайту. Браузер викликає `read` на сокеті, щоб отримати байти корисного навантаження HTTP з кодом стану й відповіддю, і відповідно їх обробляє.
 
-Within the bytestream, HTTP can add some delimiter like a newline character to denote the end of a request or response. Also, HTTP headers like Content-Length can specify the length of the payload. This also allows the browser to allocate enough memory to receive the response.
+У межах потоку байтів HTTP може додавати певний роздільник, як-от символ нового рядка, щоб позначити кінець запиту чи відповіді. Крім того, заголовки HTTP, як-от Content-Length, можуть вказувати довжину корисного навантаження. Це також дає браузеру змогу виділити достатньо пам'яті для отримання відповіді.
 
-The HTTP response that comes back might trigger further requests. If the HTML in the response has some syntax like `<img src="/logo.png">`, this tells the browser to make another HTTP request to fetch the `/logo.png` resource. Or, the user might click a link on the website like `www.berkeley.edu/about.html`, which would also trigger another HTTP request to the same server.
+Відповідь HTTP, що повертається, може ініціювати подальші запити. Якщо HTML у відповіді має синтаксис на кшталт `<img src="/logo.png">`, це підказує браузеру зробити ще один запит HTTP для отримання ресурсу `/logo.png`. Або користувач може натиснути посилання на вебсайті на кшталт `www.berkeley.edu/about.html`, що теж ініціює ще один запит HTTP до того самого сервера.
 
 <img width="900px" src="/assets/end-to-end/5-081-end8.png">
 
-Recall that multiple HTTP requests to the same server can be pipelined across the same TCP connection for efficiency, so we can keep the TCP connection open and keep using it for subsequent HTTP requests and responses.
+Пригадайте, що для ефективності кілька запитів HTTP до того самого сервера можна конвеєризувати в тому самому з'єднанні TCP, тож ми можемо тримати з'єднання TCP відкритим і використовувати його для подальших запитів і відповідей HTTP.
 
-Eventually, after some pipelining, the client or server chooses to close the connection. The normal teardown handshake occurs, where each side sends a FIN, and both FIN packets are acked. We're all done!
+Зрештою, після певної конвеєризації, клієнт чи сервер вирішує закрити з'єднання. Відбувається звичайне рукостискання розірвання, де кожна сторона надсилає FIN, і обидва пакети FIN підтверджуються. Готово!
 
 <img width="900px" src="/assets/end-to-end/5-082-end9.png">
 
-Note that the HTTP requests/responses are not necessarily contained in a single packet. HTTP is built on top of the TCP bytestream, so a single HTTP request or response could get split up across multiple TCP/IP packets, where each packet has the same headers at Layers 1-3, and the Layer 4 headers differ in sequence number. There's only a single header for the entire HTTP request/response, even if the request/response is split across packets. With HTTP, there's no longer a one-to-one correlation from one request/response to one packet.
+Зауважте, що запити/відповіді HTTP не обов'язково вміщуються в один пакет. HTTP побудовано поверх потоку байтів TCP, тож один запит чи відповідь HTTP може розбиватися на кілька пакетів TCP/IP, де кожен пакет має однакові заголовки рівнів 1–3, а заголовки рівня 4 відрізняються порядковим номером. Для всього запиту/відповіді HTTP є лише один заголовок, навіть якщо запит/відповідь розбито на кілька пакетів. З HTTP більше немає відповідності «один до одного» між одним запитом/відповіддю й одним пакетом.
 
 
-## Sockets
+## Сокети
 
-If you're a user visiting a website in your browser, you don't need to write any code to run the application (HTTP) over the Internet. However, if you were a programmer writing your own application, you probably need to write some code to interact with the network.
+Якщо ви користувач, що відвідує вебсайт у браузері, вам не потрібно писати жодного коду, щоб запускати застосунок (HTTP) через Інтернет. Однак якби ви були програмістом, що пише власний застосунок, вам, мабуть, довелося б написати певний код для взаємодії з мережею.
 
-The **socket** abstraction gives programmers a convenient way to interact with the network. The socket abstraction exists entirely in software, and there are five basic operations that programmers can run:
+Абстракція **сокета** (socket) дає програмістам зручний спосіб взаємодіяти з мережею. Абстракція сокета існує повністю програмно, і є п'ять базових операцій, які можуть виконувати програмісти:
 
-We can **create** a new socket, corresponding to a new connection. In an object-oriented language like Java, this could be a constructor call.
+Ми можемо **створити** (create) новий сокет, що відповідає новому з'єднанню. В об'єктно-орієнтованій мові на кшталт Java це може бути виклик конструктора.
 
-We can call **connect**, which initiates a TCP connection to some remote machine. This is useful if we're the client in a client-server connection.
+Ми можемо викликати **connect**, що ініціює з'єднання TCP з певною віддаленою машиною. Це корисно, якщо ми клієнт у з'єднанні «клієнт–сервер».
 
-We can call **listen** on a specific port. This does not start a connection, but allows others to initiate a connection with us on the specified port.
+Ми можемо викликати **listen** на певному порту. Це не розпочинає з'єднання, а дає іншим змогу ініціювати з нами з'єднання на вказаному порту.
 
-Once the connection is open, we can call **write** to send some bytes on the connection. We can also call **read**, which takes one argument N, to read N bytes from the connection.
+Щойно з'єднання відкрито, ми можемо викликати **write**, щоб надіслати певні байти з'єднанням. Ми також можемо викликати **read**, що приймає один аргумент N, щоб прочитати N байтів зі з'єднання.
 
-This socket abstraction gives programmers a way to write applications without thinking about lower-level abstractions like TCP, IP, or Ethernet.
+Ця абстракція сокета дає програмістам змогу писати застосунки, не думаючи про низькорівневі абстракції на кшталт TCP, IP чи Ethernet.
 
-From the operating system perspective, each socket is associated with a Layer 4 port number. All packets to and from a single socket have the same port number, and the operating system can use the port number to de-multiplex and send packets to the correct socket.
-
-
-## Layers in the OS
-
-In hardware, Layers 1 and 2 are implemented on your computer's hardware Network Interface Card (NIC). Layers 3 and 4 are implemented in the networking stack in the operating system. The Layer 7 applications are implemented in software. The benefit of putting Layers 3 and 4 in the OS is, the applications don't have to worry about re-implementing them every time.
-
-With this division of labor, the application just needs to think about data. The NIC just needs to think about packets. The network stack in the OS translates between connections and packets.
+З погляду операційної системи кожен сокет пов'язаний із номером порту рівня 4. Усі пакети до одного сокета й від нього мають той самий номер порту, і операційна система може використовувати номер порту, щоб демультиплексувати й надсилати пакети правильному сокету.
 
 
-## Viewing Packets
+## Рівні в ОС
 
-Tools like tshark and wireshark exist if you want to look at packets being sent across the network. These tools are useful when debugging the networking part of your code.
+В апаратному забезпеченні рівні 1 і 2 реалізовано на апаратній мережевій карті (Network Interface Card, NIC) вашого комп'ютера. Рівні 3 і 4 реалізовано в мережевому стеку операційної системи. Застосунки рівня 7 реалізовано програмно. Перевага розміщення рівнів 3 і 4 в ОС полягає в тому, що застосункам не треба щоразу реалізовувати їх заново.
 
-In your browser, you can also use the Network tab of the inspect element console to view data being sent and received.
-
-If you actually looked the raw packets being sent across the network, you'll see some real-world complexities that we didn't cover in our end-to-end walkthrough. For example, packets might be encrypted and sent over TLS. Also, if we're using HTTP/3.0, packets might be sent over QUIC (the UDP variant optimized for HTTP) instead of TCP.
+За такого розподілу праці застосункові достатньо думати про дані. Мережевій карті достатньо думати про пакети. Мережевий стек в ОС виконує перетворення між з'єднаннями й пакетами.
 
 
-## Revisiting Layering
+## Перегляд пакетів
 
-The full end-to-end picture lets us see why layering is a useful principle for building the network. We were able to solve specific problems at a single layer, without thinking about all the layers at the same time.
+Якщо ви хочете подивитися на пакети, що надсилаються мережею, існують інструменти на кшталт tshark і wireshark. Ці інструменти корисні під час налагодження мережевої частини вашого коду.
 
-In fact, we haven't discussed Layer 1 at all in this class. We didn't talk about the electrical engineering or physics required to send signals across a wire. However, we were still able to build the other layers on top of Layer 1, without knowing exactly how Layer 1 works.
+У браузері ви також можете використати вкладку Network (Мережа) в консолі інструментів розробника, щоб переглядати дані, що надсилаються й отримуються.
 
-In this class, we've discussed HTTP as the predominant Layer 7 protocol, but HTTP is a relatively simple protocol. It's possible that multiple applications want to build the same complicated functionality on top of HTTP, but they don't want to each write the code for that functionality independently. To support this, we can actually build further protocols on top of HTTP, so that programmers don't always have to start from scratch with HTTP.
+Якби ви справді подивилися на сирі пакети, що надсилаються мережею, ви побачили б певні реальні складнощі, які ми не розглядали в нашому наскрізному розборі. Наприклад, пакети можуть бути зашифровані й надсилатися через TLS. Крім того, якщо ми використовуємо HTTP/3.0, пакети можуть надсилатися через QUIC (варіант UDP, оптимізований для HTTP), а не через TCP.
 
-One example of a protocol above Layer 7 is a remote procedure call (RPC) library. This allows a programmer to write some code, where some of the functions actually execute on a different computer elsewhere in the network. It would be annoying if everyone had to write RPC on top of HTTP from scratch, so instead, libraries like Apache Thrift and gRPC exist to abstract even more details away from the programmer.
+
+## Повернення до рівнів
+
+Повна наскрізна картина дає змогу побачити, чому розбиття на рівні — корисний принцип побудови мережі. Ми змогли розв'язувати конкретні задачі на одному рівні, не думаючи про всі рівні одночасно.
+
+Насправді в цьому курсі ми взагалі не обговорювали рівень 1. Ми не говорили про електротехніку чи фізику, потрібну для передавання сигналів дротом. Однак ми однаково змогли побудувати інші рівні поверх рівня 1, не знаючи точно, як працює рівень 1.
+
+У цьому курсі ми обговорювали HTTP як переважний протокол рівня 7, але HTTP — відносно простий протокол. Можливо, кілька застосунків хочуть побудувати ту саму складну функціональність поверх HTTP, але не хочуть кожен окремо писати код для цієї функціональності. Щоб це підтримати, ми можемо насправді будувати подальші протоколи поверх HTTP, щоб програмістам не доводилося щоразу починати з нуля з HTTP.
+
+Один приклад протоколу над рівнем 7 — бібліотека віддаленого виклику процедур (remote procedure call, RPC). Вона дає програмістові змогу писати код, де деякі функції насправді виконуються на іншому комп'ютері деінде в мережі. Було б прикро, якби кожному доводилося писати RPC поверх HTTP з нуля, тож натомість існують бібліотеки на кшталт Apache Thrift і gRPC, які приховують від програміста ще більше подробиць.
 
 <img width="900px" src="/assets/end-to-end/5-083-layer8.png">
 
-Here's an example of some network code that a programmer might write. It programs a client to say hello to some remote server.
+Ось приклад мережевого коду, який може написати програміст. Він програмує клієнта привітатися з певним віддаленим сервером.
 
-Notice that all of the network protocols we discussed are completely hidden behind the two lines of calls to networking libraries. The programmer didn't have to think about HTTP, TCP, IP, Ethernet, ARP, DHCP, or any other lower-level protocol. It's still useful to know about these protocols if they go wrong, and understanding the protocols can help you optimize your code for specific protocols, but ultimately, layering is a very powerful tool for abstraction.
+Зверніть увагу, що всі мережеві протоколи, які ми обговорювали, повністю сховано за двома рядками викликів мережевих бібліотек. Програмістові не довелося думати про HTTP, TCP, IP, Ethernet, ARP, DHCP чи будь-який інший протокол нижчого рівня. Знати про ці протоколи однаково корисно на випадок, якщо щось піде не так, а розуміння протоколів може допомогти оптимізувати код під конкретні протоколи, але зрештою розбиття на рівні — дуже потужний інструмент абстракції.

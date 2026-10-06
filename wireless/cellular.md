@@ -1,324 +1,323 @@
 ---
-title: Cellular
-parent: Wireless
+title: Стільникові мережі
+parent: Бездротові мережі
 nav_order: 2
 layout: page-with-toc
 ---
 
-# Cellular
+# Стільникові мережі
 
-## Why Study Cellular?
+## Навіщо вивчати стільникові мережі?
 
-Wireless mobile connectivity is the modern standard. Your phone is be able to connect to the Internet while you're in a moving car.
+Бездротове мобільне підключення — сучасний стандарт. Ваш телефон може під'єднуватися до Інтернету, поки ви їдете в автомобілі.
 
-Traditional Internet networks can't support this. You might be able to move from your bedroom to your kitchen and still have Internet access. In that case, you're within range of your wireless home router, which is then connected via wires to the rest of the Internet. However, the traditional Internet doesn't offer seamless connections across wide distances (e.g. moving in a car).
+Традиційні мережі Інтернету цього не підтримують. Ви можете перейти зі спальні на кухню й однаково мати доступ до Інтернету. У такому разі ви в зоні дії свого бездротового домашнього маршрутизатора, який потім дротами під'єднаний до решти Інтернету. Однак традиційний Інтернет не пропонує безшовних з'єднань на великих відстанях (наприклад, під час руху в автомобілі).
 
-There are many ways to implement wireless mobile connectivity, but cellular is the dominant access technology today. Over half of web traffic today originates from a cellular device!
+Є багато способів реалізувати бездротове мобільне підключення, але стільниковий зв'язок (cellular) — переважна технологія доступу сьогодні. Понад половина вебтрафіку сьогодні походить зі стільникових пристроїв!
 
-Cellular is just one of many technologies that can offer mobile wireless connectivity. Other technologies like satellite or free-space optics also exist, though cellular networks are still the dominant approach today.
+Стільниковий зв'язок — лише одна з багатьох технологій, що можуть забезпечувати мобільне бездротове підключення. Існують й інші технології, як-от супутниковий зв'язок чи оптичний зв'язок у вільному просторі, хоча стільникові мережі досі є переважним підходом сьогодні.
 
-In the future, high-performance applications that require wireless mobile technology, like self-driving cars or virtual reality, could lead to more innovation. Current cellular networks might get prohibitively expensive as we try to scale them up to support future applications. Also, cellular network operators like AT&T and Verizon don't have a reputation for rapid innovation. The general consensus is that this is an area ripe for disruption in the near future, and is an active area of research.
+У майбутньому високопродуктивні застосунки, що потребують бездротових мобільних технологій, як-от безпілотні автомобілі чи віртуальна реальність, можуть привести до більших інновацій. Поточні стільникові мережі можуть стати непомірно дорогими, коли ми намагатимемося масштабувати їх для підтримки майбутніх застосунків. Крім того, оператори стільникових мереж на кшталт AT&T і Verizon не мають репутації швидких новаторів. Загальний консенсус полягає в тому, що ця галузь дозріла для докорінних змін у найближчому майбутньому, і це активна галузь досліджень.
 
 <img width="700px" src="/assets/wireless/8-029-cellular-taxonomy.png">
 
 
-## Brief History of Cellular Networks
+## Коротка історія стільникових мереж
 
-Cellular technology has its roots in the old telephone system. Cellular networks were first developed to allow users to make phone calls wirelessly, instead of on a wired landline. The first mobile phone was sold in 1983 for \$4,000 (way more today, after inflation).
+Стільникова технологія корінням сягає старої телефонної системи. Стільникові мережі спершу розробили, щоб користувачі могли телефонувати бездротово, а не стаціонарною дротовою лінією. Перший мобільний телефон продали в 1983 році за \$4000 (з урахуванням інфляції сьогодні це набагато більше).
 
 <img width="900px" class="real-photo" src="/assets/wireless/8-030-first-phone.png">
 
-Because cellular technology was derived from the telephone network (not the Internet), many of the design choices differ from the traditional Internet. For many years, cellular technology (e.g. pre-smartphone cell phones for voice calls) and the Internet developed in parallel, each with a different set of architectural choices.
+Оскільки стільникова технологія походить із телефонної мережі (а не з Інтернету), багато проєктних рішень відрізняються від традиційного Інтернету. Багато років стільникова технологія (наприклад, мобільні телефони до смартфонів для голосових дзвінків) і Інтернет розвивалися паралельно, кожна зі своїм набором архітектурних рішень.
 
-For example, the cellular network uses resource reservations, while the modern Internet uses packet switching. Cellular networks often thinks in terms of individual users, while the Internet mostly thinks in terms of individual flows or packets. The business model of cellular networks (e.g. charge user by the minute) is different from the Internet, which generally doesn't keep track of usage as much.
+Наприклад, стільникова мережа використовує резервування ресурсів, а сучасний Інтернет — комутацію пакетів. Стільникові мережі часто мислять у термінах окремих користувачів, а Інтернет здебільшого — у термінах окремих потоків чи пакетів. Бізнес-модель стільникових мереж (наприклад, тарифікація користувача поштучно за хвилину) відрізняється від Інтернету, який загалом не так ретельно відстежує використання.
 
-In recent years, cellular networks have emerged to be more compatible with the traditional Internet. Today, you can think of a cellular network as a specialized Layer 2 local network that can interact with the rest of the traditional TCP/IP Internet.
+Останніми роками стільникові мережі стали сумісніші з традиційним Інтернетом. Сьогодні стільникову мережу можна уявляти як спеціалізовану локальну мережу рівня 2, що може взаємодіяти з рештою традиційного Інтернету TCP/IP.
 
 
-## Cellular Standards
+## Стільникові стандарти
 
-In the traditional Internet, we saw that standards bodies help us standardize protocols like TCP and IP. The cellular network also has many standards bodies that cooperate to generate a standard.
+У традиційному Інтернеті ми бачили, що органи стандартизації допомагають стандартизувати протоколи на кшталт TCP і IP. Стільникова мережа теж має багато органів стандартизації, які співпрацюють, щоб створити стандарт.
 
-In some ways, the cellular network standards bodies have more real-life political complexity than the Internet standards bodies. In order to aciheve interoperability, all manufacturers of cell phones, and all network operators (e.g. Verizon building cell towers), need to agree on protocols, all the way down to the physical layer.
+Певною мірою органи стандартизації стільникових мереж мають більше реальної політичної складності, ніж органи стандартизації Інтернету. Щоб досягти сумісності, усі виробники мобільних телефонів і всі мережеві оператори (наприклад, Verizon, що будує вежі зв'язку) мають домовитися про протоколи аж до фізичного рівня.
 
-The key standards body in the cellular world is the 3GPP (3rd Generation Partnership Project). The large equipment vendors and telecommunications companies all participate in this organization. The 3GPP proposes standards, which are then forwarded to the ITU (International Telecom Union). The ITU is part of the United Nations, and every country gets a vote, so there's some politics involved in standards as well. (Fun fact: Every country gets one vote, so the US can get out-voted by the European Union.)
+Ключовий орган стандартизації у світі стільникового зв'язку — 3GPP (3rd Generation Partnership Project). У цій організації беруть участь великі постачальники обладнання й телекомунікаційні компанії. 3GPP пропонує стандарти, які потім передаються до ITU (Міжнародного союзу електрозв'язку, International Telecom Union). ITU — частина Організації Об'єднаних Націй, і кожна країна має голос, тож у стандартах присутня й певна політика. (Цікавий факт: кожна країна має один голос, тож Європейський Союз може переголосувати США.)
 
-Typically, a new technology generation is introduced every 10 years. Now you know what the numbers in 2G, 3G, 4G, and 5G represent (generations of cellular technology). The 5G network was defined around 2020, and operators are still working on deploying the technology. Planning for the 6G standard will start in the next few years (late 2020s).
+Зазвичай нове покоління технологій запроваджують кожні 10 років. Тепер ви знаєте, що означають числа в 2G, 3G, 4G і 5G (покоління стільникової технології). Мережу 5G визначили близько 2020 року, і оператори досі працюють над розгортанням цієї технології. Планування стандарту 6G почнеться в найближчі кілька років (наприкінці 2020-х).
 
-Each generation tries to improve on the previous generation along multiple dimensions, including peak theoretical data rate, average data rate experienced by users, mobility (connection while user is traveling at a high speed), connection density (number of devices within a specific area), and so on. Each generation usually operates around 10 times better than the previous generation, along all these dimensions.
+Кожне покоління намагається покращити попереднє за кількома вимірами, зокрема пікову теоретичну швидкість передачі даних, середню швидкість, яку відчувають користувачі, мобільність (з'єднання, поки користувач рухається з високою швидкістю), щільність з'єднань (кількість пристроїв на певній території) тощо. Кожне покоління зазвичай працює приблизно в 10 разів краще за попереднє за всіма цими вимірами.
 
 <img width="900px" src="/assets/wireless/8-031-cellular-generations.png">
 
-In addition to performance improvements, the architectural design has also evolved across generations, to move away from the telephone network design and towards the Internet design. 1G phones were purely analog, designed for voice calls. 2G/3G was still mostly circuit-switched, with a focus on voice traffic (a bit of texting, barely any Internet traffic). From 4G onwards, we've moved to a packet-switched architecture, and voice is now just one of many applications running over the network.
+Окрім покращень продуктивності, від покоління до покоління еволюціонував і архітектурний дизайн, відходячи від дизайну телефонної мережі в бік дизайну Інтернету. Телефони 1G були суто аналоговими, призначеними для голосових дзвінків. 2G/3G досі здебільшого використовували комутацію каналів із зосередженням на голосовому трафіку (трохи текстових повідомлень, майже жодного інтернет-трафіку). Починаючи з 4G, ми перейшли до архітектури з комутацією пакетів, і голос тепер — лише один із багатьох застосунків, що працюють мережею.
 
-Cellular specifications are thousands of pages and include hundreds of documents, and pretty much no one actually reads them in full. One inconvenient feature of these standards is that everything gets renamed when we move from one generation to the next. For example, cellular towers have been called a "base station", "nodeB", "evolved NodeB (eNodeB)", and a "next-gen Node B (gNB)," all meaning the same thing. In this class, we'll invent our own terminology to make the names more intuitive. If you look through a textbook or a specification, you might see different names, but the ideas we'll see should generally be conceptually consistent with textbooks and specs.
-
-
-## Key Challenge: Mobility
-
-The key challenge that makes cellular networks hard is mobility. Remember, think of mobility as your phone playing a video as you're moving down the freeway (don't watch videos while driving though). There are four fundamental challenges that we'll study:
-
-1. Discovery: As I'm moving, how do I know which cell tower to connect to?
-
-2. Authentication: The AT&T tower may only offer want to offer connectivity to its own customers, but not other customers. How does the cell tower achieve this?
-
-3. Seamless communication: If I move out of range of one tower, and into the range of a different cell tower, my connection should be seamless, with no disruption.
-
-4. Accountability: If the customer only paid for 6GB of data, the network should stop offering the customer connectivity (or offer worse connectivity) after the customer has exceeded their limit. This requirement comes from the old cellular network (pay per minute of a voice call), and still exists because resources in cellular networks are scarce.
+Специфікації стільникового зв'язку складаються з тисяч сторінок і сотень документів, і практично ніхто не читає їх повністю. Одна незручна особливість цих стандартів полягає в тому, що під час переходу від одного покоління до наступного все перейменовують. Наприклад, вежі стільникового зв'язку називали «базовою станцією» (base station), «nodeB», «evolved NodeB (eNodeB)» і «next-gen Node B (gNB)», і все це означає одне й те саме. У цьому курсі ми вигадаємо власну термінологію, щоб назви були інтуїтивнішими. Якщо ви переглядатимете підручник чи специфікацію, ви можете побачити інші назви, але ідеї, які ми побачимо, загалом мають концептуально узгоджуватися з підручниками й специфікаціями.
 
 
-## Infrastructure Components: Radio Towers
+## Ключовий виклик: мобільність
 
-What are the components of a cellular network? First, there's the radio tower.
+Ключовий виклик, що робить стільникові мережі складними, — мобільність. Пам'ятайте: уявляйте мобільність як ваш телефон, що відтворює відео, поки ви рухаєтеся автострадою (утім, не дивіться відео за кермом). Є чотири фундаментальні виклики, які ми вивчатимемо:
 
-The radio tower has an antenna. Inside the tower is a radio transceiver, which converts digital bits to analog signals sent over the air interface.
+1. Виявлення: як, рухаючись, я дізнаюся, до якої вежі зв'язку під'єднатися?
 
-Also inside the tower is a radio controller, which decides how to allocate radio resources.
+2. Автентифікація: вежа AT&T може хотіти надавати підключення лише власним клієнтам, але не іншим. Як вежа зв'язку цього досягає?
+
+3. Безшовний зв'язок: якщо я виходжу із зони дії однієї вежі й потрапляю в зону дії іншої, моє з'єднання має бути безшовним, без переривань.
+
+4. Облік: якщо клієнт заплатив лише за 6 ГБ даних, мережа має припинити надавати клієнтові підключення (чи надавати гірше підключення) після того, як клієнт перевищив свій ліміт. Ця вимога походить зі старої стільникової мережі (оплата за хвилину голосового дзвінка) і досі існує, бо ресурси в стільникових мережах дефіцитні.
+
+
+## Компоненти інфраструктури: радіовежі
+
+Які компоненти має стільникова мережа? По-перше, є радіовежа.
+
+Радіовежа має антену. Усередині вежі розташований радіотрансивер, що перетворює цифрові біти на аналогові сигнали, які надсилаються через радіоінтерфейс.
+
+Також усередині вежі розташований радіоконтролер, який вирішує, як розподіляти радіоресурси.
 
 <img width="900px" class="real-photo" src="/assets/wireless/8-032-towers.png">
 
-You can think of the controller like a CPU running a scheduler. The controller allocates different segments of frequency and time to different customers, depending on demand and business model (e.g. how much the customer is paying). This is actually a pretty difficult scheduling problem, though we won't discuss further here.
+Контролер можна уявляти як процесор, що виконує планувальник. Контролер розподіляє різні ділянки частот і часу між різними клієнтами залежно від попиту й бізнес-моделі (наприклад, скільки платить клієнт). Насправді це доволі складна задача планування, хоча ми тут не обговорюватимемо її далі.
 
-Here's a simplified model of the radio controller allocating resources. Each colored rectangle shows us that a user (denoted by color) can use that specific frequency, at that specific time.
+Ось спрощена модель того, як радіоконтролер розподіляє ресурси. Кожен кольоровий прямокутник показує, що користувач (позначений кольором) може використовувати цю конкретну частоту в цей конкретний час.
 
 <img width="900px" src="/assets/wireless/8-033-scheduling.png">
 
-Each vertical cross-section represents one time slot, and shows you how the frequencies have been allocated to users in that cross-section. For example, in the first time slot, the blue user gets 3 frequency slots, the orange user gets 5 frequency slots, and the gray user gets 4 frequency slots.
+Кожен вертикальний переріз відповідає одному часовому слоту й показує, як частоти розподілено між користувачами в цьому перерізі. Наприклад, у першому часовому слоті синій користувач отримує 3 частотні слоти, помаранчевий — 5, а сірий — 4.
 
-Each horizontal cross-section represents one frequency, and shows you how that specific frequency is allocated to users over time. For example, the top row shows a frequency being allocated to gray, and later green, and later blue, and later red, and so on.
+Кожен горизонтальний переріз відповідає одній частоті й показує, як цю конкретну частоту розподілено між користувачами з плином часу. Наприклад, верхній рядок показує частоту, виділену сірому, потім зеленому, потім синьому, потім червоному тощо.
 
-Notice that this model is sharing resources using reservations, not best-effort. A user can only send in a frequency and time that's been allocated to them by the controller.
+Зверніть увагу, що ця модель розподіляє ресурси за допомогою резервування, а не без гарантій. Користувач може надсилати лише на частоті й у час, які йому виділив контролер.
 
-Radio controllers were traditionally installed in the tower or near the tower, though nowadays, there's been work to move controllers into the cloud for easier maintenance and management.
+Радіоконтролери традиційно встановлювали у вежі чи поруч із нею, хоча нині ведеться робота з перенесення контролерів у хмару для простішого обслуговування й керування.
 
-Each operator runs many cellular towers, spaced out over the entire country, so that users can connect to a tower no matter where they are. The result is a Radio Access Network (RAN).
+Кожен оператор обслуговує багато веж стільникового зв'язку, рознесених по всій країні, щоб користувачі могли під'єднатися до вежі, хоч би де вони були. Результат — мережа радіодоступу (Radio Access Network, RAN).
 
 <img width="400px" src="/assets/wireless/8-034-ran.png">
 
-Typically, each tower gets its own set of frequencies that it can use, and frequencies are assigned such that neighboring towers get different frequency ranges. This ensures that neighboring towers don't use the same frequencies and interfere with each other. In this picture, each color corresponds to one set of frequencies. It's possible that two towers both use the blue set of frequencies, but they aren't neighboring so they won't interfere. Any neighboring towers are using non-overlapping frequencies. Note that frequencies are often allocated according to demand, so that a cell tower in downtown San Francisco gets more frequencies than a cell tower in the middle of nowhere.
+Зазвичай кожна вежа отримує власний набір частот, які може використовувати, і частоти призначаються так, щоб сусідні вежі отримували різні діапазони частот. Це гарантує, що сусідні вежі не використовують ті самі частоти й не заважають одна одній. На цьому рисунку кожен колір відповідає одному набору частот. Дві вежі можуть обидві використовувати синій набір частот, але вони не сусідні, тож не заважатимуть одна одній. Будь-які сусідні вежі використовують частоти, що не перетинаються. Зауважте, що частоти часто виділяються відповідно до попиту, тож вежа зв'язку в центрі Сан-Франциско отримує більше частот, ніж вежа десь у глушині.
 
 
-## Infrastructure Components: Cellular Core
+## Компоненти інфраструктури: стільникове ядро
 
-A mobile user can now send data to a cell tower. The cell tower now needs to send that data to the rest of the Internet.
+Мобільний користувач тепер може надсилати дані вежі зв'язку. Тепер вежа зв'язку має надіслати ці дані решті Інтернету.
 
-Each cell tower has a wired connection to the cellular core. You can think of the cellular core as the backend infrastructure of the cellular network (not user-facing).
+Кожна вежа зв'язку має дротове з'єднання зі стільниковим ядром (cellular core). Стільникове ядро можна уявляти як внутрішню інфраструктуру стільникової мережі (не спрямовану до користувачів).
 
 <img width="900px" src="/assets/wireless/8-035-core.png">
 
-The cellular core contains some data-plane components. You can think of these like typical routers and switches that forward packets between the users (via towers) and the rest of the network. We'll focus on two special types of routers in the cellular core.
+Стільникове ядро містить певні компоненти площини даних. Їх можна уявляти як типові маршрутизатори й комутатори, що пересилають пакети між користувачами (через вежі) і рештою мережі. Ми зосередимося на двох спеціальних типах маршрутизаторів у стільниковому ядрі.
 
-The radio gateway is the boundary between the RAN (cell towers) and the cellular core. A cell tower forwards its data to one of these radio gateways. On the other end of the core, the packet gateway is the boundary between the cellular network and the rest of the Internet. Data from users eventually reaches the packet gateway and is sent out to the Internet as a standard TCP/IP packet.
+Радіошлюз (radio gateway) — межа між RAN (вежами зв'язку) і стільниковим ядром. Вежа зв'язку пересилає свої дані одному з цих радіошлюзів. На іншому кінці ядра пакетний шлюз (packet gateway) — межа між стільниковою мережею й рештою Інтернету. Дані від користувачів зрештою доходять до пакетного шлюзу й надсилаються в Інтернет як стандартний пакет TCP/IP.
 
-The cellular core also contains some control-plane components. We didn't have these in the traditional Internet. User traffic doesn't reach these components. We'll focus on two control-plane components.
+Стільникове ядро також містить певні компоненти площини керування. У традиційному Інтернеті їх не було. Користувацький трафік до цих компонентів не доходить. Ми зосередимося на двох компонентах площини керування.
 
-The database stores information about customers, such as: What devices does the customer own? What data plan does the customer have? Where is the customer's device right now (e.g. which tower is it connected to)?
+База даних зберігає інформацію про клієнтів, наприклад: якими пристроями володіє клієнт? Який у клієнта тарифний план? Де зараз пристрій клієнта (наприклад, до якої вежі він під'єднаний)?
 
-The mobility manager is a controller (think of it like a CPU) that manages network functionality. The manager helps us authenticate a user (e.g. check if they're really a Verizon customer). The manager also helps us update configurations as the user moves around.
+Менеджер мобільності (mobility manager) — контролер (уявляйте його як процесор), що керує функціональністю мережі. Менеджер допомагає автентифікувати користувача (наприклад, перевірити, чи справді він клієнт Verizon). Менеджер також допомагає оновлювати конфігурації, коли користувач переміщується.
 
-To summarize the infrastructure: User devices send data to cell towers in the RAN. The cell tower forwards the data to the radio gateway (entering the core). The data eventually reaches the packet gateway and gets forwarded to the Internet (exiting the core). Also in the core are control components (mobility manager, database) to store and manage information about customers.
+Підсумуємо інфраструктуру: пристрої користувачів надсилають дані вежам зв'язку в RAN. Вежа зв'язку пересилає дані радіошлюзу (входячи в ядро). Дані зрештою доходять до пакетного шлюзу й пересилаються в Інтернет (виходячи з ядра). Також у ядрі є компоненти керування (менеджер мобільності, база даних) для зберігання й керування інформацією про клієнтів.
 
 
-## High-Level Steps of Cellular Operation
+## Високорівневі кроки роботи стільникової мережі
 
-Step 0: Registration. The user registers for the cellular service. For example, you walk into a Verizon store and purchase a data plan and sign a contract. The operator now stores information about you and your service plan in the database.
+Крок 0: реєстрація. Користувач реєструється для отримання стільникових послуг. Наприклад, ви заходите в магазин Verizon, купуєте тарифний план і підписуєте договір. Тепер оператор зберігає інформацію про вас і ваш тарифний план у базі даних.
 
 <img width="900px" src="/assets/wireless/8-036-step0.png">
- 
-Step 1: Discovery. The user turns on their phone in the middle of nowhere. Their phone must discover which nearby towers are available, and must also pick a tower to use.
+
+Крок 1: виявлення. Користувач вмикає телефон десь у глушині. Його телефон має виявити, які розташовані поруч вежі доступні, а також обрати вежу для використання.
 
 <img width="900px" src="/assets/wireless/8-037-step1.png">
 
-Step 2: Attachment. After picking a tower, the user's device tells the tower that it wants to connect. The tower must ask the mobility manager if the connection is allowed (e.g. check if the user has exceeded their quota).
+Крок 2: під'єднання. Обравши вежу, пристрій користувача каже вежі, що хоче під'єднатися. Вежа має запитати в менеджера мобільності, чи дозволено з'єднання (наприклад, перевірити, чи не перевищив користувач свою квоту).
 
 <img width="900px" src="/assets/wireless/8-038-step2.png">
 
-If the authentication checks out, then the mobility manager configures the tower and the routers to establish a path from the user to the Internet (via the tower and the routers).
+Якщо автентифікація успішна, менеджер мобільності налаштовує вежу й маршрутизатори, щоб встановити шлях від користувача до Інтернету (через вежу й маршрутизатори).
 
 <img width="900px" src="/assets/wireless/8-039-step2-part2.png">
 
-Step 3: Data exchange. The user can now send and receive data along the path configured.
+Крок 3: обмін даними. Тепер користувач може надсилати й отримувати дані налаштованим шляхом.
 
 <img width="900px" src="/assets/wireless/8-040-step3.png">
 
-Step 4: Handover. As the user moves around, they might move away from their original tower, and closer to a new tower (in the same operator's RAN). The old tower, new tower, and the user's device all work together to decide if the user should switch towers.
+Крок 4: передавання обслуговування (handover). Коли користувач переміщується, він може віддалятися від своєї початкової вежі й наближатися до нової (у RAN того самого оператора). Стара вежа, нова вежа й пристрій користувача спільно вирішують, чи слід користувачеві перейти на іншу вежу.
 
 <img width="900px" src="/assets/wireless/8-041-step4.png">
 
-If everyone agrees that the user should switch towers, they tell the mobility manager, and the mobility manager re-configures the tower and the routers to establish a new path from the user to the Internet (now using the new tower, and possibly different routers too). This handoff must be seamless, which means the user could be sending and receiving data through the whole process, and shouldn't be disrupted. Achieving such a seamless handoff requires the network to constantly babysit the user device.
+Якщо всі погоджуються, що користувачеві слід перейти на іншу вежу, вони повідомляють менеджера мобільності, і менеджер мобільності переналаштовує вежу й маршрутизатори, щоб встановити новий шлях від користувача до Інтернету (тепер через нову вежу й, можливо, інші маршрутизатори). Це передавання має бути безшовним, тобто користувач може надсилати й отримувати дані протягом усього процесу, і його не повинно бути перервано. Досягнення такого безшовного передавання вимагає, щоб мережа постійно «доглядала» пристрій користувача.
 
 <img width="900px" src="/assets/wireless/8-042-step4-part2.png">
 
-Steps 3 and 4 can repeat as the user moves around, and the best router to use keeps changing.
+Кроки 3 і 4 можуть повторюватися, коли користувач переміщується, і найкращий маршрутизатор для використання постійно змінюється.
 
 <img width="900px" src="/assets/wireless/8-043-step4-part3.png">
 
-One final feature we need to implement is roaming. If the user goes to a different country like Germany, their operator (e.g. Verizon, US-based) might not have coverage in Germany. But, Verizon might sign a contract with Deutsche Telecom (an operator in Germany), to allow Verizon's customers to use Deutsche Telecom's infrastructure. This means that Deutsche Telecom might need to support not only its own users, but also users from other networks like Verizon.
+Остання функція, яку нам треба реалізувати, — роумінг. Якщо користувач їде до іншої країни, наприклад Німеччини, його оператор (наприклад, Verizon зі США) може не мати покриття в Німеччині. Але Verizon може підписати договір з Deutsche Telecom (оператором у Німеччині), щоб дозволити клієнтам Verizon користуватися інфраструктурою Deutsche Telecom. Це означає, що Deutsche Telecom, можливо, доведеться підтримувати не лише власних користувачів, а й користувачів з інших мереж, як-от Verizon.
 
 <img width="900px" src="/assets/wireless/8-044-step-roaming.png">
 
-The steps of connecting in a visiting network (while roaming) are generally pretty similar, except the mobility managers in the visited network and the home network must also coordinate with each other (e.g. Deutsche Telecom checks with Verizon to see if the user paid for roaming).
+Кроки під'єднання до відвідуваної мережі (у роумінгу) загалом доволі схожі, за винятком того, що менеджери мобільності у відвідуваній і домашній мережах також мають координуватися між собою (наприклад, Deutsche Telecom перевіряє у Verizon, чи сплатив користувач за роумінг).
 
 
-## Step 0: Registration
+## Крок 0: реєстрація
 
-When you register for a data plan, you receive an IMSI (International Mobile Subscriber Identity), which is a unique identifier associated with your subscription. This number is securely stored in hardware in a SIM card.
+Реєструючись на тарифний план, ви отримуєте IMSI (International Mobile Subscriber Identity, міжнародний ідентифікатор мобільного абонента) — унікальний ідентифікатор, пов'язаний із вашою підпискою. Це число надійно зберігається апаратно на SIM-картці.
 
-Note: This is why operators like Verizon give you a SIM card to insert into your phone. If you switch phones, but stay on the same plan, you just have to transfer the SIM card into your new phone, and now your new phone is associated with the same IMSI number. Or, if you switch plans, but use the same phone, you put a new SIM card in your phone, and now that phone is associated with a new IMSI number.
+Примітка: саме тому оператори на кшталт Verizon дають вам SIM-картку, щоб вставити її в телефон. Якщо ви змінюєте телефон, але залишаєтеся на тому самому тарифі, вам достатньо переставити SIM-картку в новий телефон, і тепер ваш новий телефон пов'язаний з тим самим номером IMSI. Або, якщо ви змінюєте тариф, але користуєтеся тим самим телефоном, ви вставляєте в телефон нову SIM-картку, і тепер цей телефон пов'язаний з новим номером IMSI.
 
-The first 3 digits of the IMSI are the Mobile Country Code, identifying a country. The next 2-3 digits are the Mobile Network Code, representing your service provider (e.g. Verizon, AT&T). The remaining digits are the Mobile Subscriber Identification Number, which identifies a specific user within that service provider. The IMSI overall cannot exceed 15 digits.
+Перші 3 цифри IMSI — мобільний код країни (Mobile Country Code), що ідентифікує країну. Наступні 2–3 цифри — код мобільної мережі (Mobile Network Code), що позначає вашого постачальника послуг (наприклад, Verizon, AT&T). Решта цифр — ідентифікаційний номер мобільного абонента (Mobile Subscriber Identification Number), що ідентифікує конкретного користувача в межах цього постачальника послуг. Загалом IMSI не може перевищувати 15 цифр.
 
 <img width="600px" src="/assets/wireless/8-045-imsi.png">
 
-Note that the IMSI is not the same as an IP address. If you pay for a year-long data plan, you keep the same IMSI all year. But, each time you attach and connect to the network, you could get a different IP address.
+Зауважте, що IMSI — не те саме, що IP-адреса. Якщо ви платите за річний тарифний план, ви зберігаєте той самий IMSI весь рік. Але щоразу, під'єднуючись до мережі, ви можете отримувати іншу IP-адресу.
 
-There are two other identifiers used in cellular networks. They're distinct from the IMSI, and we won't cover them in a lot of detail. The IMEI (International Mobile Equipment Identity) uniquely identifies a physical device. The IMEI encodes the device manufacturer and model ("this is an iPhone 13"), and stays the same even if you change data plans. Or, if you have two phones covered by the same data plan, you'd have two IMEI numbers, but only a single IMSI.
+У стільникових мережах використовуються ще два ідентифікатори. Вони відрізняються від IMSI, і ми не розглядатимемо їх надто детально. IMEI (International Mobile Equipment Identity, міжнародний ідентифікатор мобільного обладнання) однозначно ідентифікує фізичний пристрій. IMEI кодує виробника й модель пристрою («це iPhone 13») і залишається тим самим, навіть якщо ви змінюєте тарифні плани. Або, якщо у вас два телефони, охоплені тим самим тарифним планом, у вас буде два номери IMEI, але лише один IMSI.
 
-The other identifier is your phone number. Again, this is distinct from the IMSI or IMEI, and the digits represent different things (e.g. your area code). The phone network will need to associate your phone number with a specific IMSI to determine your phone plan.
+Інший ідентифікатор — ваш номер телефону. Знову ж таки, він відрізняється від IMSI чи IMEI, і його цифри означають інше (наприклад, ваш код регіону). Телефонній мережі доведеться пов'язати ваш номер телефону з конкретним IMSI, щоб визначити ваш тарифний план.
 
-After you register and receive an IMSI, the operator (e.g. Verizon) stores your IMSI and information about your plan in the database.
+Після того як ви зареєструвалися й отримали IMSI, оператор (наприклад, Verizon) зберігає ваш IMSI й інформацію про ваш тариф у базі даних.
 
 <img width="600px" src="/assets/wireless/8-046-registration.png">
 
-During registration, the user's device (SIM card) and the operator (database) also agree on a shared secret key. This will be useful when we do attachment.
+Під час реєстрації пристрій користувача (SIM-картка) і оператор (база даних) також домовляються про спільний секретний ключ. Він знадобиться під час під'єднання.
 
+## Крок 1: виявлення
 
-## Step 1: Discovery
+Як пристрій користувача виявляє, які вежі в зоні досяжності й належать операторові користувача?
 
-How does the user device discover which towers are in range, and owned by the user's operator?
+Кожна вежа періодично передає маяки (beacons; вітальні повідомлення), повідомляючи всім у зоні дії, що вежа існує. Повідомлення-маяк також містить мережевого оператора (наприклад, «привіт, я вежа Verizon»), де оператора ідентифікує 2–3-цифровий код мобільної мережі. Пам'ятайте, IMSI пристрою (на SIM-картці) теж має код мобільної мережі, тож пристрій може перевірити: моя SIM-картка каже, що я в мережі 220, а маяк цієї вежі каже, що вона в мережі 220, тож я можу користуватися цією вежею.
 
-Each tower transmits periodic beacons (hello messages), telling everybody in range that the tower exists. The beacon message also includes the network operator (e.g. hello, I'm a Verizon tower), where the operator is identified by the 2-3 digit Mobile Network Code. Remember, the device's IMSI (on the SIM card) also has a Mobile Network Code, so the device can check: My SIM card says I'm in network 220, and this tower's beacon says it's in network 220, so I can use this tower.
+Маяк передається на певній частоті під назвою канал керування (control channel), щоб маяк не заважав передаванню даних. Кожен діапазон частот має власний пов'язаний канал керування. Пригадайте, що сусідні вежі мають діапазони частот, що не перетинаються, а отже, мають і різні канали керування (що запобігає завадам).
 
-The beacon is transmitted on a specific frequency called the control channel, so that the beacon doesn't interfere with data transmissions. Each frequency range has its own associated control channel. Recall that neighboring towers have non-overlapping frequency ranges, which also means they have different control channels (avoids interference).
-
-The user's device might hear many beacons. The user measures the signal strength to different towers, and picks the tower (belonging to its operator) with the best signal.
+Пристрій користувача може чути багато маяків. Користувач вимірює силу сигналу до різних веж і обирає вежу (що належить його операторові) з найкращим сигналом.
 
 <img width="300px" src="/assets/wireless/8-047-discovery.png">
 
-There's one problem we have to solve. How does the user's device know which control channel to listen to? The device needs to tune in to the control channel in order to pick up the beacons. We have a bootstrapping problem.
+Є одна проблема, яку нам треба розв'язати. Як пристрій користувача знає, який канал керування слухати? Пристрій має налаштуватися на канал керування, щоб уловлювати маяки. У нас проблема початкового завантаження (bootstrapping).
 
-There are a few solutions to this problem. The device could just scan and try a bunch of frequencies (slow, but sometimes the only option). The operator might give the device a pre-configured list of control channels during registration. The device can also cache previously-used channels. 
+Є кілька розв'язків цієї проблеми. Пристрій може просто сканувати й пробувати купу частот (повільно, але іноді це єдиний варіант). Оператор може дати пристрою заздалегідь налаштований список каналів керування під час реєстрації. Пристрій також може кешувати раніше використані канали.
 
-Note that scanning for subsequent towers after discovery is not necessary. During handovers, the old tower will tell users exactly which data frequency to use on the new tower. This is why handovers (order of 0.01--0.1 seconds) are much faster than scanning during discovery (order of 10--100 seconds).
+Зауважте, що сканувати в пошуках наступних веж після виявлення не потрібно. Під час передавання обслуговування стара вежа точно скаже користувачам, яку частоту даних використовувати на новій вежі. Саме тому передавання обслуговування (порядку 0,01–0,1 секунди) набагато швидше за сканування під час виявлення (порядку 10–100 секунд).
 
 
-## Step 2: Attachment
+## Крок 2: під'єднання
 
-1. Once a user has discovered a tower, it sends an attach request to that tower. The user includes its IMSI (subscriber ID) in the request.
+1. Щойно користувач виявив вежу, він надсилає цій вежі запит на під'єднання (attach request). Користувач включає в запит свій IMSI (ідентифікатор абонента).
 
-2. The tower must then send the request to the mobility manager, which actually processes the request.
+2. Потім вежа має надіслати запит менеджеру мобільності, який фактично обробляє запит.
 
-3. The manager looks up the IMSI in the database to learn the details about the user's service plan. The manager also performs authentication cryptographic details omitted) by using the secret key known by the device and the manager (in its database).
+3. Менеджер шукає IMSI в базі даних, щоб дізнатися подробиці тарифного плану користувача. Менеджер також виконує автентифікацію (криптографічні подробиці опущено), використовуючи секретний ключ, відомий пристрою й менеджерові (у його базі даних).
 
-If the authentication succeeds, we know the user is who they say they are. If the database lookup also shows that the user is eligible for service, then the manager approves the attach request.
+Якщо автентифікація успішна, ми знаємо, що користувач — той, за кого себе видає. Якщо пошук у базі даних також показує, що користувач має право на обслуговування, менеджер схвалює запит на під'єднання.
 
 <img width="700px" src="/assets/wireless/8-048-attachment1.png">
 
-4. After the attach request is approved, the mobility manager now has to configure the data plane to give the user connectivity. First, the manager assigns an IP address to the device. Then, the the manager configures the tower, telling the tower radio controller how many resources to allocate for this user. The manager also configures the tower and the routers to create a path between the device and the Internet. Finally, the manager initializes counters and shapers to keep track of the device's Internet usage.
+4. Після схвалення запиту на під'єднання менеджер мобільності тепер має налаштувати площину даних, щоб надати користувачеві підключення. Спершу менеджер призначає пристрою IP-адресу. Потім менеджер налаштовує вежу, кажучи радіоконтролеру вежі, скільки ресурсів виділити цьому користувачеві. Менеджер також налаштовує вежу й маршрутизатори, щоб створити шлях між пристроєм та Інтернетом. Нарешті менеджер ініціалізує лічильники й формувачі трафіку (shapers), щоб відстежувати використання Інтернету пристроєм.
 
-After setting up the user's connectivity, the manager finishes by recording the user's location information in the database. Specifically, the database maps the user's IMSI to its IP address and the path it's using (which tower, which gateways).
+Налаштувавши підключення користувача, менеджер наостанок записує інформацію про розташування користувача в базу даних. Конкретно, база даних відображає IMSI користувача на його IP-адресу й шлях, який він використовує (яка вежа, які шлюзи).
 
 <img width="700px" src="/assets/wireless/8-049-attachment2.png">
 
-Note that the entire attachment process occurs over control channels. We haven't assigned any frequencies to the user yet, so the user has to use dedicated control channels to communicate.
+Зауважте, що весь процес під'єднання відбувається через канали керування. Ми ще не призначили користувачеві жодних частот, тож для спілкування користувач мусить використовувати виділені канали керування.
 
 <img width="700px" src="/assets/wireless/8-050-attachment3.png">
 
 
-## Step 3: Data Exchange
+## Крок 3: обмін даними
 
-At this point, the network is configured so that the device can use its IP address to send and receive messages.
+На цьому етапі мережу налаштовано так, що пристрій може використовувати свою IP-адресу для надсилання й отримання повідомлень.
 
 <img width="900px" src="/assets/wireless/8-051-exchange1.png">
 
-How does the cellular network (tower, radio gateway, tower gateway) know how to forward packets? Users are constantly moving, so if we ran a traditional routing algorithm like distance-vector, routes would never converge.
+Як стільникова мережа (вежа, радіошлюз, шлюз вежі) знає, як пересилати пакети? Користувачі постійно рухаються, тож якби ми виконували традиційний алгоритм маршрутизації на кшталт дистанційно-векторного, маршрути ніколи б не збігалися.
 
-Instead, the manager will create a path between the device and the Internet using tunnels. Remember, the packet's path is from the device, to the tower, to the radio gateway, to the packet gateway.
+Натомість менеджер створить шлях між пристроєм та Інтернетом за допомогою тунелів (tunnels). Пам'ятайте, шлях пакета пролягає від пристрою до вежі, до радіошлюзу, до пакетного шлюзу.
 
-Conceptually, to implement the tunnel, we'll tell the tower: If you get a packet from the user, send it this way (into the blue tunnel). On the other side of the wired link, the packets will exit the blue tunnel and arrive at the radio gateway. We'll then tell the radio gateway: If you get a packet exiting the tunnel, send it this way (into the green tunnel). Packets then travel through the green tunnel and arrive at the packet gateway, who can forward the packet into the Internet.
+Концептуально, щоб реалізувати тунель, ми скажемо вежі: якщо ти отримуєш пакет від користувача, надсилай його ось так (у синій тунель). На іншому кінці дротового каналу пакети виходять із синього тунелю й надходять до радіошлюзу. Потім ми скажемо радіошлюзу: якщо ти отримуєш пакет, що виходить із тунелю, надсилай його ось так (у зелений тунель). Потім пакети проходять зеленим тунелем і надходять до пакетного шлюзу, який може переслати пакет в Інтернет.
 
 <img width="900px" src="/assets/wireless/8-052-exchange2.png">
 
-Incoming packets also travel through the tunnels. We tell the packet gateway: If you get a packet bound for User A, send it into the green tunnel (toward the radio gateway). We also tell the radio gateway: If you get a packet exiting the green tunnel, send it into the blue tunnel (toward the tower).
+Вхідні пакети теж проходять тунелями. Ми кажемо пакетному шлюзу: якщо ти отримуєш пакет, призначений користувачеві A, надсилай його в зелений тунель (до радіошлюзу). Ми також кажемо радіошлюзу: якщо ти отримуєш пакет, що виходить із зеленого тунелю, надсилай його в синій тунель (до вежі).
 
-Notice that none of the network components are running a routing protocol to find paths. Instead, the manager is telling the routers how to forward packets. Each user will need their own set of tunnels, so the network is storing per-user state (e.g. one table entry for each connected user).
+Зверніть увагу, що жоден із мережевих компонентів не виконує протоколу маршрутизації для пошуку шляхів. Натомість менеджер каже маршрутизаторам, як пересилати пакети. Кожному користувачеві знадобиться власний набір тунелів, тож мережа зберігає стан для кожного користувача (наприклад, по одному запису таблиці на кожного під'єднаного користувача).
 
-How do we actually implement these rules? For example, how does the radio gateway know when an incoming packet is coming out of the blue tunnel? We can use encapsulation. When entering a tunnel, we can add a new header, indicating that the packet is traveling through that tunnel (e.g. "this packet is traveling through the blue tunnel"). On the other end, when the packet exits the tunnel, the gateway looks at the extra header and knows which tunnel the packet came from. The gateway can then use this information to decide where to forward the packet next.
+Як насправді реалізувати ці правила? Наприклад, як радіошлюз знає, коли вхідний пакет виходить із синього тунелю? Можна використати інкапсуляцію. Входячи в тунель, ми можемо додати новий заголовок, що вказує, що пакет іде цим тунелем (наприклад, «цей пакет іде синім тунелем»). На іншому кінці, коли пакет виходить із тунелю, шлюз дивиться на додатковий заголовок і знає, з якого тунелю надійшов пакет. Потім шлюз може використати цю інформацію, щоб вирішити, куди переслати пакет далі.
 
 <img width="900px" src="/assets/wireless/8-053-exchange3.png">
 
-Notice that with tunnels and encapsulation, the routers are never forwarding based on the user's IP. The user is always moving around, so we can't use their IP to determine their location. Instead, we have to use these pre-configured tunnels to decide where to forward the packet.
+Зверніть увагу, що з тунелями й інкапсуляцією маршрутизатори ніколи не пересилають на основі IP-адреси користувача. Користувач постійно переміщується, тож ми не можемо використовувати його IP-адресу для визначення його розташування. Натомість для вирішення, куди пересилати пакет, нам доводиться використовувати ці заздалегідь налаштовані тунелі.
 
 
-## Step 4: Handover
+## Крок 4: передавання обслуговування
 
-What happens if the user moves from one tower to another? Let's look at a (slightly simplified) protocol. We'll call the towers old and new, and move from the old tower to the new tower.
+Що відбувається, якщо користувач переходить від однієї вежі до іншої? Розгляньмо (дещо спрощений) протокол. Назвемо вежі старою й новою; ми переходимо від старої вежі до нової.
 
 <img width="900px" src="/assets/wireless/8-054-handover1.png">
 
-1. Your device is constantly measuring its signal strength to the old tower, and reporting that strength to the old tower. At some point, the old tower will say: Your signal strength is too low. Here are some nearby towers (owned by the same operator) and their corresponding control channel frequencies. Can you measure your signal strength to these nearby towers?
+1. Ваш пристрій постійно вимірює силу свого сигналу до старої вежі й повідомляє цю силу старій вежі. У певний момент стара вежа скаже: сила вашого сигналу занизька. Ось кілька розташованих поруч веж (що належать тому самому операторові) і відповідні частоти їхніх каналів керування. Чи можете ви виміряти силу свого сигналу до цих розташованих поруч веж?
 
-2. Your device measures the signal strength to the nearby towers, and reports those values to the old tower. The old tower will pick the best new tower, based on whatever policy the operator wants.
+2. Ваш пристрій вимірює силу сигналу до розташованих поруч веж і повідомляє ці значення старій вежі. Стара вежа обере найкращу нову вежу відповідно до будь-якої політики, яку хоче оператор.
 
-3. The old tower tells the new tower: The user is coming your way. This causes the new tower to allocate some frequency resources to the user.
+3. Стара вежа каже новій: користувач прямує до тебе. Це змушує нову вежу виділити користувачеві певні частотні ресурси.
 
-4. The new tower tells the old tower which frequency resources have been allocated.
+4. Нова вежа повідомляє старій, які частотні ресурси виділено.
 
-5. The old tower tells the user: Connect to the new tower, using these frequencies.
+5. Стара вежа каже користувачеві: під'єднайся до нової вежі, використовуючи ці частоти.
 
-6. The new tower reports to the mobility manager: I am the new tower for the user. The manager updates its database with the user's new location. The manager also updates the tunnels to create a new path between the user and the Internet (via a new tower, and also possibly via new radio and packet gateways).
+6. Нова вежа повідомляє менеджера мобільності: я нова вежа для цього користувача. Менеджер оновлює свою базу даних новим розташуванням користувача. Менеджер також оновлює тунелі, щоб створити новий шлях між користувачем та Інтернетом (через нову вежу, а також, можливо, через нові радіо- й пакетні шлюзи).
 
-7. Finally, the new tower tells the old tower that handover is complete.
+7. Нарешті нова вежа повідомляє старій, що передавання обслуговування завершено.
 
-Why was the handover process so complicated? Remember, we want to give the user seamless communication, with no interruption as they move between towers. This requires cooperation between the user, the old and new towers, the mobility manager, and the gateways.
+Чому процес передавання обслуговування такий складний? Пам'ятайте, ми хочемо дати користувачеві безшовний зв'язок без переривань, коли він переходить між вежами. Це вимагає співпраці між користувачем, старою й новою вежами, менеджером мобільності та шлюзами.
 
-Seamless communication is difficult because the handover process is not atomic. The user is still sending and receiving data while the handover is ongoing. For example, outside servers replying to the user might have sent a bunch of incoming packets to the old tower. During the handoff, the old tower continues to buffer any data it receives for that user. After the handoff, the old tower can send that buffered data to the new tower, which forwards that data to the user. Notice that traditional TCP/IP networks didn't need to buffer data like this. This type of buffering is a new feature added for seamless handovers as the user moves around.
+Безшовний зв'язок складний, бо процес передавання обслуговування не атомарний. Користувач продовжує надсилати й отримувати дані, поки триває передавання обслуговування. Наприклад, зовнішні сервери, що відповідають користувачеві, могли надіслати купу вхідних пакетів старій вежі. Під час передавання стара вежа продовжує буферизувати будь-які отримані дані для цього користувача. Після передавання стара вежа може надіслати ці буферизовані дані новій вежі, яка пересилає ці дані користувачеві. Зверніть увагу, що традиційним мережам TCP/IP не потрібно було так буферизувати дані. Такий тип буферизації — нова функція, додана для безшовного передавання обслуговування, коли користувач переміщується.
 
-Notice that the decisions in this handover process are always made by the operator. The device doesn't get to choose the next tower to use. The benefit of this design is, it gives the operator more control. For example, if a tower is overloaded, the operator can load-balance and send the user to a different tower. Or, if some users are prioritized over others, the operator can send less-prioritized users to worse towers. The drawback of this design is, it's a bit slower and requires more round-trips and more complexity.
+Зверніть увагу, що рішення в цьому процесі передавання обслуговування завжди ухвалює оператор. Пристрій не обирає наступну вежу для використання. Перевага такого дизайну в тому, що він дає операторові більше контролю. Наприклад, якщо вежа перевантажена, оператор може балансувати навантаження й направити користувача до іншої вежі. Або, якщо одним користувачам надається пріоритет над іншими, оператор може направляти менш пріоритетних користувачів до гірших веж. Недолік такого дизайну в тому, що він дещо повільніший і потребує більше кругових обігів і більшої складності.
 
-Notice that the user's IP address remains unchanged during the handoff. We just updated the tunnels so that packets destined for the user's IP go through a different path.
+Зверніть увагу, що IP-адреса користувача під час передавання не змінюється. Ми лише оновили тунелі, щоб пакети, призначені для IP-адреси користувача, ішли іншим шляхом.
 
-Handovers are complicated and require updating the per-user state in the network. If the number of users increases, or users move around really quickly, this protocol encounters scaling challenges. And yet, the modern cellular network works pretty well at scale, because so much work has gone into optimizing these protocols. That's why the standards specifications are often thousands of pages long!
+Передавання обслуговування складні й потребують оновлення стану кожного користувача в мережі. Якщо кількість користувачів зростає або користувачі переміщуються справді швидко, цей протокол стикається з проблемами масштабування. І все ж сучасна стільникова мережа доволі добре працює в масштабі, бо в оптимізацію цих протоколів вкладено дуже багато роботи. Саме тому специфікації стандартів часто мають тисячі сторінок!
 
 
-## Roaming
+## Роумінг
 
-Recall that a user can roam and connect to a different network if they're visiting another country (or any place where their own operator doesn't have coverage).
+Пригадайте, що користувач може перебувати в роумінгу й під'єднуватися до іншої мережі, якщо відвідує іншу країну (чи будь-яке місце, де його власний оператор не має покриття).
 
-The connection process (discovery, attachment, handover) in a visiting network is generally pretty similar to connecting in the home network. The main difference is, the mobility manager in the visitor network must communicate back to the mobility manager in the home network.
+Процес під'єднання (виявлення, під'єднання, передавання обслуговування) у відвідуваній мережі загалом доволі схожий на під'єднання в домашній мережі. Головна відмінність у тому, що менеджер мобільності у відвідуваній мережі має спілкуватися з менеджером мобільності в домашній мережі.
 
-For example, the visitor needs to ask the home for help in authenticating the user (check if the user has paid for roaming). Also, the visitor needs to send tracking data back to the home network, so that the home network knows the user's location.
+Наприклад, відвідувана мережа має попросити домашню допомогти автентифікувати користувача (перевірити, чи сплатив користувач за роумінг). Крім того, відвідувана мережа має надсилати дані відстеження назад домашній мережі, щоб домашня мережа знала розташування користувача.
 
-How does the visitor know where the home network is? Remember, during attachment, the device presents its IMSI, and the IMSI contains a Mobile Network Code which identifies the user's operator.
+Як відвідувана мережа знає, де домашня мережа? Пам'ятайте, під час під'єднання пристрій пред'являє свій IMSI, а IMSI містить код мобільної мережі, що ідентифікує оператора користувача.
 
-There are two different approaches to set up tunnels between the user and the Internet.
+Є два різні підходи до налаштування тунелів між користувачем та Інтернетом.
 
-In the home routing approach, traffic is tunneled through the home network's packet gateway. This means that all packets must travel from the visiting network back to the home network, before getting forwarded to the wider Internet. This is beneficial because it lets the home network's packet gateway can track the user. One drawback is, if you're a USA-based user, you roam in Germany, and you want to access a website in Germany, your packet must travel from Germany, back to the USA gateway, and then back to Germany.
+За підходу домашньої маршрутизації (home routing) трафік тунелюється через пакетний шлюз домашньої мережі. Це означає, що всі пакети мають пройти з відвідуваної мережі назад до домашньої, перш ніж їх буде переслано в ширший Інтернет. Це корисно, бо дає змогу пакетному шлюзу домашньої мережі відстежувати користувача. Один недолік: якщо ви користувач зі США, перебуваєте в роумінгу в Німеччині і хочете отримати доступ до вебсайту в Німеччині, ваш пакет мусить пройти з Німеччини назад до шлюзу в США, а потім знову до Німеччини.
 
 <img width="900px" src="/assets/wireless/8-055-roaming1.png">
 
-In the local breakout approach, traffic is tunneled through the visiting network's packet gateway. This can shorten the route between the user and the Internet, since packets don't have to travel all the way back to the home network first. However, this can make accounting for the user's usage more complicated, since the roaming network must now do the accounting and send the data back to the home network.
+За підходу локального виходу (local breakout) трафік тунелюється через пакетний шлюз відвідуваної мережі. Це може скоротити маршрут між користувачем та Інтернетом, бо пакетам не треба спершу проходити весь шлях назад до домашньої мережі. Однак це може ускладнити облік використання користувачем, бо тепер облік має вести мережа роумінгу й надсилати дані назад домашній мережі.
 
 <img width="900px" src="/assets/wireless/8-056-roaming2.png">
 
 
-## Additional Operations
+## Додаткові операції
 
-We've seen some of the key operations in cellular networks, but other operations exist as well.
+Ми розглянули деякі ключові операції в стільникових мережах, але існують й інші операції.
 
-Lawful intercept is a legal requirement for all cellular operators. This allows a government with a search warrant to wiretap your connection and listen to the packets you're sending.
+Законне перехоплення (lawful intercept) — юридична вимога до всіх стільникових операторів. Воно дає уряду з ордером на обшук змогу прослуховувати ваше з'єднання й читати пакети, які ви надсилаєте.
 
-Stolen phone registries allow a user to report their phone as stolen. Then, if the thief tries to connect your stolen phone to the network, the operator (manager and database) notice that the phone is stolen, and can try to track down the phone. Here, the operator uses the IMEI (the ID number hard-coded into your phone) to identify the specific phone (regardless of the IMSI, the subscriber ID). Devices need to report their IMEI when they connect, allowing the operator to check if the phone is stolen.
+Реєстри викрадених телефонів дають користувачеві змогу повідомити, що його телефон викрадено. Тоді, якщо злодій спробує під'єднати ваш викрадений телефон до мережі, оператор (менеджер і база даних) помітить, що телефон викрадено, і може спробувати відстежити телефон. Тут оператор використовує IMEI (ідентифікаційний номер, жорстко записаний у ваш телефон), щоб ідентифікувати конкретний телефон (незалежно від IMSI, ідентифікатора абонента). Під час під'єднання пристрої мають повідомляти свій IMEI, що дає операторові змогу перевірити, чи не викрадено телефон.
 
-These additional operations are possible because the operator has centralized control, keeping track of all the users and their locations.
+Ці додаткові операції можливі, бо оператор має централізований контроль, відстежуючи всіх користувачів і їхні розташування.
 
 
-## Cellular Network Design Reflections
+## Роздуми про дизайн стільникових мереж
 
-As we noted earlier, cellular networks have different fundamental goals and design choices, compared to the traditional Internet. For example, we saw that authentication and accounting are central goals of the cellular network, even though these were not goals in the traditional Internet. We also saw that allocation is based on reservations, and the network maintains per-user state that is dynamically changing.
+Як ми зазначали раніше, стільникові мережі мають інші фундаментальні цілі й проєктні рішення порівняно з традиційним Інтернетом. Наприклад, ми бачили, що автентифікація й облік — центральні цілі стільникової мережі, хоча в традиційному Інтернеті таких цілей не було. Ми також бачили, що розподіл ґрунтується на резервуванні, а мережа підтримує динамічно мінливий стан для кожного користувача.
 
-Using stateful reservation-based networks increased the complexity of our network. The various components had to constantly reconfigure tunnels as the user moved around.
+Використання мереж зі збереженням стану на основі резервування збільшило складність нашої мережі. Різним компонентам доводилося постійно переналаштовувати тунелі, коли користувач переміщувався.
 
-Let's think about some possible alternate designs. Recall that handover was complicated because we wanted the user to keep the same IP address as they moved around. What if we instead changed the user's IP address on each handover? Now, the IP addresses actually reflect the user's location, and we could use traditional routing protocols again. However, higher-level protocols like TCP and HTTP will break. Remember, TCP relies on the two connecting users keep the same IP address.
+Подумаймо про деякі можливі альтернативні проєкти. Пригадайте, що передавання обслуговування було складним, бо ми хотіли, щоб користувач зберігав ту саму IP-адресу, переміщуючись. А що, як натомість змінювати IP-адресу користувача за кожного передавання обслуговування? Тепер IP-адреси справді відображають розташування користувача, і ми знову могли б використовувати традиційні протоколи маршрутизації. Однак протоколи вищих рівнів на кшталт TCP і HTTP зламаються. Пам'ятайте, TCP спирається на те, що два з'єднані користувачі зберігають ту саму IP-адресу.
 
-Using the same IP address increases complexity, but changing IP addresses breaks TCP. One possible solution is to use a different transport-level protocol that allows changing IP addresses, like QUIC (developed at Google). Then, even though the IP addresses are changing, we can use the flow label field in the IPv6 header to label all the packets in a flow.
+Використання тієї самої IP-адреси збільшує складність, а зміна IP-адрес ламає TCP. Одне можливе рішення — використовувати інший протокол транспортного рівня, що дозволяє змінювати IP-адреси, як-от QUIC (розроблений у Google). Тоді, хоча IP-адреси змінюються, ми можемо використовувати поле мітки потоку в заголовку IPv6, щоб позначати всі пакети потоку.

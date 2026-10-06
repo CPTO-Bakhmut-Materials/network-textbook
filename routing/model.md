@@ -1,140 +1,140 @@
 ---
-title: Model for Intra-Domain Routing
-parent: Routing
+title: Модель внутрішньодоменної маршрутизації
+parent: Маршрутизація
 nav_order: 2
 layout: page-with-toc
 ---
 
-# Model for Intra-Domain Routing
+# Модель внутрішньодоменної маршрутизації
 
-## Modeling the Network as a Graph
+## Моделювання мережі як графа
 
-Let's create a simplified model of the Internet to help us formally define the routing problem.
+Створімо спрощену модель Інтернету, яка допоможе нам формально визначити задачу маршрутизації.
 
-Recall from the previous unit that we can think of the Internet as a set of machines, connected together with a set of links, where each link connects two of the machines on the network.
+Пригадайте з попереднього розділу, що Інтернет можна уявляти як множину машин, з'єднаних множиною каналів, де кожен канал з'єднує дві машини мережі.
 
 <img width="900px" src="/assets/routing/2-002-network-of-networks.png">
 
-We can represent the network topology as a graph, where each node represents a machine, and each edge between two nodes represents a link between two machines.
+Топологію мережі можна подати у вигляді графа, де кожна вершина відповідає машині, а кожне ребро між двома вершинами — каналу між двома машинами.
 
-Historically, sometimes links could connect more than two machines, but in modern networks, links essentially always connect exactly two machines.
+Історично канали іноді з'єднували більше ніж дві машини, але в сучасних мережах канали фактично завжди з'єднують рівно дві машини.
 
-## Full Mesh Network Topology
+## Топологія повнозв'язної мережі
 
-Suppose we have two machines, A and B. If the two machines want to exchange messages, we could add a link between them.
+Припустімо, у нас є дві машини, A і B. Якщо ці дві машини хочуть обмінюватися повідомленнями, ми можемо додати між ними канал.
 
-But what if we had five machines instead of two? One possible approach is to create a link between every pair of machines, such that every machine is connected to every other machine. This is sometimes called a full mesh topology.
+А що, як у нас п'ять машин замість двох? Один можливий підхід — створити канал між кожною парою машин, щоб кожна машина була з'єднана з кожною іншою. Таку топологію іноді називають повнозв'язною (full mesh).
 
 <img width="300px" src="/assets/routing/2-005-mesh.png">
 
-What are some drawbacks of this approach?
+Які недоліки має такий підхід?
 
-This approach doesn't scale well. If we tried to scale this to the size of the modern Internet, we'd need a wire connecting every pair of computers in the world. When a new computer joins the network, we'd have create new links between that computer and every other computer in the world.
+Цей підхід погано масштабується. Якби ми спробували масштабувати його до розміру сучасного Інтернету, нам знадобився б дріт між кожною парою комп'ютерів у світі. Коли до мережі приєднується новий комп'ютер, довелося б створювати нові канали між цим комп'ютером і кожним іншим комп'ютером у світі.
 
-Although it can't scale to the entire Internet, there are still some benefits to a a full mesh topology in smaller settings. In particular, having links between every pair of machines gives us a lot of bandwidth on the network. Every machine has a dedicated link to all other machines, and each pair of machines can use the full bandwidth on their dedicated link.
+Хоча повнозв'язна топологія не масштабується на весь Інтернет, у менших умовах вона все ж має певні переваги. Зокрема, канали між кожною парою машин дають нам велику пропускну здатність у мережі. Кожна машина має виділений канал до всіх інших машин, і кожна пара машин може використовувати повну пропускну здатність свого виділеного каналу.
 
-In general, there is no guarantee that each machine has a direct link to all other links. In other words, there is no guarantee that the underlying graph is fully-connected.
+Загалом немає гарантії, що кожна машина має прямий канал до всіх інших машин. Іншими словами, немає гарантії, що базовий граф є повним.
 
-## Single-Link Network Topology
+## Топологія з одним каналом
 
-In addition to the full mesh topology, there are other ways in which we can deploy links to connect up multiple machines. For example, we could use a single link to connect up all five machines:
+Окрім повнозв'язної топології, є й інші способи розгортання каналів для з'єднання кількох машин. Наприклад, ми можемо з'єднати всі п'ять машин одним каналом:
 
 <img width="300px" src="/assets/routing/2-006-single-link.png">
 
-(Here, we're temporarily breaking the assumption that a link connects only two machines, by considering a link that connects more than two machines.)
+(Тут ми тимчасово порушуємо припущення, що канал з'єднує лише дві машини, розглядаючи канал, який з'єднує більше двох машин.)
 
-This approach would scale better than the full mesh topology. For example, if a new computer joined the network, instead of creating five new links between the new computer and the five existing computers, we can just extend the existing wire to the new computer.
+Такий підхід масштабувався б краще за повнозв'язну топологію. Наприклад, якщо до мережі приєднується новий комп'ютер, то замість створення п'яти нових каналів між новим комп'ютером і п'ятьма наявними ми можемо просто подовжити наявний дріт до нового комп'ютера.
 
-However, this approach is more limited in the amount of bandwidth available to the machines. In particular, there is only a single link, and all five machines need to share the bandwidth on this link.
+Однак за такого підходу машинам доступно менше пропускної здатності. Зокрема, канал лише один, і всі п'ять машин мають ділити між собою його пропускну здатність.
 
-In order to create more sophisticated network topologies, we will need to introduce the idea of a router.
+Щоб створювати складніші мережеві топології, нам знадобиться ідея маршрутизатора.
 
-## Routers and Hosts
+## Маршрутизатори та хости
 
-In our simplified model, we'll classify every machine as being one of two types.
+У нашій спрощеній моделі ми відноситимемо кожну машину до одного з двох типів.
 
-**End hosts** are machines connecting to the Internet to send and receive data. Examples of end hosts include applications on your own personal computer, such as your web browser. Web servers, such as a Google web server receiving Google search queries and sending back search results, are also end hosts. These machines send outgoing packets to other destinations, and could be the final destination for incoming packets. However, these machines usually do not receive and forward intermediate packets (i.e. packets with some different final destination).
+**Кінцеві хости** (end hosts) — це машини, які під'єднуються до Інтернету, щоб надсилати й отримувати дані. Прикладами кінцевих хостів є застосунки на вашому персональному комп'ютері, як-от веббраузер. Вебсервери, наприклад вебсервер Google, що отримує пошукові запити й повертає результати пошуку, — теж кінцеві хости. Ці машини надсилають вихідні пакети іншим адресатам і можуть бути кінцевим пунктом призначення для вхідних пакетів. Однак зазвичай ці машини не отримують і не пересилають транзитних пакетів (тобто пакетів з іншим кінцевим пунктом призначення).
 
-**Routers**, by contrast, are machines connected to the Internet responsible for receiving and forwarding intermediate packets closer to their final destination. For example, consider the router installed in your home network, or routers living in a data center building somewhere. These machines usually do not create and send new packets of their own, and they usually are not the final destination for packets. For example, in your daily Internet use, you might want to send packets to a Google web server to perform a search, but you probably don't need to send a message directly to your home router or a data center. Those routers will help you forward your packet toward Google, but they are not the final destination of your packet.
+**Маршрутизатори** (routers), натомість, — це під'єднані до Інтернету машини, які відповідають за отримання та пересилання транзитних пакетів ближче до їхнього кінцевого пункту призначення. Наприклад, згадайте маршрутизатор, встановлений у вашій домашній мережі, або маршрутизатори десь у будівлі дата-центру. Ці машини зазвичай не створюють і не надсилають власних нових пакетів і зазвичай не є кінцевим пунктом призначення для пакетів. Наприклад, щоденно користуючись Інтернетом, ви можете надсилати пакети вебсерверу Google, щоб виконати пошук, але вам, імовірно, не потрібно надсилати повідомлення безпосередньо своєму домашньому маршрутизатору чи дата-центру. Ці маршрутизатори допоможуть переслати ваш пакет до Google, але вони не є кінцевим пунктом призначення вашого пакета.
 
 <img width="900px" src="/assets/routing/2-007-host-router.png">
 
-Depending on the network design, routers could be legal destinations, but in this unit, we'll ignore routers as destinations. However, do note that routers potentially can be sources and send new packets of their own.
+Залежно від конструкції мережі маршрутизатори можуть бути допустимими адресатами, але в цьому розділі ми не розглядатимемо маршрутизатори як адресатів. Утім, зверніть увагу, що маршрутизатори потенційно можуть бути джерелами й надсилати власні нові пакети.
 
-Routers are sometimes also called switches. There are historical differences between routers and switches, but nowadays, the terms are used interchangeably. In these notes, we'll use "router" when possible.
+Маршрутизатори іноді також називають комутаторами (switches). Історично між маршрутизаторами й комутаторами були відмінності, але нині ці терміни вживають як взаємозамінні. У цих матеріалах ми за можливості вживатимемо «маршрутизатор».
 
-In our graph model of the Internet, routers appear as intermediate nodes that are usually connected to multiple neighbors. End hosts appear as nodes that are usually connected to one or more routers. In practice, these assumptions aren't always true.
+У нашій графовій моделі Інтернету маршрутизатори є проміжними вершинами, які зазвичай з'єднані з кількома сусідами. Кінцеві хости — це вершини, які зазвичай з'єднані з одним чи кількома маршрутизаторами. На практиці ці припущення не завжди справджуються.
 
-In these notes, when possible, we'll always draw routers as squares and end hosts as circles. In practice, sometimes routers are represented by other symbols. For example, this is a common router symbol used in network diagrams:
+У цих матеріалах ми за можливості завжди зображатимемо маршрутизатори квадратами, а кінцеві хости — колами. На практиці маршрутизатори іноді позначають іншими символами. Наприклад, ось поширений символ маршрутизатора, який використовують на мережевих діаграмах:
 
 <img width="100px" src="/assets/routing/2-008-router-icon.png">
 
-## Network Topologies with Routers
+## Мережеві топології з маршрутизаторами
 
-Now that we have routers in addition to end hosts, we can create more complicated network topologies like this:
+Тепер, коли окрім кінцевих хостів у нас є маршрутизатори, ми можемо створювати складніші мережеві топології, як-от таку:
 
 <img width="400px" src="/assets/routing/2-009-router-topology.png">
 
-This topology lets us combine the benefits of the full-mesh and single-link topologies. In particular, this topology uses fewer links than the full mesh topology from earlier. Also, this topology has more bandwidth than the single link topology from earlier.
+Ця топологія дає змогу поєднати переваги повнозв'язної топології та топології з одним каналом. Зокрема, вона використовує менше каналів, ніж повнозв'язна топологія, яку ми розглядали раніше. Крім того, ця топологія має більшу пропускну здатність, ніж топологія з одним каналом.
 
-This topology is also more robust to failure. If a link goes down, the packet can take a different path through the network and still reach its destination.
+Ця топологія також стійкіша до відмов. Якщо канал виходить з ладу, пакет може пройти мережею іншим шляхом і все одно дістатися пункту призначення.
 
 <img width="900px" src="/assets/routing/2-010-different-path.png">
 
 
-## End Hosts in Routing
+## Кінцеві хости в маршрутизації
 
-Note that end hosts generally do not participate in routing protocols, since they don't forward intermediate packets. Instead, end hosts are often connected to a single router with a single link. By default, the end host sends all outgoing messages to the router, which will figure out how to send the packet to its final destination. This strategy of sending everything to the router is sometimes called the **default route** of the end host.
+Зауважте, що кінцеві хости зазвичай не беруть участі в протоколах маршрутизації, оскільки не пересилають транзитних пакетів. Натомість кінцеві хости часто під'єднані до одного маршрутизатора одним каналом. За замовчуванням кінцевий хост надсилає всі вихідні повідомлення маршрутизатору, який з'ясує, як надіслати пакет до кінцевого пункту призначення. Таку стратегію надсилання всього маршрутизатору іноді називають **маршрутом за замовчуванням** (default route) кінцевого хоста.
 
-When designing routing protocols, we often ignore end hosts, except as destinations (since the routers need to figure out how to reach different destinations).
+Проєктуючи протоколи маршрутизації, ми часто ігноруємо кінцеві хости, окрім як адресатів (бо маршрутизатори мають з'ясувати, як дістатися різних адресатів).
 
 
-## Packets
+## Пакети
 
-Recall from the previous unit that when an application wants to send data over the Internet, the application creates a packet containing the data. As the packet is passed to lower-layer protocols, additional headers are wrapped around the packet with metadata to help the packet reach its destination.
+Пригадайте з попереднього розділу: коли застосунок хоче надіслати дані через Інтернет, він створює пакет, що містить дані. Коли пакет передається протоколам нижчих рівнів, навколо нього загортаються додаткові заголовки з метаданими, які допомагають пакету дістатися пункту призначення.
 
-In the routing unit, we'll consider a simplified model where each packet has a header with metadata, and a payload with the application-level data. We'll ignore nested headers and multiple layers for now.
+У розділі про маршрутизацію ми розглядатимемо спрощену модель, де кожен пакет має заголовок із метаданими та корисне навантаження з даними рівня застосунку. Наразі ми ігноруватимемо вкладені заголовки й кілька рівнів.
 
-Routing protocols are not concerned with the application-level data. It doesn't matter whether the user is trying to send an image, or an HTML webpage, or an audio file; from the perspective of routing, we have a sequence of 1s and 0s, and we need a protocol to send those bits to their destination.
+Протоколи маршрутизації не цікавляться даними рівня застосунку. Байдуже, чи користувач намагається надіслати зображення, HTML-вебсторінку чи аудіофайл: з погляду маршрутизації в нас є послідовність одиниць і нулів, і нам потрібен протокол, щоб надіслати ці біти до пункту призначення.
 
-In the header, the main metadata field we're concerned with is the destination address. This tells us the final destination of the packet. When a router receives a packet, the router reads the metadata field in the header to determine how to send the packet towards its final destination. The problem of figuring out where to send the packet is the key problem we'll need to solve in routing.
+У заголовку основне поле метаданих, яке нас цікавить, — адреса призначення. Вона вказує кінцевий пункт призначення пакета. Коли маршрутизатор отримує пакет, він читає це поле метаданих у заголовку, щоб визначити, як надіслати пакет у напрямку кінцевого пункту призначення. Задача з'ясування, куди надіслати пакет, — ключова задача, яку нам доведеться розв'язати в маршрутизації.
 
 <img width="200px" src="/assets/routing/2-011-header.png">
 
-## Addressing
+## Адресація
 
-How do we write down the destination of the packet in the packet header? We'll need some way of addressing each machine on the network. In other words, we need a protocol that assigns an address to each machine on the network.
+Як записати пункт призначення пакета в його заголовку? Нам знадобиться якийсь спосіб адресувати кожну машину в мережі. Іншими словами, нам потрібен протокол, який призначає адресу кожній машині в мережі.
 
-Later in this unit, we'll discuss scalable approaches to addressing. For now, let's assign each machine a unique label (e.g. we could label three routers X, Y, and Z), and treat those labels as the addresses for each router. This will allow us to think about the routing problem and the addressing problem separately.
+Пізніше в цьому розділі ми обговоримо масштабовані підходи до адресації. А поки що призначмо кожній машині унікальну мітку (наприклад, ми можемо позначити три маршрутизатори як X, Y і Z) і вважатимемо ці мітки адресами маршрутизаторів. Це дасть змогу розглядати задачу маршрутизації та задачу адресації окремо.
 
-At this point, we can define the routing problem: When a router receives a packet, how does the router know where to forward the packet such that it will eventually arrive at the final destination?
+Тепер ми можемо визначити задачу маршрутизації: коли маршрутизатор отримує пакет, як він дізнається, куди переслати пакет, щоб той зрештою дістався кінцевого пункту призначення?
 
-## Network Topologies Change
+## Мережеві топології змінюються
 
-At this point, we have defined the routing problem, but there are still a few more practical considerations that make the routing problem difficult.
+Отже, ми визначили задачу маршрутизації, але є ще кілька практичних міркувань, які роблять її складною.
 
-If the Internet could be drawn as a fixed, constant graph that never changes, then perhaps we could solve the routing problem by simply looking at the graph and computing paths through the graph.
+Якби Інтернет можна було зобразити як фіксований незмінний граф, то, можливо, ми б розв'язали задачу маршрутизації, просто подивившись на граф і обчисливши шляхи в ньому.
 
-However, the network topology is constantly changing. For example, links might fail at unpredictable times. Now, packets must be sent along a different route in order to reach the destination.
+Однак топологія мережі постійно змінюється. Наприклад, канали можуть відмовляти в непередбачувані моменти. Тоді пакети доводиться надсилати іншим маршрутом, щоб дістатися пункту призначення.
 
-New links might also be added, creating additional paths that can be considered during routing.
+Можуть також додаватися нові канали, створюючи додаткові шляхи, які можна враховувати під час маршрутизації.
 
-The routing protocols we design need to be robust to these changing network topologies.
+Протоколи маршрутизації, які ми проєктуємо, мають бути стійкими до таких змін мережевої топології.
 
-## Routing Protocols are Distributed
+## Протоколи маршрутизації розподілені
 
-If the network changes, perhaps we could solve the routing problem by updating our graph and then computing paths through the new graph.
+Якщо мережа змінюється, можливо, ми могли б розв'язати задачу маршрутизації, оновивши наш граф і обчисливши шляхи в новому графі.
 
-Another problem that makes routing difficult is that routers don't inherently have a global, birds-eye view of the entire network. For example, if a link somewhere else in the network fails, there's no way for all routers to automatically know this. We will have to somehow propagate that information about the new network topology to the routers as part of our routing protocol.
+Ще одна проблема, яка ускладнює маршрутизацію, полягає в тому, що маршрутизатори за своєю природою не мають глобального погляду з висоти пташиного польоту на всю мережу. Наприклад, якщо десь в іншому місці мережі відмовить канал, усі маршрутизатори не можуть автоматично про це дізнатися. Нам доведеться якось поширювати цю інформацію про нову топологію мережі серед маршрутизаторів у межах нашого протоколу маршрутизації.
 
 <img width="900px" src="/assets/routing/2-012-non-global.png">
 
-This leads to routing protocols often being distributed protocols. Instead of a single central mastermind computing all the answers, each router must compute its own part of the answer (possibly without full knowledge of the network topology). Collectively, the answers computed by each router must form a global answer to the routing problem that allows packets to reach their end destination.
+Через це протоколи маршрутизації часто є розподіленими (distributed) протоколами. Замість одного центрального «мозку», що обчислює всі відповіді, кожен маршрутизатор має обчислювати власну частину відповіді (можливо, не маючи повного знання про топологію мережі). Разом відповіді, обчислені кожним маршрутизатором, мають утворювати глобальний розв'язок задачі маршрутизації, який дає пакетам змогу дістатися кінцевого пункту призначення.
 
-The distributed nature of routing protocols also means that we have to account for individual routers failing. If there was a single computer that was solving the problem, and that computer crashed and forgot the answer, we could simply make the computer re-compute the entire answer from scratch. However, in a distributed protocol, if one router crashes and forgets its part of the answer, our protocol will need to a way to help this one router recover from failure and re-learn its part of the answer.
+Розподілена природа протоколів маршрутизації також означає, що ми маємо враховувати відмови окремих маршрутизаторів. Якби задачу розв'язував один комп'ютер і цей комп'ютер аварійно завершив роботу й забув відповідь, ми могли б просто змусити комп'ютер обчислити всю відповідь заново. Однак у розподіленому протоколі, якщо один маршрутизатор аварійно завершить роботу й забуде свою частину відповіді, нашому протоколу знадобиться спосіб допомогти цьому маршрутизатору відновитися після відмови й заново дізнатися свою частину відповіді.
 
-## Links are Best-Effort
+## Канали працюють без гарантій
 
-Recall from the previous unit that protocols at Layer 3 and below are best-effort. In other words, when a packet is sent over a link, there is no guarantee that the packet reaches the destination. The link might drop the packet.
+Пригадайте з попереднього розділу, що протоколи рівня 3 і нижче працюють без гарантій (best-effort). Іншими словами, коли пакет надсилається каналом, немає гарантії, що пакет дістанеться пункту призначення. Канал може відкинути пакет.
 
-When designing routing protocols, we'll need to account for this problem as well.
+Проєктуючи протоколи маршрутизації, нам доведеться враховувати й цю проблему.

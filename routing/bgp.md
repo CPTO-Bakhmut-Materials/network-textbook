@@ -1,98 +1,98 @@
 ---
-title: Border Gateway Protocol (BGP)
-parent: Routing
+title: Протокол прикордонного шлюзу (BGP)
+parent: Маршрутизація
 nav_order: 9
 layout: page-with-toc
 ---
 
-# Border Gateway Protocol (BGP)
+# Протокол прикордонного шлюзу (BGP)
 
-## Brief History of BGP
+## Коротка історія BGP
 
-Least-cost routing protocols are closely related to the shortest-paths problem in graph theory, which has been studied in computer science even before the Internet existed. Dijkstra's algorithm is from 1956, and the Bellman-Ford algorithm is from 1958. When developing early routing protocols, designers could adapt the ideas from these algorithms.
+Протоколи маршрутизації з найменшою вартістю тісно пов'язані із задачею найкоротших шляхів у теорії графів, яку в комп'ютерних науках вивчали ще до появи Інтернету. Алгоритм Дейкстри датується 1956 роком, а алгоритм Беллмана–Форда — 1958 роком. Розробляючи ранні протоколи маршрутизації, проєктувальники могли адаптувати ідеї цих алгоритмів.
 
-In the early days, the Internet was a government-funded project, where the network was centrally controlled by the US Department of Defense. The notion of autonomous systems didn't exist yet, and least-cost algorithms could be scaled up to the small size of the early Internet. Eventually, as the Internet grew, the government transferred control over to different commercial entities, who had to develop inter-domain routing protocols on the fly.
+У перші роки Інтернет був державним проєктом, і мережею централізовано керувало Міністерство оборони США. Поняття автономних систем ще не існувало, і алгоритми з найменшою вартістю можна було масштабувати до невеликого розміру раннього Інтернету. Зрештою, коли Інтернет розрісся, уряд передав контроль різним комерційним суб'єктам, яким довелося розробляти протоколи міждоменної маршрутизації на ходу.
 
-Unlike the early least-cost routing protocols, the notion of autonomous systems each having their own private policies had no precedent in computer science. The ideas behind inter-domain routing protocols had to be developed on the fly in response to the needs of these new Internet companies.
+На відміну від ранніх протоколів маршрутизації з найменшою вартістю, поняття автономних систем, кожна з яких має власні приватні політики, не мало прецедентів у комп'ютерних науках. Ідеї, що лежать в основі протоколів міждоменної маршрутизації, доводилося розробляти на ходу у відповідь на потреби цих нових інтернет-компаній.
 
-BGP was created in 1989-1995, and its ad-hoc development process means that the protocol isn't perfect. If we could rewrite the protocol from scratch today, the result might look different. However, the protocol has proven to be effective and resilient, and is still the inter-domain routing protocol in use today. (Remember, everybody has to agree to use the same inter-domain routing protocol, so there is only one.)
-
-
-## BGP is based on Distance-Vector
-
-Recall that we saw two classes of intra-domain routing algorithms: distance-vector algorithms and link-state algorithms. When designing BGP, which class of algorithm would be a better starting point for our design?
-
-Remember that in BGP, we need to respect the privacy of individual ASes. If we used a link-state protocol, then every AS has to tell the entire network about its policies, so that everybody has the full knowledge to compute routes by themselves.
-
-Also, in BGP, we need to respect autonomy and allow each AS to make its own policy decisions. However, a link-state protocol requires everybody to compute routes in some consistent way (e.g. everyone agrees to use least-cost paths).
-
-Link-state algorithm don't respect the privacy or autonomy of ASes, so link-state would be a poor choice of algorithm to design BGP around. By contrast, distance-vector would allow every individual AS to make its own decisions about what routes to accept/reject, and what routes to announce. Also, because distance-vector is not a global protocol, each AS doesn't need to know about everyone else's policies in order to compute valid routes.
-
-Many core ideas in distance-vector protocols will still apply in BGP. The advertisements that we send and receive will still be specific to one destination. Just like in previous sections, we'll think about advertisements and routes for a single destination, but know that the protocol is being run for multiple destinations simultaneously.
-
-In both distance-vector protocols and BGP, each AS computes routes using only information from the advertisements it receives, without seeing a global picture of the network topology. Also, in both types of protocols, the AS will send and receive advertisements indefinitely, until everybody has converged on a set of routes.
-
-BGP follows the same core idea as distance-vector protocols, but with a slight change in terminology. Instead of saying that each AS announces or advertises routes, we say that the AS is **exporting** routes. Then, each AS listens to advertisements and selects its preferred route, which we'll call **importing** routes.
-
-Distance-vector is a good starting point, but what's missing?
-
-Distance-vector protocols are designed to find least-cost routes, but in BGP, we want routes to be decided based on each AS's individual policies.
+BGP було створено в 1989–1995 роках, і через стихійний процес розробки протокол не ідеальний. Якби сьогодні ми могли переписати протокол з нуля, результат міг би виглядати інакше. Однак протокол довів свою ефективність і стійкість і досі є протоколом міждоменної маршрутизації, що використовується сьогодні. (Пам'ятайте: усі мають погодитися використовувати той самий протокол міждоменної маршрутизації, тож він лише один.)
 
 
-## Policy-Based Importing and Exporting
+## BGP ґрунтується на дистанційно-векторному підході
 
-At a high level, in order to support policies, we will change the rules for importing and exporting routes. Each AS will only export (advertise) routes that the AS likes (according to its policy). Also, when importing (selecting) routes, the AS will select the best route according to policy, not distance.
+Пригадайте, що ми розглянули два класи алгоритмів внутрішньодоменної маршрутизації: дистанційно-векторні алгоритми та алгоритми стану каналів. Проєктуючи BGP, який клас алгоритмів був би кращою відправною точкою для нашого дизайну?
 
-When an AS receives multiple advertisements for the same destination, instead of picking the shortest route, the AS now selects (imports) a route based on policy.
+Пам'ятайте, що в BGP треба поважати приватність окремих AS. Якби ми використали протокол стану каналів, кожна AS мала б розповідати всій мережі про свої політики, щоб усі мали повне знання для самостійного обчислення маршрутів.
+
+Крім того, у BGP треба поважати автономію й дозволяти кожній AS ухвалювати власні рішення щодо політик. Однак протокол стану каналів вимагає, щоб усі обчислювали маршрути певним узгодженим чином (наприклад, усі погоджуються використовувати шляхи з найменшою вартістю).
+
+Алгоритми стану каналів не поважають приватності чи автономії AS, тож протокол стану каналів був би поганим вибором як основа для BGP. Натомість дистанційно-векторний підхід дозволив би кожній окремій AS ухвалювати власні рішення щодо того, які маршрути приймати/відхиляти і які маршрути оголошувати. Крім того, оскільки дистанційно-векторний протокол не є глобальним, кожній AS не потрібно знати про політики всіх інших, щоб обчислювати коректні маршрути.
+
+Багато ключових ідей дистанційно-векторних протоколів і далі застосовуватимуться в BGP. Оголошення, які ми надсилаємо й отримуємо, і далі стосуватимуться одного пункту призначення. Як і в попередніх розділах, ми розглядатимемо оголошення й маршрути для одного пункту призначення, пам'ятаючи, що протокол виконується одночасно для багатьох пунктів призначення.
+
+І в дистанційно-векторних протоколах, і в BGP кожна AS обчислює маршрути, використовуючи лише інформацію з отриманих оголошень, не бачачи глобальної картини топології мережі. Крім того, в обох типах протоколів AS безперервно надсилатиме й отримуватиме оголошення, доки всі не збіжаться до певного набору маршрутів.
+
+BGP дотримується тієї самої ключової ідеї, що й дистанційно-векторні протоколи, але з невеликою зміною термінології. Замість казати, що кожна AS оголошує маршрути, ми кажемо, що AS **експортує** (exporting) маршрути. Потім кожна AS слухає оголошення й обирає бажаний маршрут, що ми називатимемо **імпортом** (importing) маршрутів.
+
+Дистанційно-векторний підхід — добра відправна точка, але чого бракує?
+
+Дистанційно-векторні протоколи спроєктовано для пошуку маршрутів із найменшою вартістю, але в BGP ми хочемо, щоб маршрути визначалися на основі індивідуальних політик кожної AS.
+
+
+## Імпорт і експорт на основі політик
+
+На високому рівні, щоб підтримувати політики, ми змінимо правила імпорту й експорту маршрутів. Кожна AS експортуватиме (оголошуватиме) лише ті маршрути, які їй подобаються (згідно з її політикою). Крім того, імпортуючи (обираючи) маршрути, AS обиратиме найкращий маршрут згідно з політикою, а не відстанню.
+
+Коли AS отримує кілька оголошень для того самого пункту призначення, замість обирати найкоротший маршрут, вона тепер обирає (імпортує) маршрут на основі політики.
 
 <img width="500px" src="/assets/routing/2-153-import-export.png">
 
-Remember that advertisements propagate outward from the destination, and messages are forwarded closer to the destination (the opposite direction from advertisements). The import decision dictates where an AS is sending its outbound traffic. For example, if S hears advertisements from A, B, and C about the same destination, S's import decision (A or B or C) determines where packets for that destination will be forwarded.
+Пам'ятайте, що оголошення поширюються від пункту призначення назовні, а повідомлення пересилаються ближче до пункту призначення (у напрямку, протилежному оголошенням). Рішення про імпорт визначає, куди AS надсилає свій вихідний трафік. Наприклад, якщо S отримує оголошення від A, B і C про той самий пункт призначення, рішення S про імпорт (A, B чи C) визначає, куди пересилатимуться пакети для цього пункту призначення.
 
 <img width="900px" src="/assets/routing/2-154-import-policy.png">
 
-In the distance-vector protocol, when I receive an announcement and install a new route, I always announce this new route to all my neighbors.
+У дистанційно-векторному протоколі, коли я отримую оголошення й встановлюю новий маршрут, я завжди оголошую цей новий маршрут усім своїм сусідам.
 
-Now that ASes have their own policies, they can choose whether or not they want to participate in a route. If an AS has a route it potentially dislikes, it can now choose to not export that route to certain neighbors.
+Тепер, коли AS мають власні політики, вони можуть вирішувати, чи хочуть брати участь у маршруті. Якщо AS має маршрут, який їй потенційно не подобається, вона тепер може вирішити не експортувати цей маршрут певним сусідам.
 
-For example, suppose my policy is that I don't want to carry C's traffic. This could be because of monetary reasons, or it could be some other policy decision by me. When I accept an advertisement and install a route, it's okay if I don't advertise that route to C.
+Наприклад, припустімо, моя політика полягає в тому, що я не хочу переносити трафік C. Це може бути з грошових причин або через якесь інше моє рішення щодо політики. Коли я приймаю оголошення й встановлюю маршрут, цілком нормально, якщо я не оголошу цей маршрут C.
 
-Again, remember that data flows in the opposite direction from advertisements. The export decision dictates what inbound traffic an AS is willing to carry. If I export a route, I am agreeing to participate in this route and let other people forward packets to me along this route.
+Знову ж таки пам'ятайте, що дані течуть у напрямку, протилежному оголошенням. Рішення про експорт визначає, який вхідний трафік AS готова переносити. Якщо я експортую маршрут, я погоджуюся брати участь у цьому маршруті й дозволяю іншим пересилати мені пакети цим маршрутом.
 
-A consequence of this rule is, even if the underlying graph is connected (a path exists between any two nodes), it is not guaranteed that every AS can reach every other AS. In practice, we'll be able to guarantee reachability by establishing some conventions about the ASes' policies and the structure of the AS graph.
+Наслідок цього правила такий: навіть якщо базовий граф зв'язний (між будь-якими двома вершинами існує шлях), немає гарантії, що кожна AS може дістатися кожної іншої AS. На практиці ми зможемо гарантувати досяжність, встановивши певні домовленості щодо політик AS і структури графа AS.
 
 
-## Implementing Gao-Rexford Rules
+## Реалізація правил Гао–Рексфорда
 
-In general, BGP supports arbitrary policies, but arbitrary policies don't give us any guarantees that the Internet is fully connected (packets can go from any source to any destination).
+Загалом BGP підтримує довільні політики, але довільні політики не дають нам жодних гарантій, що Інтернет повністю зв'язний (пакети можуть дістатися від будь-якого джерела до будь-якого пункту призначення).
 
-Recall that the **Gao-Rexford rules** enforce a more restrictive set of policies, based on common money-based import and export policies. Nobody enforces that an AS must follow these rules. However, if ASes agree to follow these rules, we can make stronger assumptions about Internet connectivity.
+Пригадайте, що **правила Гао–Рексфорда** (Gao-Rexford rules) запроваджують обмеженіший набір політик, заснований на поширених грошових політиках імпорту й експорту. Ніхто не змушує AS дотримуватися цих правил. Однак якщо AS погоджуються їх дотримуватися, ми можемо робити сильніші припущення щодо зв'язності Інтернету.
 
-Brief history: The rules are named for Lixin Gao and Jennifer Rexford at AT&T in the 1990s. Back then, each AS made up their own policies on the fly. Gao and Rexford surveyed ASes about their policies to come up with these rules, and used them to prove guarantees about the Internet.
+Коротка історія: правила названо на честь Ліксінь Гао (Lixin Gao) і Дженніфер Рексфорд (Jennifer Rexford) з AT&T у 1990-х роках. Тоді кожна AS вигадувала власні політики на ходу. Гао і Рексфорд опитали AS щодо їхніх політик, щоб сформулювати ці правила, і використали їх для доведення гарантій щодо Інтернету.
 
-When importing routes, the Gao-Rexford rules say that the AS prefers to import a route advertised by a customer, over a route advertised by a peer, over a route advertised by a provider.
+Під час імпорту маршрутів правила Гао–Рексфорда кажуть, що AS надає перевагу імпорту маршруту, оголошеного клієнтом, перед маршрутом, оголошеним піром, а маршруту піра — перед маршрутом, оголошеним провайдером.
 
 <img width="900px" src="/assets/routing/2-154-import-policy.png">
 
-In practice, ASes also implement additional tiebreaking rules in addition to the Gao-Rexford rules. For example, if I receive advertisements from two customers, I need some additional tiebreaker to prefer one of them. Performance is a common tiebreaker, where we pick routes with higher bandwidth or shorter paths.
+На практиці AS на додачу до правил Гао–Рексфорда реалізують і додаткові правила розв'язання нічиїх. Наприклад, якщо я отримую оголошення від двох клієнтів, мені потрібне якесь додаткове правило, щоб надати перевагу одному з них. Поширеним критерієм є продуктивність: ми обираємо маршрути з більшою пропускною здатністю або коротшими шляхами.
 
-Based on the Gao-Rexford rules, how should we export paths? Recall that an AS agrees to participate in a route if at least one neighbor is a customer. Therefore, the AS should only advertise routes if the resulting route, if accepted, has a neighbor on one side.
+Як слід експортувати шляхи за правилами Гао–Рексфорда? Пригадайте, що AS погоджується брати участь у маршруті, якщо щонайменше один сусід — клієнт. Тому AS має оголошувати маршрути лише тоді, коли отриманий маршрут, якщо його приймуть, матиме клієнта з одного боку.
 
-Let's go through all the specific cases.
+Розгляньмо всі конкретні випадки.
 
-I receive and install a route from a customer. This means that the next hop on this route is that customer. Who should I export this route to? I've already guaranteed that there's a customer on one side paying me, so I can export this route to everybody (customers, providers, and peers).
+Я отримую й встановлюю маршрут від клієнта. Це означає, що наступний перехід на цьому маршруті — цей клієнт. Кому я маю експортувати цей маршрут? Я вже гарантував, що з одного боку є клієнт, який мені платить, тож я можу експортувати цей маршрут усім (клієнтам, провайдерам і пірам).
 
 <img width="900px" src="/assets/routing/2-155-export-policy1.png">
 
 <img width="900px" src="/assets/routing/2-156-export-policy2.png">
 
-I receive and install a route from a peer (the next hop is a peer). Who should I export this route to? Nobody is paying me yet, so I should only export this route to customers. If I export this route to a peer or provider who accepts, then I've created a route where neither side is paying me.
+Я отримую й встановлюю маршрут від піра (наступний перехід — пір). Кому я маю експортувати цей маршрут? Мені поки що ніхто не платить, тож я маю експортувати цей маршрут лише клієнтам. Якщо я експортую цей маршрут пірові чи провайдерові й той прийме його, я створю маршрут, де жодна сторона мені не платить.
 
 <img width="900px" src="/assets/routing/2-157-export-policy3.png">
 
 <img width="900px" src="/assets/routing/2-158-export-policy3.png">
 
-Similarly, if I receive and install a route from a provider, I should only export this route to customers, because I need at least one side to pay me, and the provider isn't paying.
+Аналогічно, якщо я отримую й встановлюю маршрут від провайдера, я маю експортувати цей маршрут лише клієнтам, бо мені потрібно, щоб щонайменше одна сторона мені платила, а провайдер не платить.
 
 <img width="900px" src="/assets/routing/2-159-export-policy5.png">
 
@@ -100,63 +100,63 @@ Similarly, if I receive and install a route from a provider, I should only expor
 
 <img width="800px" src="/assets/routing/2-161-export-policy7.png">
 
-The Gao-Rexford rules allow us to provably show that this statement is true: Assuming that the AS graph is hierarchical and acyclic, and all ASes follow the Gao-Rexford rules, then we can guarantee reachability and convergence in steady state.
+Правила Гао–Рексфорда дають змогу довести таке твердження: за умови, що граф AS ієрархічний і ациклічний, а всі AS дотримуються правил Гао–Рексфорда, можна гарантувати досяжність і збіжність в усталеному стані.
 
-Breaking down the specific terms in the statement: Reachability means that any two ASes in the graph can communicate. Convergence means that all ASes will eventually stop updating their paths, and the network will reach a steady state with valid paths between any two ASes. "In steady state" means that if the network topology changes, the paths might take some time to change and reach steady state again.
+Розберімо конкретні терміни твердження. Досяжність (reachability) означає, що будь-які дві AS у графі можуть спілкуватися. Збіжність (convergence) означає, що всі AS зрештою перестануть оновлювати свої шляхи, і мережа досягне усталеного стану з коректними шляхами між будь-якими двома AS. «В усталеному стані» означає, що якщо топологія мережі змінюється, шляхам може знадобитися певний час, щоб змінитися й знову досягти усталеного стану.
 
-Recall that hierarchical means that starting from any AS, moving up the hierarchy (from customers to providers) will lead to a Tier 1 AS. Acyclic means there is no cycle of customer-provider relationships (directed edges).
+Пригадайте, що ієрархічність означає: починаючи з будь-якої AS, рух угору ієрархією (від клієнтів до провайдерів) приведе до AS рівня 1. Ациклічність означає, що немає циклу відносин «клієнт–провайдер» (орієнтованих ребер).
 
-The proof of this statement requires that everybody follows the Gao-Rexford rules. If ASes were running their own arbitrary policies, the guarantees would no longer hold.
+Доведення цього твердження вимагає, щоб усі дотримувалися правил Гао–Рексфорда. Якби AS застосовували власні довільні політики, гарантії більше не виконувалися б.
 
 
-## Modification: BGP Aggregates Destinations
+## Модифікація: BGP агрегує пункти призначення
 
-There are two more modifications we need to make to the distance-vector protocol.
+Є ще дві модифікації, які нам треба внести в дистанційно-векторний протокол.
 
-In distance-vector protocols, we showed that each destination had a unique address, and the forwarding table mapped each destination to a next hop and distance.
+У дистанційно-векторних протоколах ми показували, що кожен пункт призначення мав унікальну адресу, а таблиця пересилання відображала кожен пункт призначення на наступний перехід і відстань.
 
-In BGP, each AS is addressed by a prefix, which indicates that all machines inside that AS share the same prefix.
+У BGP кожна AS адресується префіксом, що вказує, що всі машини всередині цієї AS мають спільний префікс.
 
-These forwarding tables could get very large (imagine if a provider had hundreds of customers), and every single destination would need to be described in a separate announcement. Is there any way we can express this forwarding table more concisely?
+Ці таблиці пересилання можуть стати дуже великими (уявіть, що провайдер має сотні клієнтів), і кожен пункт призначення довелося б описувати в окремому оголошенні. Чи можна якось висловити цю таблицю пересилання стисліше?
 
-To improve scalability, BGP allows ASes to **aggregate** multiple destinations into a single forwarding table entry, and announce a more general prefix that includes all of the destinations combined.
+Для покращення масштабованості BGP дозволяє AS **агрегувати** (aggregate) кілька пунктів призначення в один запис таблиці пересилання й оголошувати загальніший префікс, що охоплює всі ці пункти призначення разом.
 
 <img width="900px" src="/assets/routing/2-162-bgp-aggregation.png">
 
-Note that in practice, BGP has conventions on the size of the prefixes being announced. For example, ASes will not make an announcement for an individual IP address. 24-bit prefixes (blocks of 256 addresses) are usually the smallest unit of addresses that are announced.
+Зауважте, що на практиці в BGP є домовленості щодо розміру оголошуваних префіксів. Наприклад, AS не оголошуватимуть окрему IP-адресу. 24-бітові префікси (блоки з 256 адрес) зазвичай є найменшою одиницею адрес, яку оголошують.
 
 
-## Modification: Path-Vector Protocol
+## Модифікація: протокол вектора шляху
 
-In least-cost protocols such as distance vector, we didn't have to worry about loops. Every router was trying to find least-cost routes, and by definition, the least-cost route will not contain a loop.
+У протоколах із найменшою вартістю, як-от дистанційно-векторному, нам не доводилося перейматися петлями. Кожен маршрутизатор намагався знайти маршрути з найменшою вартістю, а маршрут із найменшою вартістю за визначенням не містить петлі.
 
-Now that each AS is choosing routes based on its own preferences, we've lost the guarantee of no loops. For example, suppose B likes paths through C, and C likes paths through B. We've created a routing loop!
+Тепер, коли кожна AS обирає маршрути на основі власних уподобань, ми втратили гарантію відсутності петель. Наприклад, припустімо, B подобаються шляхи через C, а C подобаються шляхи через B. Ми створили петлю маршрутизації!
 
 <img width="800px" src="/assets/routing/2-163-bgp-loop.png">
 
-To fix this problem, instead of the distance to destination, BGP announcements will include the full AS path to the destination. This changes the protocol from a distance-vector to a **path-vector** protocol.
+Щоб виправити цю проблему, замість відстані до пункту призначення оголошення BGP міститимуть повний шлях AS до пункту призначення. Це перетворює протокол із дистанційно-векторного на протокол **вектора шляху** (path-vector).
 
-For example, in a distance-vector protocol, A would announce: "I can reach the destination with cost 1." Then, B would announce: "I can reach the destination with cost 2."
+Наприклад, у дистанційно-векторному протоколі A оголосила б: «Я можу дістатися пункту призначення з вартістю 1». Потім B оголосила б: «Я можу дістатися пункту призначення з вартістю 2».
 
-In a path-vector protocol, A would announce: "I can reach the destination with the path [A]." Then, B would announce: "I can reach the destination with the path [B, A]."
+У протоколі вектора шляху A оголосила б: «Я можу дістатися пункту призначення шляхом [A]». Потім B оголосила б: «Я можу дістатися пункту призначення шляхом [B, A]».
 
-With this modification, ASes can determine whether an advertised path contains a loop by tracing through the path in the advertisement. Specifically, if I receive an advertisement, I just need to check if the path includes myself. That would cause the packet to be sent back to me, creating a loop, so I would ignore that advertisement and not accept or advertise the route with the loop.
+З цією модифікацією AS можуть визначати, чи містить оголошений шлях петлю, простежуючи шлях в оголошенні. Конкретно, якщо я отримую оголошення, мені достатньо перевірити, чи містить шлях мене самого. Це призвело б до того, що пакет надсилався б назад мені, утворюючи петлю, тож я проігнорував би таке оголошення й не прийняв і не оголосив би маршрут із петлею.
 
-Note: If everybody agrees to discard routes with loops, this guarantees that advertisements won't contain loops. The only way that an advertised route would create a loop is if I see a route that already includes myself, and the addition of myself is what creates the loop.
+Примітка: якщо всі погоджуються відкидати маршрути з петлями, це гарантує, що оголошення не міститимуть петель. Єдиний спосіб, у який оголошений маршрут створив би петлю, — якщо я бачу маршрут, що вже містить мене, і саме додавання мене створює петлю.
 
-The change from distance-vector to path-vector also allows ASes to implement arbitrary policies. In a distance-vector protocol, I might have a policy like "avoid AS#2063 when possible." If I receive an advertisement "I can reach the destination with cost 12," I have no idea if the path being advertised goes through AS#2063. If instead, the advertisement contained the entire path, I can check if the path goes through AS#2063 before deciding to accept or reject it.
+Перехід від дистанційно-векторного протоколу до протоколу вектора шляху також дає AS змогу реалізовувати довільні політики. У дистанційно-векторному протоколі в мене може бути політика на кшталт «за можливості уникати AS#2063». Якщо я отримую оголошення «Я можу дістатися пункту призначення з вартістю 12», я гадки не маю, чи проходить оголошений шлях через AS#2063. Якщо ж оголошення міститиме весь шлях, я можу перевірити, чи проходить шлях через AS#2063, перш ніж вирішити, приймати його чи відхиляти.
 
-Note: The conventional BGP import policy we saw earlier (prefer selecting routes that go to customers, over peers, over providers) only depends on the next hop, not the entire path. Still, the change to path-vector is useful for loop detection, and lets us generalize the protocol to arbitrary policies.
+Примітка: стандартна політика імпорту BGP, яку ми бачили раніше (надавати перевагу маршрутам до клієнтів перед пірами, а пірам — перед провайдерами), залежить лише від наступного переходу, а не від усього шляху. Утім, перехід до вектора шляху корисний для виявлення петель і дає змогу узагальнити протокол на довільні політики.
 
 
-## Stub ASes Use Default Routes
+## Тупикові AS використовують маршрути за замовчуванням
 
-Some ASes don't need to run BGP to determine how to forward packets through the network. In particular, if a stub AS is only connected to a single provider, then every packet bound for other ASes should be sent to that one provider. The stub AS can install a single hard-coded **default route** for all destinations in other ASes.
+Деяким AS не потрібно запускати BGP, щоб визначити, як пересилати пакети через мережу. Зокрема, якщо тупикова AS під'єднана лише до одного провайдера, то кожен пакет, призначений для інших AS, слід надсилати цьому одному провайдерові. Тупикова AS може встановити один жорстко заданий **маршрут за замовчуванням** (default route) для всіх пунктів призначення в інших AS.
 
-What about other ASes trying to send packets to the stub AS? The stub can ask the provider to install a **static route**, which tells the provider how to send packets to the stub AS. Now, the provider can run BGP and advertise this static route to the rest of the Internet. The stub can ask the provider to hard-code the static route, and the stub never has to run BGP, since the provider is advertising routes to the stub on behalf of the stub.
+А як щодо інших AS, що намагаються надсилати пакети тупиковій AS? Тупикова AS може попросити провайдера встановити **статичний маршрут** (static route), який підказує провайдерові, як надсилати пакети тупиковій AS. Тепер провайдер може запускати BGP й оголошувати цей статичний маршрут решті Інтернету. Тупикова AS може попросити провайдера жорстко задати статичний маршрут, і їй ніколи не доведеться запускати BGP, бо провайдер оголошує маршрути до тупикової AS від її імені.
 
 <img width="600px" src="/assets/routing/2-164-stub-routes.png">
 
-Most small ASes in the Internet are stub ASes that use default and static routes.
+Більшість невеликих AS в Інтернеті — тупикові AS, що використовують маршрути за замовчуванням і статичні маршрути.
 
-Stub ASes are similar to end hosts in intra-domain routing. They send and receive packets for their own AS, but do not forward packets of their own and do not participate in the routing process. Just like in intra-domain routing, we will usually ignore stub ASes and only consider transit ASes that actually participate in BGP.
+Тупикові AS схожі на кінцеві хости у внутрішньодоменній маршрутизації. Вони надсилають і отримують пакети для власної AS, але не пересилають чужих пакетів і не беруть участі в процесі маршрутизації. Як і у внутрішньодоменній маршрутизації, ми зазвичай ігноруватимемо тупикові AS і розглядатимемо лише транзитні AS, що справді беруть участь у BGP.

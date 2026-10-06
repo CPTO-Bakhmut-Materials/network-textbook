@@ -1,44 +1,44 @@
 ---
-title: Core-Based Trees
-parent: Beyond Client-Server
+title: Дерева з ядром (CBT)
+parent: За межами клієнт-сервер
 nav_order: 4
 layout: page-with-toc
 ---
 
-# Core-Based Trees (CBT)
+# Дерева з ядром (CBT)
 
-## CBT Definition
+## Визначення CBT
 
-The goal of multicast routing is still the same: We have a packet whose destination is a group, and the routers need to work together to forward this packet to all members of the group.
+Мета маршрутизації багатоадресної розсилки та сама: у нас є пакет, пунктом призначення якого є група, і маршрутизатори мають спільно переслати цей пакет усім членам групи.
 
-However, we will now try a different approach, completely different from DVMRP.
+Однак тепер ми спробуємо інший підхід, зовсім не схожий на DVMRP.
 
 <img width="900px" src="/assets/beyond-client-server/7-032-cbt-taxonomy.png">
 
-In the **Core-Based Tree (CBT)** approach, each destination group has its own tree. The CBT for a destination group is simply a tree that touches every member of that group.
+У підході **дерев з ядром** (Core-Based Tree, CBT) кожна група-адресат має власне дерево. CBT для групи-адресата — це просто дерево, що торкається кожного члена цієї групи.
 
 <img width="600px" src="/assets/beyond-client-server/7-033-cbt-end-goal.png">
 
-It can be confusing to think about CBT trees and DVMRP trees at the same time. For now, you can think of them as totally different trees with nothing in common.
+Думати про дерева CBT і дерева DVMRP одночасно може бути заплутано. Поки що можете вважати їх зовсім різними деревами, що не мають нічого спільного.
 
 
-## Building CBTs
+## Побудова CBT
 
-To build a core-based tree, the tree needs a root, which we'll call the core. The core is some arbitrary router in the network, chosen ahead of time.
+Щоб побудувати дерево з ядром, дереву потрібен корінь, який ми називатимемо ядром (core). Ядро — певний довільний маршрутизатор у мережі, обраний заздалегідь.
 
-Now, we'll build a tree that touches every group member, with the core as the root.
+Тепер ми побудуємо дерево, що торкається кожного члена групи, з ядром як коренем.
 
-If a member wants to join a group, the member unicasts a join message to the core. This packet travels through several routers to reach the core. All of these routers join the tree as well, so that the tree now has a path from the core to the new member.
+Якщо член хоче приєднатися до групи, він одноадресно надсилає ядру повідомлення про приєднання (join). Цей пакет проходить кілька маршрутизаторів, щоб дістатися ядра. Усі ці маршрутизатори теж приєднуються до дерева, тож тепер дерево має шлях від ядра до нового члена.
 
 <img width="800px" src="/assets/beyond-client-server/7-034-cbt-join-1.png">
 
 <img width="600px" src="/assets/beyond-client-server/7-035-cbt-join-2.png">
 
-More formally, if you're a router and you receive a join message for a specific group, you know that you are now part of this group's tree. The join message's incoming link is your child (link pointing away from the root). The join message's outgoing link (next-hop to root) is your parent (link pointing toward the root). You can write down your parent and your children to remember where you are in the tree. There's no global mastermind remembering the tree; each router on the tree is responsible for remembering its own parent and children.
+Формальніше: якщо ви маршрутизатор і отримали повідомлення про приєднання для певної групи, ви знаєте, що тепер є частиною дерева цієї групи. Вхідний канал повідомлення про приєднання — ваша дитина (канал, що вказує від кореня). Вихідний канал повідомлення про приєднання (наступний перехід до кореня) — ваш батько (канал, що вказує в бік кореня). Ви можете записати свого батька й дітей, щоб пам'ятати, де ви в дереві. Немає глобального «мозку», що пам'ятає дерево; кожен маршрутизатор у дереві відповідає за те, щоб пам'ятати власного батька й дітей.
 
 <img width="900px" src="/assets/beyond-client-server/7-036-cbt-join-recap.png">
 
-If a member wants to leave a group, the member can unicast a quit message to its direct parent on the tree. If all of your children on the tree have sent a quit message, that means that you can also leave the tree, so you can send a quit message to your direct parent. Quit messages are sent to your direct parent, and are not forwarded any further than that.
+Якщо член хоче покинути групу, він може одноадресно надіслати повідомлення про вихід (quit) своєму безпосередньому батькові в дереві. Якщо всі ваші діти в дереві надіслали повідомлення про вихід, це означає, що ви теж можете покинути дерево, тож можете надіслати повідомлення про вихід своєму безпосередньому батькові. Повідомлення про вихід надсилаються вашому безпосередньому батькові й далі не пересилаються.
 
 <img width="700px" src="/assets/beyond-client-server/7-037-cbt-leave-1.png">
 
@@ -46,66 +46,66 @@ If a member wants to leave a group, the member can unicast a quit message to its
 
 <img width="900px" src="/assets/beyond-client-server/7-039-cbt-quit-recap.png">
 
-Remember that we are building one tree per group. This means that routers must remember their parent and children for each tree that they belong to. Also, join and leave messages must be associated with specific group, e.g. "I want to join group G2."
+Пам'ятайте, що ми будуємо по одному дереву на групу. Це означає, що маршрутизатори мають пам'ятати свого батька й дітей для кожного дерева, до якого вони належать. Крім того, повідомлення про приєднання й вихід мають бути пов'язані з конкретною групою, наприклад «Я хочу приєднатися до групи G2».
 
 <img width="600px" src="/assets/beyond-client-server/7-040-multiple-1.png">
 
 <img width="600px" src="/assets/beyond-client-server/7-041-multiple-2.png">
 
-Here's some fine print about the core, though it's not the main intuition behind the protocol.
-- Since the core is a router, it has a unicast IP address, and everyone can send unicast packets to the core.
-- We're building one tree per group. Different groups can use different cores.
-- We'll assume that everyone knows the mapping from groups to cores, e.g. "Group G1 is using R2 as its core." This mapping could be published using something like DNS (recall: DNS is useful for distributing key-value pairs).
-- The core isn't a group member. In our model, we've assumed that hosts can join/leave groups, not routers. The core is a router, so it isn't joining multicast groups.
+Ось кілька дрібних подробиць про ядро, хоча це не головна інтуїція протоколу.
+- Оскільки ядро — маршрутизатор, воно має одноадресну IP-адресу, і всі можуть надсилати ядру одноадресні пакети.
+- Ми будуємо по одному дереву на групу. Різні групи можуть використовувати різні ядра.
+- Ми вважатимемо, що всі знають відображення груп на ядра, наприклад «Група G1 використовує R2 як ядро». Це відображення можна публікувати за допомогою чогось на кшталт DNS (пригадайте: DNS корисна для розповсюдження пар «ключ–значення»).
+- Ядро не є членом групи. У нашій моделі ми вважали, що до груп можуть приєднуватися й покидати їх хости, а не маршрутизатори. Ядро — маршрутизатор, тож воно не приєднується до груп багатоадресної розсилки.
 
-Here's some fine print about the join and quit messages, though it's not the main intuition behind the protocol.
-- The join and quit messages are technically sent by the first-hop router. The router uses IGMP to detect that one of its directly-connected hosts has joined or left the group, and the first-hop router sends out the join or quit message.
-- In reality, a JOIN-ACK is sent in response to join messages, and routers note their parent and children when the JOIN-ACK is sent. Likewise, a QUIT-ACK message is sent in response to quit messages. For this class, we'll ignore this feature.
+Ось кілька дрібних подробиць про повідомлення про приєднання й вихід, хоча це не головна інтуїція протоколу.
+- Повідомлення про приєднання й вихід технічно надсилає маршрутизатор першого переходу. Маршрутизатор за допомогою IGMP виявляє, що один із безпосередньо під'єднаних до нього хостів приєднався до групи чи покинув її, і маршрутизатор першого переходу надсилає повідомлення про приєднання чи вихід.
+- Насправді у відповідь на повідомлення про приєднання надсилається JOIN-ACK, і маршрутизатори записують свого батька й дітей, коли надсилається JOIN-ACK. Аналогічно у відповідь на повідомлення про вихід надсилається повідомлення QUIT-ACK. У цьому курсі ми ігноруватимемо цю функцію.
 
 
-## Using CBTs
+## Використання CBT
 
-Now that we've built a CBT for a group, how do we use them to send messages to that group?
+Тепер, коли ми побудували CBT для групи, як використовувати його для надсилання повідомлень цій групі?
 
-Case 1: If you are a group member, that means you're already touching the tree. Therefore, all you need to do is broadcast the message to everybody on the tree.
+Випадок 1: якщо ви член групи, це означає, що ви вже торкаєтеся дерева. Тому вам достатньо широкомовно розіслати повідомлення всім у дереві.
 
-More specifically, you start by forwarding the packet to your parent on the tree. Then, every router on the tree receives the packet and floods the packet to all of its tree links (both parent links and child links).
+Конкретніше, ви починаєте з пересилання пакета своєму батькові в дереві. Потім кожен маршрутизатор у дереві отримує пакет і лавинно розсилає його всіма своїми каналами дерева (і каналами до батька, і каналами до дітей).
 
 <img width="700px" src="/assets/beyond-client-server/7-042-cbt-forwarding-1.png">
 
-Case 2: If you're not a group member, you aren't touching the tree, so the Case 1 strategy won't work. Instead, you can unicast the packet to the core. Then, the core can broadcast the message to everybody on the tree.
+Випадок 2: якщо ви не член групи, ви не торкаєтеся дерева, тож стратегія випадку 1 не спрацює. Натомість ви можете одноадресно надіслати пакет ядру. Потім ядро може широкомовно розіслати повідомлення всім у дереві.
 
-More specifically, when you unicast the packet to the core, you need to encapsulate the packet. The outer header has unicast information to reach the core. The inner header has the multicast information.
+Конкретніше, одноадресно надсилаючи пакет ядру, вам треба інкапсулювати пакет. Зовнішній заголовок містить одноадресну інформацію, щоб дістатися ядра. Внутрішній заголовок містить інформацію багатоадресної розсилки.
 
-When the core receives the packet, it unwraps the outer header and sees the inner multicast packet. The core is then able to broadcast this packet along the tree. As in Case 1, every router on the tree receives the packet and floods the packet to all of its tree links (both parent and child links).
+Коли ядро отримує пакет, воно знімає зовнішній заголовок і бачить внутрішній пакет багатоадресної розсилки. Потім ядро може широкомовно розіслати цей пакет уздовж дерева. Як і у випадку 1, кожен маршрутизатор у дереві отримує пакет і лавинно розсилає його всіма своїми каналами дерева (і каналами до батька, і каналами до дітей).
 
 <img width="900px" src="/assets/beyond-client-server/7-043-cbt-forwarding-2.png">
 
 
-## Benefit: Better Scaling
+## Перевага: краще масштабування
 
-Recall that DVMRP scales poorly because the routers must keep track of one tree per source, per destination group. Each tree shows the shortest paths from one source, to all members of one destination group.
+Пригадайте, що DVMRP погано масштабується, бо маршрутизатори мають відстежувати по одному дереву на кожне джерело для кожної групи-адресата. Кожне дерево показує найкоротші шляхи від одного джерела до всіх членів однієї групи-адресата.
 
-In the CBT approach, a CBT for a destination group is a simply a tree that touches every member of that group.
+У підході CBT CBT для групи-адресата — це просто дерево, що торкається кожного члена цієї групи.
 
-Notice that the CBT is the same for all sources. Unlike DVMRP (one tree per source, per destination group), we now only have one tree per destination group.
+Зверніть увагу, що CBT однакове для всіх джерел. На відміну від DVMRP (одне дерево на кожне джерело для кожної групи-адресата), тепер у нас лише одне дерево на групу-адресата.
 
 <img width="900px" src="/assets/beyond-client-server/7-044-dvmrp-cbt-scaling.png">
 
-It's useful to compare DVMRP trees and CBT trees to see how the protocols scale, but beyond that, the trees we build in each protocol have totally different semantics. If you're confused, it might be easier to think of the trees as completely separate conceptual topics.
+Корисно порівнювати дерева DVMRP і дерева CBT, щоб побачити, як масштабуються протоколи, але поза цим дерева, які ми будуємо в кожному протоколі, мають зовсім різну семантику. Якщо вас це заплутує, можливо, легше вважати ці дерева цілком окремими концептуальними темами.
 
-Recall that another scaling problem with DVMRP is the fact that pruning states are periodically cleared, and when that happens, packets get broadcast to everybody on the network (including non-group members). CBT also solves this problem, because there's no point in CBT operation where a packet needs to get broadcast to everybody. The tree itself tells us where the group members are, and therefore ensures that non-group members will never receive the packet.
+Пригадайте, що ще одна проблема масштабування DVMRP полягає в тому, що стани обрізання періодично очищаються, і коли це відбувається, пакети широкомовно розсилаються всім у мережі (включно з тими, хто не є членом групи). CBT розв'язує і цю проблему, бо в роботі CBT немає моменту, коли пакет треба розсилати широкомовно всім. Саме дерево показує, де члени групи, а отже, гарантує, що ті, хто не є членом групи, ніколи не отримають пакета.
 
 
-## Efficiency Analysis
+## Аналіз ефективності
 
-Recall that DVMRP built least-cost trees from the sender to all the group members. By forwarding packets along these trees, we ensured that packets would be forwarded along the least-cost paths to all group members.
+Пригадайте, що DVMRP будував дерева з найменшою вартістю від відправника до всіх членів групи. Пересилаючи пакети вздовж цих дерев, ми гарантували, що пакети пересилатимуться шляхами з найменшою вартістю до всіх членів групи.
 
-By contrast, CBT trees don't involve the sender at all, so there is no more guarantee of optimality. The paths from the sender to all group members are not necessarily the least-cost paths.
+Натомість дерева CBT узагалі не залучають відправника, тож гарантії оптимальності більше немає. Шляхи від відправника до всіх членів групи не обов'язково є шляхами з найменшою вартістю.
 
-CBT trades scalability for efficiency. CBT is more scalable because fewer trees need to be built (i.e. routers store less state), but in exchange, packets may be forwarded along suboptimal paths.
+CBT обмінює ефективність на масштабованість. CBT масштабованіший, бо треба будувати менше дерев (тобто маршрутизатори зберігають менше стану), але натомість пакети можуть пересилатися неоптимальними шляхами.
 
-The efficiency of CBT is highly dependent on which router is chosen to be the core. For example, consider the topology below, with various choices of core.
+Ефективність CBT дуже залежить від того, який маршрутизатор обрано ядром. Наприклад, розгляньте топологію нижче з різними варіантами вибору ядра.
 
 <img width="700px" src="/assets/beyond-client-server/7-045-core-choice-1.png">
 
@@ -113,25 +113,25 @@ The efficiency of CBT is highly dependent on which router is chosen to be the co
 
 <img width="700px" src="/assets/beyond-client-server/7-047-core-choice-3.png">
 
-In every choice of core, at least one pair of routers are connected by a suboptimal path. We no longer have a guaranteed shortest paths tree from one source to all group members.
+За будь-якого вибору ядра щонайменше одна пара маршрутизаторів з'єднана неоптимальним шляхом. У нас більше немає гарантованого дерева найкоротших шляхів від одного джерела до всіх членів групи.
 
-For example, if A plans on sending a lot of packets to the group, R2 might be a good choice of core, since it just happens to connect A to B and C along the shortest paths. However, if B wanted to send packets to the group, the packets would travel along a suboptimal path to C.
+Наприклад, якщо A планує надсилати групі багато пакетів, R2 може бути добрим вибором ядра, бо воно якраз з'єднує A з B і C найкоротшими шляхами. Однак якби B захотів надсилати пакети групі, пакети йшли б до C неоптимальним шляхом.
 
-Finding the optimal core is infeasible, especially since members can join and leave the group at any time. In practice, operators often manually select the core.
+Знайти оптимальне ядро нездійсненно, особливо тому, що члени можуть будь-коли приєднуватися до групи й покидати її. На практиці оператори часто обирають ядро вручну.
 
 
-## Other CBT Pros and Cons
+## Інші переваги й недоліки CBT
 
-CBT creates a single point of failure at the root. To introduce fault-tolerance, we would need the tree to have multiple cores. This can be done, though it introduces more complexity. We won't discuss multi-core trees any further, but see the linked paper below if you're curious.
+CBT створює єдину точку відмови в корені. Щоб запровадити відмовостійкість, дерево мало б мати кілька ядер. Це можна зробити, хоча це додає складності. Ми не обговорюватимемо дерева з кількома ядрами далі, але якщо вам цікаво, див. статтю за посиланням нижче.
 
-Recall that DVMRP was built as an extension to distance-vector, which results in the multicast protocol (DVMRP) and the unicast protocol (distance-vector) being tightly-coupled. Changing one protocol requires also updating the other protocol. By contrast, CBT is decoupled from the unicast routing protocol. CBT does use the unicast forwarding tables (e.g. to forward join messages to the root), but it doesn't matter how those forwarding tables were generated (distance-vector, link-state, hard-coded, etc.). As a result, CBT does not rely on any particular unicast protocol being used, and CBT works with any unicast protocol.
+Пригадайте, що DVMRP побудовано як розширення дистанційно-векторного протоколу, через що протокол багатоадресної розсилки (DVMRP) і одноадресний протокол (дистанційно-векторний) тісно пов'язані. Зміна одного протоколу вимагає оновлення й іншого. Натомість CBT не залежить від протоколу одноадресної маршрутизації. CBT таки використовує таблиці одноадресного пересилання (наприклад, щоб пересилати повідомлення про приєднання до кореня), але байдуже, як ці таблиці пересилання отримано (дистанційно-векторним протоколом, протоколом стану каналів, жорстким заданням тощо). Як наслідок, CBT не покладається на використання якогось конкретного одноадресного протоколу і працює з будь-яким одноадресним протоколом.
 
-Further reading on CBT: [https://people.eecs.berkeley.edu/~sylvia/cs268-2019/papers/cbt.pdf](https://people.eecs.berkeley.edu/~sylvia/cs268-2019/papers/cbt.pdf)
+Додаткове читання про CBT: [https://people.eecs.berkeley.edu/~sylvia/cs268-2019/papers/cbt.pdf](https://people.eecs.berkeley.edu/~sylvia/cs268-2019/papers/cbt.pdf)
 
-Is DVMRP or CBT better? As we've seen, there are trade-offs between the two protocols.
+Що краще — DVMRP чи CBT? Як ми бачили, між цими двома протоколами є компроміси.
 
-If you have one source sending data to a large group, then DVMRP might be the better solution, since it will ensure that all this data travels along optimal paths through the network. Lots of data is being sent (to lots of group members), so using optimal paths results in significant bandwidth savings. Also, if the group is large (e.g. includes almost everyone on the network), then DVMRP's occasional flooding may not be a big problem.
+Якщо одне джерело надсилає дані великій групі, кращим рішенням може бути DVMRP, бо він гарантує, що всі ці дані йдуть мережею оптимальними шляхами. Надсилається багато даних (багатьом членам групи), тож використання оптимальних шляхів дає суттєву економію пропускної здатності. Крім того, якщо група велика (наприклад, охоплює майже всіх у мережі), то епізодичне лавинне розсилання DVMRP може не бути великою проблемою.
 
-By contrast, if you have a small group whose members are scattered across a large network, then CBT might be the better solution. CBT will avoid flooding packets to non-members, which would waste a lot of bandwidth (since most members are not in the group).
+Натомість якщо у вас невелика група, члени якої розкидані великою мережею, кращим рішенням може бути CBT. CBT уникатиме лавинного розсилання пакетів тим, хто не є членом групи, що марнувало б багато пропускної здатності (бо більшість учасників мережі не входять до групи).
 
-In practice, both DVMRP and CBT are used today. DVMRP is sometimes named PIM-DM (Protocol Independent Multicast - Dense Mode), which reflects the fact that DVMRP is good for large groups. CBT is sometimes called PIM-SM (Protocol Independent Multicast - Sparse Mode), which reflects the fact that CBT is good for smaller groups.
+На практиці сьогодні використовуються і DVMRP, і CBT. DVMRP іноді називають PIM-DM (Protocol Independent Multicast - Dense Mode, щільний режим), що відображає той факт, що DVMRP добре підходить для великих груп. CBT іноді називають PIM-SM (Protocol Independent Multicast - Sparse Mode, розріджений режим), що відображає той факт, що CBT добре підходить для менших груп.

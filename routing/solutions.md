@@ -1,217 +1,217 @@
 ---
-title: Routing States
-parent: Routing
+title: Стани маршрутизації
+parent: Маршрутизація
 nav_order: 3
 layout: page-with-toc
 ---
 
-# Routing States
+# Стани маршрутизації
 
-## Bad Routing Strategies
+## Погані стратегії маршрутизації
 
-So far, we've defined the routing problem as this: When a router receives a packet, how does the router know where to forward the packet such that it will eventually arrive at the final destination?
+Досі ми визначали задачу маршрутизації так: коли маршрутизатор отримує пакет, як він дізнається, куди переслати пакет, щоб той зрештою дістався кінцевого пункту призначення?
 
 <img width="600px" src="/assets/routing/2-013-forwarding.png">
 
-Once we find an algorithm (a routing protocol) to solve this problem, we can apply that algorithm to generate an answer, which we'll call a **routing state**. You can think of a routing state as a set of rules that each router uses to forward packets it receives. What does a routing state look like, and how can we check if a given routing state is valid or good?
+Щойно ми знайдемо алгоритм (протокол маршрутизації) для розв'язання цієї задачі, ми зможемо застосувати його, щоб отримати відповідь, яку називатимемо **станом маршрутизації** (routing state). Стан маршрутизації можна уявляти як набір правил, за якими кожен маршрутизатор пересилає отримані пакети. Як виглядає стан маршрутизації і як перевірити, чи даний стан маршрутизації коректний або добрий?
 
-To start, we could consider some bad strategies for generating routing states. One possible routing strategy is: The router forwards the packet to a randomly-selected neighbor. Intuitively, we can already see that routing states generated this way probably won't be valid. If we use this strategy, we can't be sure that packets will reach their final destination.
+Для початку можна розглянути кілька поганих стратегій отримання станів маршрутизації. Одна з можливих стратегій: маршрутизатор пересилає пакет випадково обраному сусідові. Інтуїтивно вже зрозуміло, що отримані так стани маршрутизації, найімовірніше, не будуть коректними. Використовуючи цю стратегію, ми не можемо бути певні, що пакети дістануться кінцевого пункту призначення.
 
-Another possible bad strategy is: The router forwards a copy of the packet to every single one of its neighbors. Intuitively, this might be valid, in the sense that copies of the packet will eventually spread across the entire network and probably reach the destination. However, this strategy is inefficient, because it wastes a lot of bandwidth forwarding the packet to routers that were not needed to send the packet to its final destination.
+Ще одна можлива погана стратегія: маршрутизатор пересилає копію пакета кожному зі своїх сусідів. Інтуїтивно це може бути коректним у тому сенсі, що копії пакета зрештою поширяться всією мережею й, імовірно, дістануться адресата. Однак ця стратегія неефективна, бо марнує багато пропускної здатності на пересилання пакета маршрутизаторам, які не були потрібні для доставки пакета до кінцевого пункту призначення.
 
-We can intuitively see that these two strategies are bad, but to analyze smarter routing protocols, we'll need to formally define what a routing state looks like. Then, we'll need to formalize what makes a routing state valid, and what makes a routing state good.
+Інтуїтивно видно, що ці дві стратегії погані, але щоб аналізувати розумніші протоколи маршрутизації, нам потрібно формально визначити, як виглядає стан маршрутизації. Потім треба формалізувати, що робить стан маршрутизації коректним і що робить його добрим.
 
 
-## Forwarding Tables
+## Таблиці пересилання
 
-In our model of the network, each router has some number of outgoing links connecting it to adjacent routers and hosts. In other words, in the underlying graph, each router node has some number of neighbors, connected to the router by an edge.
+У нашій моделі мережі кожен маршрутизатор має певну кількість вихідних каналів, що з'єднують його з сусідніми маршрутизаторами та хостами. Іншими словами, у базовому графі кожна вершина-маршрутизатор має певну кількість сусідів, з'єднаних із нею ребром.
 
-When the router receives a packet, with its final destination in the metadata, the router needs to decide which of the adjacent routers or hosts the packet should be forwarded to. The next intermediate router that the packet will be forwarded to is called the **next hop**.
+Коли маршрутизатор отримує пакет із кінцевим пунктом призначення в метаданих, він має вирішити, якому із сусідніх маршрутизаторів чи хостів переслати пакет. Наступний проміжний маршрутизатор, якому буде переслано пакет, називається **наступним переходом** (next hop).
 
 <img width="700px" src="/assets/routing/2-014-nexthop.png">
 
-For example, consider this network. If R2 receives a packet whose final destination is B, the natural corresponding next hop would be R3. The possible choices of next hop are R1, R3, and R4 (the three routers adjacent to R2), and R3 is the next hop that sends the packet closer to B.
+Наприклад, розгляньте цю мережу. Якщо R2 отримує пакет, кінцевим пунктом призначення якого є B, природним відповідним наступним переходом був би R3. Можливі варіанти наступного переходу — R1, R3 і R4 (три маршрутизатори, суміжні з R2), і R3 — той наступний перехід, що наближає пакет до B.
 
-If R2 instead receives a packet whose final destination is A, then the natural corresponding next hop would be R1 instead.
+Якщо ж R2 отримує пакет, кінцевим пунктом призначення якого є A, природним відповідним наступним переходом натомість був би R1.
 
-For each possible final destination, we can write down the corresponding next hop to forward the packet closer to that destination. The result is called a **forwarding table**.
+Для кожного можливого кінцевого пункту призначення ми можемо записати відповідний наступний перехід, щоб пересилати пакет ближче до цього пункту. Результат називається **таблицею пересилання** (forwarding table).
 
 <img width="850px" src="/assets/routing/2-015-forwarding-table.png">
 
-Note that the in the mapping of destination to next hop, a next hop can be used more than once. For example, in R2's forwarding table, packets destined for B and packets destined for C will both be forwarded to R3.
+Зауважте, що у відображенні «пункт призначення → наступний перехід» той самий наступний перехід може використовуватися кілька разів. Наприклад, у таблиці пересилання R2 і пакети для B, і пакети для C пересилатимуться до R3.
 
-By writing down the forwarding table for each intermediate router, we now have a full routing state for the network. In other words, given a packet with some final destination, we know exactly how each router will forward that packet.
+Записавши таблицю пересилання для кожного проміжного маршрутизатора, ми отримуємо повний стан маршрутизації мережі. Іншими словами, маючи пакет із певним кінцевим пунктом призначення, ми точно знаємо, як кожен маршрутизатор перешле цей пакет.
 
-In the physical world, instead of mapping destinations to next hops, routers will often map destinations to **physical ports**, where each physical port corresponds to a link. In the graph model, we would now be mapping each destination to an edge, instead of mapping each destination to a neighboring node. In the physical world, you can think of this as a router having several outgoing wires, where each wire is connected to another router. Instead of writing down neighboring routers in the forwarding table, the router instead writes down which wire a packet should be sent along.
+У фізичному світі замість відображення пунктів призначення на наступні переходи маршрутизатори часто відображають пункти призначення на **фізичні порти** (physical ports), де кожен фізичний порт відповідає каналу. У графовій моделі ми тепер відображали б кожен пункт призначення на ребро, а не на сусідню вершину. У фізичному світі це можна уявити так: маршрутизатор має кілька вихідних дротів, кожен з яких під'єднаний до іншого маршрутизатора. Замість записувати в таблицю пересилання сусідні маршрутизатори, маршрутизатор записує, яким дротом слід надіслати пакет.
 
 <img width="550px" src="/assets/routing/2-016-ports.png">
 
-This is a subtle distinction, and it reflects the fact that the router doesn't really care about the identity of the neighboring router. The only decision the router needs to make is to send the packet along one of the wires, regardless of who the wire is connected to. In these notes, we'll draw forwarding tables as mapping destinations to next hops (instead of physical ports), for simplicity.
+Це тонка відмінність, і вона відображає той факт, що маршрутизатору насправді байдуже, хто є сусіднім маршрутизатором. Єдине рішення, яке має ухвалити маршрутизатор, — надіслати пакет одним із дротів, незалежно від того, до кого цей дріт під'єднано. Для простоти в цих матеріалах ми зображатимемо таблиці пересилання як відображення пунктів призначення на наступні переходи (а не на фізичні порти).
 
-## Destination-Based Forwarding
+## Пересилання на основі адреси призначення
 
-A consequence of using a forwarding table is that given a packet, the decision of where to forward the packet depends only on the destination field of the packet. In other words, if a router receives many different packets, all with the same destination, they will all be routed to the same next hop (assuming the forwarding table stays unchanged). Since each destination is only mapped to a single next hop, there's no way for two packets with the same destination to be forwarded to different routers. This approach is called **destination-based forwarding** or **destination-based routing**.
+Наслідок використання таблиці пересилання полягає в тому, що рішення, куди переслати пакет, залежить лише від поля призначення пакета. Іншими словами, якщо маршрутизатор отримує багато різних пакетів з тим самим пунктом призначення, усі вони будуть спрямовані на той самий наступний перехід (за умови, що таблиця пересилання не змінюється). Оскільки кожен пункт призначення відображено лише на один наступний перехід, два пакети з тим самим пунктом призначення ніяк не можуть бути переслані різним маршрутизаторам. Такий підхід називається **пересиланням на основі адреси призначення** (destination-based forwarding) або **маршрутизацією на основі адреси призначення** (destination-based routing).
 
-Destination-based routing is the most common approach to routing, and it's what's used in the modern Internet. In theory, other approaches could exist where additional metadata is used to make forwarding decision, but these are usually only used in limited applications (e.g. inside a particular local network).
+Маршрутизація на основі адреси призначення — найпоширеніший підхід до маршрутизації, і саме вона використовується в сучасному Інтернеті. Теоретично можуть існувати інші підходи, де для ухвалення рішень про пересилання використовуються додаткові метадані, але вони зазвичай застосовуються лише в обмежених випадках (наприклад, усередині певної локальної мережі).
 
-In later units, when we consider data center topologies, we might consider destination-based forwarding approaches where there might be more than one next hop for a specific destination. In this unit, we'll assume that each destination is mapped to only one next hop.
+У пізніших розділах, розглядаючи топології дата-центрів, ми можемо розглядати підходи до пересилання на основі адреси призначення, де для конкретного пункту призначення може бути більше одного наступного переходу. У цьому розділі ми вважатимемо, що кожен пункт призначення відображено лише на один наступний перехід.
 
-## Routing vs. Forwarding
+## Маршрутизація та пересилання
 
-Now that we've introduced the idea of a forwarding table, we need to make a distinction between the process of creating the forwarding table, and the process of using the forwarding table.
+Тепер, коли ми запровадили ідею таблиці пересилання, треба розрізняти процес створення таблиці пересилання і процес її використання.
 
-**Routing** is the process of routers communicating with each other to determine how to populate their forwarding tables.
+**Маршрутизація** (routing) — це процес, у якому маршрутизатори обмінюються інформацією між собою, щоб визначити, як заповнити свої таблиці пересилання.
 
-**Forwarding** is the process of receiving a packet, looking up its appropriate next hop in the table, and sending the packet to the appropriate neighbor.
+**Пересилання** (forwarding) — це процес отримання пакета, пошуку відповідного наступного переходу в таблиці та надсилання пакета відповідному сусідові.
 
-Forwarding is not the same as routing. When forwarding packets, routers use the existing forwarding table, with no knowledge of how that table was generated.
+Пересилання — це не те саме, що маршрутизація. Пересилаючи пакети, маршрутизатори використовують наявну таблицю пересилання, нічого не знаючи про те, як цю таблицю отримано.
 
-Forwarding is a local process. When a router is forwarding packets, the router doesn't need to know the full network topology. The router also doesn't care about where the packet goes after it's been forwarded to the next hop. The router only needs to know about the arriving packet, and its own forwarding table.
+Пересилання — локальний процес. Коли маршрутизатор пересилає пакети, йому не потрібно знати повну топологію мережі. Маршрутизатору також байдуже, куди піде пакет після того, як його переслано на наступний перехід. Маршрутизатору треба знати лише про пакет, що надійшов, і про власну таблицю пересилання.
 
-By contrast, routing is a global process. In order to fill out the forwarding tables, we will need to learn something about the global topology of the network.
+Натомість маршрутизація — глобальний процес. Щоб заповнити таблиці пересилання, нам доведеться дізнатися щось про глобальну топологію мережі.
 
 <img width="950px" src="/assets/routing/2-017-forwarding-routing.png">
 
-For example, in when filling in R2's forwarding table, we had to somehow learn that destination B is associated with R3, even though host B is not directly connected to R2. During routing, each router will need to know about non-local destinations as well.
+Наприклад, заповнюючи таблицю пересилання R2, ми мали якось дізнатися, що пункт призначення B пов'язаний з R3, хоча хост B не під'єднаний безпосередньо до R2. Під час маршрутизації кожен маршрутизатор має знати й про нелокальні пункти призначення.
 
-## Routing State Validity is Global
+## Коректність стану маршрутизації — глобальна властивість
 
-Recall that a routing state consists of a forwarding table for each router, which collectively tells us how packets will travel through the network. Given a routing state, how can we tell if the routing state is correct or incorrect?
+Пригадайте, що стан маршрутизації складається з таблиць пересилання всіх маршрутизаторів, які разом визначають, як пакети мандруватимуть мережею. Як, маючи стан маршрутизації, визначити, правильний він чи ні?
 
-First, we need to formally define **routing state validity** to determine whether a routing state is valid (though this term may not be widely used outside CS 168 at UC Berkeley). The main requirement for validity is: the routing state needs to produce forwarding decisions that ensure that packets actually reach their destination.
+Спершу нам потрібно формально визначити **коректність стану маршрутизації** (routing state validity), щоб з'ясовувати, чи є стан маршрутизації коректним (хоча цей термін може не надто вживатися поза курсом CS 168 в UC Berkeley). Головна вимога коректності: стан маршрутизації має давати рішення про пересилання, які гарантують, що пакети справді дістануться пункту призначення.
 
-Note that validity must be evaluated in the global context, not a local context. Looking at local routing state, such as a single router's forwarding table, cannot tell us whether a routing state is valid. For example, in a router R2's local forwarding table, we might see that the next hop for destination A is router R3, but we have no way to decide if this is valid. Will forwarding packets to R3 help packets reach destination A? There's no way to tell from just the forwarding table.
+Зауважте, що коректність потрібно оцінювати в глобальному контексті, а не в локальному. Поглянувши на локальний стан маршрутизації, як-от таблицю пересилання одного маршрутизатора, не можна сказати, чи є стан маршрутизації коректним. Наприклад, у локальній таблиці пересилання маршрутизатора R2 ми можемо побачити, що наступним переходом для пункту призначення A є маршрутизатор R3, але ми не маємо способу вирішити, чи це коректно. Чи допоможе пересилання пакетів до R3 пакетам дістатися пункту призначення A? З самої лише таблиці пересилання цього не визначити.
 
 <img width="800px" src="/assets/routing/2-018-validity-local.png">
 
-Instead, we need to consider the global routing state, which consists of the collection of all the forwarding tables in all of the routers.
+Натомість нам треба розглядати глобальний стан маршрутизації, що складається з сукупності всіх таблиць пересилання в усіх маршрутизаторах.
 
 <img width="950px" src="/assets/routing/2-019-validity-global.png">
 
-## Routing State Validity Definition
+## Визначення коректності стану маршрутизації
 
-Now, we can define a formal condition that we can use to check whether or not packets will reach their destination for a given routing state.
+Тепер ми можемо визначити формальну умову, за якою можна перевірити, чи дістануться пакети пункту призначення за даного стану маршрутизації.
 
-A global routing state is valid if and only if, for any destination,  packets do not get stuck in dead ends or loops.
+Глобальний стан маршрутизації коректний тоді й лише тоді, коли для будь-якого пункту призначення пакети не застрягають у глухих кутах або петлях.
 
-A **dead end** occurs if a packet arrives at a router, but the router doesn't know how to forward the packet to its destination, so the packet is not forwarded. This might occur if the router's forwarding table doesn't contain an entry for the packet's destination.
+**Глухий кут** (dead end) виникає, якщо пакет надходить до маршрутизатора, але маршрутизатор не знає, як переслати пакет до пункту призначення, тож пакет не пересилається. Таке може статися, якщо таблиця пересилання маршрутизатора не містить запису для пункту призначення пакета.
 
-Note that the dead end condition only applies to the intermediate routers, and not the end hosts. When a packet reaches the destination end host, there's no need for the end host to forward the packet any further, so we won't consider end hosts in the dead end condition.
+Зверніть увагу, що умова глухого кута стосується лише проміжних маршрутизаторів, а не кінцевих хостів. Коли пакет досягає кінцевого хоста-адресата, хостові не потрібно пересилати пакет далі, тож кінцеві хости ми в умові глухого кута не розглядаємо.
 
 <img width="950px" src="/assets/routing/2-020-dead-end.png">
 
-A **loop** occurs if a packet is sent in a cycle around the same of nodes. Note that because we're using destination-based forwarding, where the next hop only depends on the destination, once a packet enters a loop, it will be trapped in the loop forever. When the packet arrives at the router the first time, or the 10th time, or the 500th time, it will be forwarded the exact same way (since the final destination is the same). Since this applies to every router on the loop, the packet will be stuck in the loop forever.
+**Петля** (loop) виникає, якщо пакет надсилається по колу через ту саму множину вершин. Зауважте: оскільки ми використовуємо пересилання на основі адреси призначення, коли наступний перехід залежить лише від пункту призначення, то щойно пакет потрапляє в петлю, він опиняється в ній назавжди. Коли пакет надходить до маршрутизатора вперше, вдесяте чи в п'ятисотий раз, його буде переслано точнісінько так само (бо кінцевий пункт призначення той самий). Оскільки це стосується кожного маршрутизатора в петлі, пакет застрягне в петлі назавжди.
 
 <img width="850px" src="/assets/routing/2-021-loop.png">
 
-This condition (no dead ends, no loops) is both necessary and sufficient for a route to be valid. Let's check both directions of this logical implication.
+Ця умова (немає глухих кутів, немає петель) є водночас необхідною й достатньою для коректності маршруту. Перевірмо обидва напрями цієї логічної імплікації.
 
-No dead ends and no loops is a necessary condition for validity. In other words, a state is valid only if there are no dead ends and no loops.
+Відсутність глухих кутів і петель — необхідна умова коректності. Іншими словами, стан коректний, лише якщо немає глухих кутів і немає петель.
 
-Proof: If there's a dead end, the packet won't reach the destination. The packet will reach the dead end and not be forwarded.
+Доведення: якщо є глухий кут, пакет не дістанеться пункту призначення. Пакет дійде до глухого кута й не буде пересланий далі.
 
-If there are loops, the packet won't reach the destination. The packet will be trapped in the loop forever (because of destination-based forwarding, described earlier). Also, note that the final destination can't be part of the loop, since the destination won't forward the packet. Therefore, a packet trapped in the loop won't reach the destination.
+Якщо є петлі, пакет не дістанеться пункту призначення. Пакет застрягне в петлі назавжди (через пересилання на основі адреси призначення, описане раніше). Крім того, зауважте, що кінцевий пункт призначення не може бути частиною петлі, бо адресат не пересилає пакет. Отже, пакет, що застряг у петлі, не дістанеться пункту призначення.
 
-Now, let's check the other direction. If there are no loops and no dead ends, then the state is valid.
+Тепер перевірмо інший напрям. Якщо немає петель і немає глухих кутів, то стан коректний.
 
-Proof: Assume that the routing state has no loops or dead ends. A packet won't reach the same node twice (because there are no loops). Also, the packet won't stop before reaching the destination (because there are no dead ends). Therefore, the packet must keep wandering through the network, reaching different nodes. There are only a finite number of unique nodes to visit, so the packet must eventually reach the destination. Therefore, the routing state must be valid.
+Доведення: припустімо, що стан маршрутизації не має петель чи глухих кутів. Пакет не потрапить до тієї самої вершини двічі (бо немає петель). Крім того, пакет не зупиниться, не дійшовши до пункту призначення (бо немає глухих кутів). Отже, пакет мусить і далі мандрувати мережею, потрапляючи до різних вершин. Унікальних вершин для відвідування скінченна кількість, тож пакет зрештою мусить дістатися пункту призначення. Отже, стан маршрутизації коректний.
 
-## Directed Delivery Trees
+## Орієнтовані дерева доставки
 
-Now that we have a formal definition for routing state validity, we can ask: given a global routing state, how can we check if it's valid?
+Тепер, коли в нас є формальне визначення коректності стану маршрутизації, можна запитати: як, маючи глобальний стан маршрутизації, перевірити, чи він коректний?
 
-To simplify the problem, let's start by considering only a single destination end host, ignoring all other end hosts. In each router, we can look up this destination to get the corresponding next hop, which tells us how each router will forward packets meant for this destination.
+Щоб спростити задачу, почнімо з розгляду лише одного кінцевого хоста-адресата, ігноруючи всі інші кінцеві хости. У кожному маршрутизаторі ми можемо знайти цей пункт призначення й отримати відповідний наступний перехід, який показує, як кожен маршрутизатор пересилатиме пакети, призначені цьому адресатові.
 
-We can represent the next hop at each router (for this single destination) as an arrow, which shows us all the possible paths that this packet might take to reach the single destination.
+Наступний перехід на кожному маршрутизаторі (для цього одного пункту призначення) можна зобразити стрілкою, що показує всі можливі шляхи, якими цей пакет може пройти до цього одного пункту призначення.
 
 <img width="800px" src="/assets/routing/2-022-delivery-tree.png">
 
-In the resulting graph, each node will only have one outgoing arrow. This reflects our assumption that in each router's forwarding table, there is only one next hop corresponding to a destination.
+В отриманому графі кожна вершина матиме лише одну вихідну стрілку. Це відображає наше припущення, що в таблиці пересилання кожного маршрутизатора пункту призначення відповідає лише один наступний перехід.
 
-Notice that in the resulting graph, once two paths meet, they never split. In other words, even if there are multiple incoming arrows (paths) to a node, since there is only one outgoing arrow, those paths will now converge into a single path. This reflects our destination-based forwarding approach, because each router only uses the final destination to decide how to forward a packet. The router does not care how the packet arrived at the router in the first place.
+Зверніть увагу, що в отриманому графі, щойно два шляхи зустрічаються, вони вже ніколи не розходяться. Іншими словами, навіть якщо до вершини входить кілька стрілок (шляхів), оскільки вихідна стрілка лише одна, ці шляхи тепер зливаються в один. Це відображає наш підхід пересилання на основі адреси призначення, бо кожен маршрутизатор використовує лише кінцевий пункт призначення, щоб вирішити, як переслати пакет. Маршрутизатору байдуже, як пакет потрапив до нього.
 
 <img width="900px" src="/assets/routing/2-023-no-diverging.png">
 
-The arrows we've drawn form a set of paths that a packet can take to reach the single destination. This set of paths is called a **directed delivery tree**.
+Намальовані нами стрілки утворюють множину шляхів, якими пакет може пройти до цього одного пункту призначення. Ця множина шляхів називається **орієнтованим деревом доставки** (directed delivery tree).
 
-In graph terms, the arrows in a valid delivery tree must form an **oriented spanning tree**, rooted at the destination. Recall that a spanning tree is a set of edges in the graph that touch every node and form a tree. We want the delivery tree to be a tree, since there should be no cycles (packets can't travel in loops). We want the delivery tree to be spanning (touch every node), because we want to be able to reach the destination from everywhere. The delivery tree is oriented because the edges have arrows, which tells us which direction to forward the packet.
+У термінах графів стрілки в коректному дереві доставки мають утворювати **орієнтоване кістякове дерево** (oriented spanning tree) з коренем у пункті призначення. Пригадайте, що кістякове дерево — це множина ребер графа, яка торкається кожної вершини й утворює дерево. Ми хочемо, щоб дерево доставки було деревом, бо циклів бути не повинно (пакети не можуть ходити петлями). Ми хочемо, щоб дерево доставки було кістяковим (торкалося кожної вершини), бо хочемо мати змогу дістатися пункту призначення звідусіль. Дерево доставки орієнтоване, бо ребра мають стрілки, які показують, у якому напрямку пересилати пакет.
 
-All edges in a valid delivery tree should point toward the destination. In other words, starting from any node, following the arrows should always result in reaching the destination.
+Усі ребра в коректному дереві доставки мають вказувати в бік пункту призначення. Іншими словами, починаючи з будь-якої вершини, рух за стрілками завжди має приводити до пункту призначення.
 
-## Verifying Routing State Validity
+## Перевірка коректності стану маршрутизації
 
-As before, let's consider only a single destination end host, ignoring all other end hosts.
+Як і раніше, розглядатимемо лише один кінцевий хост-адресат, ігноруючи всі інші кінцеві хости.
 
-Example: Even though there are multiple end hosts here, let's only consider end host A.
+Приклад: хоча тут кілька кінцевих хостів, розглядатимемо лише кінцевий хост A.
 
 <img width="800px" src="/assets/routing/2-024-validity1.png">
 
-Using the forwarding tables at each router, we will draw the arrows into the network to form the directed delivery tree for this single destination. Formally, for each router (node in the graph), we will draw a single outgoing arrow from that node.
+Використовуючи таблиці пересилання кожного маршрутизатора, ми намалюємо стрілки в мережі, щоб утворити орієнтоване дерево доставки для цього одного пункту призначення. Формально для кожного маршрутизатора (вершини графа) ми малюємо одну вихідну стрілку з цієї вершини.
 
-Example: Using the forwarding tables (not shown), we can draw one outgoing arrow per router.
+Приклад: використовуючи таблиці пересилання (не показані), ми можемо намалювати по одній вихідній стрілці на маршрутизатор.
 
 <img width="800px" src="/assets/routing/2-025-validity2.png">
 
-For simplicity, at this point we can delete all the links without arrows on them. These links without arrows will never be used to send packets to the single destination, since they are not on the delivery tree.
+Для простоти на цьому етапі можна видалити всі канали без стрілок. Ці канали без стрілок ніколи не використовуватимуться для надсилання пакетів до цього одного пункту призначення, бо вони не належать дереву доставки.
 
-Example: We can delete all the links without arrows.
+Приклад: ми можемо видалити всі канали без стрілок.
 
 <img width="800px" src="/assets/routing/2-026-validity3.png">
 
-If the remaining graph is a valid directed delivery tree (spanning tree, all arrows pointing toward destination), then we can say that the routing state is valid for this single destination.
+Якщо граф, що залишився, є коректним орієнтованим деревом доставки (кістякове дерево, усі стрілки вказують у бік пункту призначення), то можна сказати, що стан маршрутизації коректний для цього одного пункту призначення.
 
-In the above example, the residual graph is indeed a valid spanning tree converging at A, so we can say this routing state is valid for A.
+У прикладі вище залишковий граф справді є коректним кістяковим деревом, що сходиться в A, тож можна сказати, що цей стан маршрутизації коректний для A.
 
-Here are some examples of invalid routing states:
+Ось кілька прикладів некоректних станів маршрутизації:
 
 <img width="800px" src="/assets/routing/2-027-dead-end.png">
 
-This state is invalid. Intuitively, there is a dead end router. A packet bound for A could get sent to this router, and this router would discard the packet without forwarding it. Formally, the remaining graph is not a spanning tree, because the edges are not all connected (there are two disconnected components, which is not allowed in a tree).
+Цей стан некоректний. Інтуїтивно: є маршрутизатор — глухий кут. Пакет, адресований A, може бути надісланий цьому маршрутизатору, і той відкине пакет, не переславши його. Формально: граф, що залишився, не є кістяковим деревом, бо ребра не всі з'єднані (є дві незв'язні компоненти, що недопустимо в дереві).
 
 <img width="800px" src="/assets/routing/2-028-loop.png">
 
-This state is also invalid. Intuitively, there is a loop that the packet could get stuck in. Formally, the remaining graph is not a spanning tree, because the edges are disconnected, and there is a cycle.
+Цей стан теж некоректний. Інтуїтивно: є петля, в якій пакет може застрягнути. Формально: граф, що залишився, не є кістяковим деревом, бо ребра незв'язні і є цикл.
 
-We can repeat this process, once for every different end host (isolating a different end host each time). If the routing state is valid for all destinations, then we can say that the routing state is valid, and will always deliver packets to their correct destinations.
+Цей процес можна повторити для кожного кінцевого хоста (щоразу виокремлюючи інший кінцевий хост). Якщо стан маршрутизації коректний для всіх пунктів призначення, то можна сказати, що стан маршрутизації коректний і завжди доставлятиме пакети до правильних пунктів призначення.
 
-## Least-Cost Routing
+## Маршрутизація з найменшою вартістю
 
-Now that we have a definition of what makes a routing state valid (routes have no loops and dead ends), we can additionally define what makes a routing state good. It's possible that a network has multiple valid routing states, and we want some metric that can help us determine whether one route is better than another.
+Тепер, коли в нас є визначення того, що робить стан маршрутизації коректним (маршрути без петель і глухих кутів), ми можемо додатково визначити, що робить стан маршрутизації добрим. Мережа може мати кілька коректних станів маршрутизації, і нам потрібна метрика, яка допоможе визначити, чи один маршрут кращий за інший.
 
-**Least-cost routing** is a common approach for measuring whether a route is good. In least-cost routing, we assign a numeric cost to every link, and look for routes that minimize the cost. In other words, we want routes that result in packets traveling along the lowest-cost paths to their destinations.
+**Маршрутизація з найменшою вартістю** (least-cost routing) — поширений підхід до оцінювання того, чи добрий маршрут. У маршрутизації з найменшою вартістю ми призначаємо кожному каналу числову вартість і шукаємо маршрути, що мінімізують вартість. Іншими словами, нам потрібні маршрути, за яких пакети мандрують до своїх пунктів призначення шляхами з найменшою вартістю.
 
 <img width="600px" src="/assets/routing/2-029-costs.png">
 
-There are many different costs we could consider assigning to links. The cost could depend on the price of building the link, the propagation delay, the physical distance of the link, the unreliability, the bandwidth, among other factors. For example, we could assign costs based on the quality of the link (bandwidth and propagation delay), such that the lowest-cost path prefers higher-quality links.
+Є багато різних вартостей, які можна призначати каналам. Вартість може залежати, зокрема, від ціни побудови каналу, затримки поширення, фізичної довжини каналу, ненадійності, пропускної здатності. Наприклад, ми можемо призначати вартості на основі якості каналу (пропускної здатності та затримки поширення), щоб шлях із найменшою вартістю віддавав перевагу якіснішим каналам.
 
-By allowing operators to set link costs arbitrarily, we give the operator the ability to optimize the network for their specific needs. The costs we assign depend on the operator's goals for the network. If we had a 400 Gbps link with 20 ms propagation delay, and a 10 Gbps link with 5 ms propagation delay, which one is lower-cost? It depends on if we're optimizing for bandwidth, propagation delay, some combination, or something else entirely.
+Дозволяючи операторам довільно встановлювати вартості каналів, ми даємо операторові змогу оптимізувати мережу під свої конкретні потреби. Вартості, які ми призначаємо, залежать від цілей оператора щодо мережі. Якщо в нас є канал 400 Гбіт/с із затримкою поширення 20 мс і канал 10 Гбіт/с із затримкою поширення 5 мс, який із них має меншу вартість? Це залежить від того, що ми оптимізуємо: пропускну здатність, затримку поширення, якусь їх комбінацію чи щось зовсім інше.
 
-If we assign a cost of 1 to every link, then the least-cost path is the path that travels along the fewest links. We sometimes call this minimizing the **hop count**. In these notes, if the edges of a graph are not labeled with a cost, you can assume all the edges have cost 1,
+Якщо призначити кожному каналу вартість 1, то шлях із найменшою вартістю — це шлях, що проходить найменшою кількістю каналів. Іноді це називають мінімізацією **кількості переходів** (hop count). Якщо в цих матеріалах ребра графа не позначено вартістю, можна вважати, що всі ребра мають вартість 1.
 
-The operator of a network can decide how to assign costs to each link. The operator might manually assign costs. Or, the operator could have the network automatically configure the costs, although this may not work with some metrics that can't be automatically measured (e.g. the network has no idea about the financial cost to build the link).
+Оператор мережі може вирішувати, як призначати вартості кожному каналу. Оператор може призначати вартості вручну. Або оператор може налаштувати мережу так, щоб вона автоматично конфігурувала вартості, хоча це може не працювати для деяких метрик, які неможливо виміряти автоматично (наприклад, мережа гадки не має про фінансову вартість побудови каналу).
 
-When designing a routing protocol, we can abstract away how the costs were assigned. From the routing protocol's perspective, somebody else (e.g. the network operator) has already assigned the costs, based on something that they consider important. The algorithm takes in the costs as an input, and computes the least-cost paths, regardless of what the costs actually represent.
+Проєктуючи протокол маршрутизації, можна абстрагуватися від того, як призначено вартості. З погляду протоколу маршрутизації хтось інший (наприклад, оператор мережі) уже призначив вартості, виходячи з того, що вважає важливим. Алгоритм отримує вартості на вхід і обчислює шляхи з найменшою вартістю незалежно від того, що ці вартості насправді означають.
 
 <img width="950px" src="/assets/routing/2-030-least-cost.png">
 
-Note that costs are local to each router. A router knows about the cost of its own outgoing links, but there is no way for the router to automatically know the costs of all links. This is consistent with the constraint we mentioned earlier, where routers don't have a global view of the entire network's topology.
+Зауважте, що вартості локальні для кожного маршрутизатора. Маршрутизатор знає вартість власних вихідних каналів, але не може автоматично дізнатися вартості всіх каналів. Це узгоджується з обмеженням, про яке ми згадували раніше: маршрутизатори не мають глобального погляду на топологію всієї мережі.
 
-For simplicity, routing protocols make some assumptions about how the costs are defined.
+Для простоти протоколи маршрутизації роблять певні припущення про те, як визначено вартості.
 
-We'll assume that costs are always positive integers. This is consistent with many common real-life metrics, such as length of a link or monetary cost of a link. If we're trying to minimize the total physical distance traveled by a packet, a negative link cost doesn't make sense. You can't travel along a link and decrease the total distance traveled. This assumption will help simplify our protocols later, since we won't have to worry about edge cases like negative-weight loops (where the least-cost solution would be to travel around the loop forever).
+Ми вважатимемо, що вартості завжди є додатними цілими числами. Це узгоджується з багатьма поширеними реальними метриками, як-от довжиною каналу чи грошовою вартістю каналу. Якщо ми намагаємося мінімізувати загальну фізичну відстань, яку проходить пакет, від'ємна вартість каналу не має сенсу. Не можна пройти каналом і зменшити загальну пройдену відстань. Це припущення допоможе згодом спростити наші протоколи, бо нам не доведеться перейматися граничними випадками, як-от петлями від'ємної ваги (де розв'язком із найменшою вартістю було б нескінченно ходити петлею).
 
-We'll assume that costs are symmetrical. The cost from A to B is the same as the cost from B to A. This reflects the diagrams we'll draw, where an edge is labeled with a single symmetric cost. In theory, it's possible to have asymmetric link costs, but this is not done in practice, and would lead to more complicated routing protocols.
+Ми вважатимемо, що вартості симетричні. Вартість від A до B така сама, як від B до A. Це відображається на діаграмах, які ми малюватимемо, де ребро позначено однією симетричною вартістю. Теоретично можливі асиметричні вартості каналів, але на практиці так не роблять, і це призвело б до складніших протоколів маршрутизації.
 
-With these assumptions, our definition of good routes (least-cost) is consistent with our definition of valid routes. In particular, a least-cost route won't have any loops, because costs are positive (traversing the loop would only increase the cost).
+За цих припущень наше визначення добрих маршрутів (з найменшою вартістю) узгоджується з визначенням коректних маршрутів. Зокрема, маршрут із найменшою вартістю не матиме петель, бо вартості додатні (проходження петлі лише збільшило б вартість).
 
-## Static Routing
+## Статична маршрутизація
 
-One possible way to generate routes is to have the network operator manually populate the forwarding table. This is known as **static routing**.
+Один із можливих способів отримати маршрути — щоб оператор мережі заповнював таблицю пересилання вручну. Це називається **статичною маршрутизацією** (static routing).
 
-Static routing by itself isn't practical (e.g. not scalable, prone to human error), but even with a routing protocol implemented, some routes still need to be manually created by operators. You can think of these manual routes as the "trivial" or "base case" routes, from which the routing protocol generates more complex routes.
+Сама по собі статична маршрутизація непрактична (наприклад, не масштабується, схильна до людських помилок), але навіть за реалізованого протоколу маршрутизації деякі маршрути все одно мають створювати оператори вручну. Ці ручні маршрути можна уявляти як «тривіальні» маршрути, або маршрути «базового випадку», з яких протокол маршрутизації отримує складніші маршрути.
 
-If we're directly connected to another machine that we want to route packets to, we can manually configure a route to forward packets to that other machine. These routes are called **direct routes** or **connected routes**. For example, your home router is connected to your personal computer with a link, so your home router can add an entry in the forwarding table corresponding to your computer. This entry is added by telling the router about the connection, and is not added from running any routing protocol.
+Якщо ми безпосередньо під'єднані до іншої машини, до якої хочемо маршрутизувати пакети, ми можемо вручну налаштувати маршрут для пересилання пакетів цій машині. Такі маршрути називаються **прямими маршрутами** (direct routes) або **під'єднаними маршрутами** (connected routes). Наприклад, ваш домашній маршрутизатор з'єднаний із вашим персональним комп'ютером каналом, тож домашній маршрутизатор може додати в таблицю пересилання запис для вашого комп'ютера. Цей запис додається, коли маршрутизатору повідомляють про з'єднання, а не в результаті роботи будь-якого протоколу маршрутизації.
 
 <img width="800px" src="/assets/routing/2-031-static.png">
 
-It is also possible to use static routing to hard-code entries for destinations in the forwarding table, even if we aren't directly connected to that destination. This can be useful if there's a route that never changes, and we want that route to always stay in our forwarding table, regardless of what the routing protocol is doing.
+Статичну маршрутизацію також можна використати, щоб жорстко задати записи для пунктів призначення в таблиці пересилання, навіть якщо ми не під'єднані до цього пункту призначення безпосередньо. Це може бути корисно, якщо є маршрут, який ніколи не змінюється, і ми хочемо, щоб він завжди залишався в нашій таблиці пересилання, хоч би що робив протокол маршрутизації.

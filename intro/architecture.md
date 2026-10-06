@@ -1,41 +1,41 @@
 ---
-title: Network Architecture
-parent: Introduction
+title: Архітектура мережі
+parent: Вступ
 nav_order: 4
 layout: page-with-toc
 ---
 
-# Network Architecture
+# Архітектура мережі
 
-## Design Paradigms
+## Парадигми проєктування
 
-So far, we've seen a bottom-up view of the Internet, starting with fundamental pieces to build up the overall picture. In this section, we'll take a top-down view of the Internet, and analyze the overarching architectural choices in the design.
+Досі ми розглядали Інтернет знизу вгору, починаючи з фундаментальних складових і вибудовуючи загальну картину. У цьому розділі ми поглянемо на Інтернет згори донизу й проаналізуємо загальні архітектурні рішення в його проєкті.
 
-These Internet design paradigms influence why the Internet works the way it does, and also influences the applications we build on top of the Internet. These paradigms were a radical departure from how systems were historically built.
+Ці парадигми проєктування Інтернету визначають, чому Інтернет працює саме так, а також впливають на застосунки, які ми будуємо поверх Інтернету. Ці парадигми радикально відрізнялися від того, як системи будували історично.
 
-These designs are just one of many possible designs, and many design choices were made years ago, before the Internet grew to its current scale. Other designs exist, and debates still exist about what the best design is.
+Ці рішення — лише одні з багатьох можливих, і чимало проєктних рішень було ухвалено роки тому, ще до того, як Інтернет виріс до нинішнього масштабу. Існують й інші підходи, і досі тривають дискусії про те, який підхід найкращий.
 
-For example, the Internet was built to be federated (independent operators cooperating), but in recent years, software-defined networking (SDN) emerged as a more centralized approach to managing a network.
+Наприклад, Інтернет будували як федеративну систему (незалежні оператори, що співпрацюють), але останніми роками з'явилися програмно-визначені мережі (software-defined networking, SDN) як більш централізований підхід до керування мережею.
 
-In the original Internet, switches were intentionally designed to be dumb and forward data without parsing it. However, in the modern Internet, attackers might try to overwhelm a switch by flooding it with useless data, and switches might need a way to detect this. Early Internet designers who came up with the dumb infrastructure paradigm did not consider this security implication.
+В оригінальному Інтернеті комутатори навмисно проєктували «тупими»: вони пересилали дані, не розбираючи їх. Однак у сучасному Інтернеті зловмисники можуть намагатися перевантажити комутатор, засипаючи його непотрібними даними, і комутаторам може знадобитися спосіб це виявляти. Ранні розробники Інтернету, які вигадали парадигму «тупої» інфраструктури, не враховували цього наслідку для безпеки.
 
 
-## Narrow Waist
+## Вузька талія
 
-It's possible to have multiple protocols at a given layer. For example, at Layer 7, we could use HTTP to serve websites, or NTP to sync system clocks, both built on the same Internet infrastructure. Or, at Layer 2, we could use Ethernet for wired networks, or Wi-Fi for wireless networks.
+На певному рівні може бути кілька протоколів. Наприклад, на рівні 7 ми можемо використовувати HTTP для обслуговування вебсайтів або NTP для синхронізації системних годинників — обидва побудовані на тій самій інфраструктурі Інтернету. Або на рівні 2 ми можемо використовувати Ethernet для дротових мереж чи Wi-Fi для бездротових.
 
-Note that even though there are multiple protocols at a given layer, you can commit to using a specific stack of protocols for your application. For example, you can commit to using HTTP over TCP over IP, and you don't need to use the other Layer 7 or Layer 4 protocols. Then, everybody using your application uses the same stack.
+Зауважте: хоча на певному рівні є кілька протоколів, для свого застосунку ви можете зупинитися на конкретному стеку протоколів. Наприклад, ви можете вирішити використовувати HTTP поверх TCP поверх IP, і вам не потрібні інші протоколи рівнів 7 чи 4. Тоді всі, хто користується вашим застосунком, використовують той самий стек.
 
 <img width="900px" src="/assets/intro/1-31-multi-protocols.png">
 
-If you look at this diagram, you'll notice there's only one protocol at Layer 3. This is the "narrow waist" that enables Internet connectivity. Ultimately, everybody on the Internet must agree to speak IP so that packets can be sent across the Internet.
+Подивившись на цю діаграму, ви помітите, що на рівні 3 є лише один протокол. Це і є «вузька талія» (narrow waist), яка забезпечує зв'язність Інтернету. Зрештою всі в Інтернеті мають погодитися говорити мовою IP, щоб пакети можна було пересилати через Інтернет.
 
 
-## Demultiplexing
+## Демультиплексування
 
-Demultiplexing is how a device determines which higher-level protocol or application should receive an incoming packet. Each layer includes a field in its header that identifies what protocol should process the payload next. For example, an IP header indicates whether its payload contains TCP or UDP, and a TCP/UDP header contains a destination port number that identifies the application/socket that should receive the data.
+Демультиплексування (demultiplexing) — це спосіб, у який пристрій визначає, який протокол вищого рівня чи застосунок має отримати вхідний пакет. Кожен рівень містить у своєму заголовку поле, яке вказує, який протокол має обробляти корисне навантаження далі. Наприклад, заголовок IP вказує, чи містить його корисне навантаження TCP або UDP, а заголовок TCP/UDP містить номер порту призначення, який визначає застосунок/сокет, що має отримати дані.
 
-When a packet arrives at a host, the networking stack repeatedly demultiplexes it: the Layer 2 header determines which Layer 3 protocol should handle the packet, the Layer 3 header determines which Layer 4 protocol should handle it, and the Layer 4 destination port helps the OS determine which application socket should receive the data.
+Коли пакет надходить на хост, мережевий стек раз у раз демультиплексує його: заголовок рівня 2 визначає, який протокол рівня 3 має обробити пакет, заголовок рівня 3 визначає, який протокол рівня 4 має його обробити, а порт призначення рівня 4 допомагає ОС визначити, який сокет застосунку має отримати дані.
 
 <img width="900px" src="/assets/intro/1-32-demultiplex.png">
 
@@ -47,11 +47,11 @@ When a packet arrives at a host, the networking stack repeatedly demultiplexes i
 
 <img width="900px" src="/assets/intro/1-36-ports.png">
 
-Be careful about naming. In networking, two different things are called ports. A physical port is the actual physical place where you plug a link into a switch. A logical port is a number in the Layer 4 header to disambiguate which application a packet belongs to.
+Будьте уважні з назвами. У мережах портами називають дві різні речі. Фізичний порт — це реальне фізичне місце, куди ви підключаєте канал до комутатора. Логічний порт — це число в заголовку рівня 4, яке дає змогу розрізнити, якому застосунку належить пакет.
 
 <img width="700px" src="/assets/intro/1-37-logical-physical-port.png">
 
-Note: The term **socket** refers to an OS mechanism for connecting an application to the networking stack in the OS. When an application opens a socket, that socket is associated with a logical port number. When the OS receives a packet, it uses the port number to direct that packet to the associated socket.
+Примітка: термін **сокет** (socket) позначає механізм ОС для з'єднання застосунку з мережевим стеком ОС. Коли застосунок відкриває сокет, цей сокет пов'язується з номером логічного порту. Коли ОС отримує пакет, вона використовує номер порту, щоб спрямувати пакет до відповідного сокета.
 
 <img width="900px" src="/assets/intro/1-38-layers-in-os1.png">
 
@@ -60,42 +60,42 @@ Note: The term **socket** refers to an OS mechanism for connecting an applicatio
 <img width="900px" src="/assets/intro/1-40-layers-in-os3.png">
 
 
-## End-to-End Principle
+## Наскрізний принцип
 
-Why did we design the Internet with the layering structure that we did? Why do only the hosts understand Layers 4 and 7, and not the routers as well?
+Чому ми спроєктували Інтернет саме з такою структурою рівнів? Чому рівні 4 і 7 розуміють лише хости, а не й маршрутизатори?
 
-The **end-to-end principle** offers wisdom and guidance for designing the Internet. David D. Clark, a scientist at MIT and a member of the Internet Architecture Board, was a major contributor to this principle. Two of his papers, "End-to-End Arguments in System Design" (1981) and "The Design Philosophy of the DARPA Internet Protocols" (1988), were hugely influential on the philosophy of the Internet design.
+**Наскрізний принцип** (end-to-end principle) пропонує мудрі настанови щодо проєктування Інтернету. Девід Д. Кларк (David D. Clark), науковець MIT і член Ради з архітектури Інтернету (Internet Architecture Board), зробив значний внесок у цей принцип. Дві його статті, «End-to-End Arguments in System Design» (1981) і «The Design Philosophy of the DARPA Internet Protocols» (1988), мали величезний вплив на філософію проєктування Інтернету.
 
-The end-to-end principle guides the debate about what functionality the network does and doesn't implement. The principle is quite broad and has many applications, but we'll focus on the question of: Should we implement reliability (Layer 4) in the network, or only at the end hosts?
+Наскрізний принцип спрямовує дискусію про те, яку функціональність мережа реалізує, а яку — ні. Принцип досить широкий і має багато застосувань, але ми зосередимося на такому питанні: чи слід реалізовувати надійність (рівень 4) у мережі, чи лише на кінцевих хостах?
 
-For now, let's think of a simple protocol for reliability. Host A wants to send 10 packets to Host B, so it sends the packets, numbered 1 through 10, across the network. The goal is for B to either receive all the packets, or realize that some packets got lost and error (we'll ignore recovering from the error).
+Наразі розгляньмо простий протокол надійності. Хост A хоче надіслати хостові B 10 пакетів, тож він надсилає мережею пакети, пронумеровані від 1 до 10. Мета полягає в тому, щоб B або отримав усі пакети, або зрозумів, що деякі пакети загубилися, і повідомив про помилку (відновлення після помилки ми не розглядатимемо).
 
-What would the Internet look like if we implemented reliability in the network? Unlike our picture from earlier, every router must now understand Layer 4 in addition to Layers 1, 2, and 3.
+Як виглядав би Інтернет, якби ми реалізували надійність у мережі? На відміну від нашої попередньої картинки, кожен маршрутизатор тепер мусить розуміти рівень 4 на додачу до рівнів 1, 2 і 3.
 
-With this new picture, an intermediate router must reliably send a packet to its next hop. It must guarantee that the next hop received all the packets, and if not, the router must re-send any lost packets. The hosts don't check that all packets were received, and instead rely on the network to ensure that all packets were received.
+У цій новій картині проміжний маршрутизатор мусить надійно надсилати пакет на свій наступний перехід. Він має гарантувати, що наступний перехід отримав усі пакети, а якщо ні — повторно надіслати втрачені пакети. Хости не перевіряють, чи отримано всі пакети, а натомість покладаються на мережу в цьому.
 
 <img width="900px" src="/assets/intro/1-41-reliability-in-network.png">
 
-In this approach, the hosts have to trust the network. If one of the routers is buggy, and drops a packet, there's nothing the hosts can really do about it.
+За такого підходу хости мусять довіряти мережі. Якщо один із маршрутизаторів містить помилку й відкидає пакет, хости фактично нічого не можуть із цим вдіяти.
 
 <img width="900px" src="/assets/intro/1-42-buggy-reliability-in-network.png">
 
-The other approach is the end-to-end approach, where we do not implement reliability in the network, and we instead force the two end hosts to enforce reliability. Routers can drop packets, and it's up to the end hosts to verify that all packets were received.
+Інший підхід — наскрізний, коли ми не реалізуємо надійність у мережі, а натомість змушуємо два кінцеві хости забезпечувати надійність. Маршрутизатори можуть відкидати пакети, і саме кінцеві хости мають перевіряти, що всі пакети отримано.
 
 <img width="900px" src="/assets/intro/1-43-reliability-in-endhost.png">
 
-In the end-to-end approach, where the end hosts implemented reliability, the control is with the hosts. The hosts could still be buggy and drop packets, but this time, the hosts have the power to fix the bug themselves. More generally, if you're writing code, it's better if you have the control over making the feature correct, instead of relying on other people who might mess up (and you can't fix their mistakes).
+За наскрізного підходу, коли надійність реалізують кінцеві хости, контроль перебуває в руках хостів. Хости однаково можуть містити помилки й відкидати пакети, але цього разу хости самі можуть виправити помилку. Загалом, якщо ви пишете код, краще, коли саме ви контролюєте правильність функції, а не покладаєтеся на інших людей, які можуть помилитися (і чиї помилки ви не можете виправити).
 
-With this comparison in mind, if we used the first approach, where we relied on the network to be correct, we can't actually guarantee perfect reliability if the network is buggy. The end hosts would probably end up doing an end-to-end check (as in the second solution) anyway.
+Враховуючи це порівняння: якби ми використали перший підхід, покладаючись на правильність мережі, ми насправді не змогли б гарантувати ідеальної надійності, якщо мережа містить помилки. Кінцеві хости, найімовірніше, однаково виконували б наскрізну перевірку (як у другому рішенні).
 
-In the old Internet, every link did implement reliability. However, as we saw, the modern Internet only implements best-effort in the network, and forces the end hosts to implement reliability, in line with the end-to-end principle.
+У старому Інтернеті кожен канал справді реалізовував надійність. Однак, як ми бачили, сучасний Інтернет реалізує в мережі лише доставку без гарантій і змушує кінцеві хости реалізовувати надійність — відповідно до наскрізного принципу.
 
-In summary: Some application requirements must be implemented end-to-end in order to ensure correctness. Also, the end-to-end implementation is sufficient, and no additional support from the network is needed. Because the end-to-end implementation alone is sufficient, adding network functionality would introduce additional unnecessary complexity (and cost), without helping us actually achieve the requirements.
+Підсумуємо: деякі вимоги застосунків мусять реалізовуватися наскрізно, щоб забезпечити правильність. Крім того, наскрізної реалізації достатньо, і додаткова підтримка з боку мережі не потрібна. Оскільки самої наскрізної реалізації достатньо, додавання функціональності в мережу внесло б додаткову зайву складність (і витрати), не допомагаючи насправді виконати вимоги.
 
-Note that the end-to-end principle is not a proof or a theorem that's always true. It's a guiding principle and a philosophical argument, and different designers might make different arguments for or against the principle.
+Зауважте, що наскрізний принцип — не доведення й не теорема, яка завжди істинна. Це керівний принцип і філософський аргумент, і різні проєктувальники можуть наводити різні аргументи за чи проти цього принципу.
 
-Here's an example of the end-to-end principle not being a strict rule. Even though the end-to-end principle says to implement reliability in the end hosts only, we could still add some extra reliability in the network in addition to the end-to-end check. This might be useful if we have highly unreliable links. Suppose there are 10 links between A and B, and each one fails 10% of the time. Then, each time we send the packet, it has a 65% chance of getting dropped. However, if each router was modified to send two copies of the packet for reliability purposes, each link only fails 0.1% of the time, and packets now only have a 1% chance of getting dropped. Wireless links will sometimes implement reliability to reduce error rates and improve performance for the end hosts.
+Ось приклад того, що наскрізний принцип не є суворим правилом. Хоча наскрізний принцип каже реалізовувати надійність лише на кінцевих хостах, ми все одно можемо додати певну додаткову надійність у мережі на додачу до наскрізної перевірки. Це може бути корисно, якщо в нас дуже ненадійні канали. Припустімо, між A і B є 10 каналів, і кожен відмовляє в 10% випадків. Тоді щоразу, коли ми надсилаємо пакет, імовірність того, що його буде відкинуто, становить 65%. Однак якщо кожен маршрутизатор змінити так, щоб він для надійності надсилав дві копії пакета, кожен канал відмовлятиме лише в 0,1% випадків, і пакети тепер матимуть лише 1% імовірності бути відкинутими. Бездротові канали іноді реалізують надійність, щоб зменшити частоту помилок і покращити продуктивність для кінцевих хостів.
 
-The end-to-end principle extends to other fields as well. For example, in security, the end-to-end principle might say that two end hosts communicating should encrypt their messages at the end hosts, instead of at intermediate points in the network.
+Наскрізний принцип поширюється й на інші галузі. Наприклад, у безпеці наскрізний принцип може означати, що два кінцеві хости, які спілкуються, мають шифрувати свої повідомлення на кінцевих хостах, а не в проміжних точках мережі.
 
-The end-to-end argument in Clark's words: "The function in question can completely and correctly be implemented only with the knowledge and help of the application at the end points. Therefore, providing that function as a feature of the communication system itself is not possible. Sometimes an incomplete version of the function provided by the communication system may be useful as a performance enhancement."
+Наскрізний аргумент словами Кларка: «Функцію, про яку йдеться, можна повністю й правильно реалізувати лише зі знанням і за допомогою застосунку на кінцевих точках. Отже, надати цю функцію як можливість самої системи зв'язку неможливо. Іноді неповна версія функції, надана системою зв'язку, може бути корисною як засіб підвищення продуктивності».

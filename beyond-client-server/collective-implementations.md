@@ -1,196 +1,196 @@
 ---
-title: Collective Implementations
-parent: Beyond Client-Server
+title: Реалізації колективних операцій
+parent: За межами клієнт-сервер
 nav_order: 8
 layout: page-with-toc
 ---
 
-# Collective Implementations
+# Реалізації колективних операцій
 
-## Motivation: Implementing AllReduce
+## Мотивація: реалізація AllReduce
 
-Now that we have definitions of the 7 collectives, we can start thinking about how to implement them in a network. To implement a collective, there are two questions we need to answer: What topology do we use to connect the nodes? What data has to be exchanged between the nodes in order to efficiently complete the operation?
+Тепер, коли в нас є визначення 7 колективів, можна почати думати, як реалізувати їх у мережі. Щоб реалізувати колектив, треба відповісти на два питання: яку топологію використати для з'єднання вершин? Якими даними треба обмінятися між вершинами, щоб ефективно завершити операцію?
 
-Once we've decided on what topology to use and what data to exchange, we can then analyze the performance of our design. What was the total amount of network bandwidth we used? How long did it take for the operation to complete? Other performance metrics can also be focused, but we'll focus on these two for these notes.
+Щойно ми вирішили, яку топологію використовувати й якими даними обмінюватися, можна проаналізувати продуктивність нашого дизайну. Скільки загалом пропускної здатності мережі ми використали? Скільки часу знадобилося для завершення операції? Можна зосередитися й на інших метриках продуктивності, але в цих матеріалах ми зосередимося на цих двох.
 
-To measure performance, we'll define some variables. There are $$p$$ nodes in total. Each vector is $$D$$ bytes in total. This means that each vector element (i.e. each box in the diagram) is $$D/p$$ bytes.
+Щоб вимірювати продуктивність, визначимо кілька змінних. Загалом є $$p$$ вершин. Кожен вектор має загалом $$D$$ байтів. Це означає, що кожен елемент вектора (тобто кожна комірка на діаграмі) має $$D/p$$ байтів.
 
-In this section, we'll set $$p=5$$ to make some of the demos more illustrative. Note that this also means that each vector is now 5 elements instead of 4 elements. (Side note: Remember that the vector represents arbitrary data, and we divide each vector into $$p$$ equally-sized sub-vectors, where $$p$$ is the total number of nodes. Increasing $$p$$ from 4 to 5 doesn't necessarily mean we have more data. It could just mean we split the same data into 5 chunks instead of 4 chunks.)
+У цьому розділі ми встановимо $$p=5$$, щоб деякі демонстрації були наочнішими. Зауважте, що це також означає, що кожен вектор тепер має 5 елементів замість 4. (Принагідна примітка: пам'ятайте, що вектор представляє довільні дані, і ми ділимо кожен вектор на $$p$$ однакових за розміром підвекторів, де $$p$$ — загальна кількість вершин. Збільшення $$p$$ з 4 до 5 не обов'язково означає, що в нас більше даних. Це може просто означати, що ми розбили ті самі дані на 5 фрагментів замість 4.)
 
-In this section, we'll focus on implementing the AllReduce collective, although the ideas can be applied to the other collectives as well. Recall that AllReduce computes an element-wise sum of the vectors, and then sends the sum vector to all nodes.
+У цьому розділі ми зосередимося на реалізації колективу AllReduce, хоча ці ідеї можна застосувати й до інших колективів. Пригадайте, що AllReduce обчислює поелементну суму векторів, а потім надсилає вектор суми всім вершинам.
 
 <img width="900px" src="/assets/beyond-client-server/7-082-allreduce-reminder.png">
 
 
-## Approach 1: Full Mesh
+## Підхід 1: повнозв'язна мережа
 
-The first topology we'll consider is a full-mesh, where every node has a direct link to every other node.
+Перша топологія, яку ми розглянемо, — повнозв'язна, де кожна вершина має прямий канал до кожної іншої.
 
 <img width="900px" src="/assets/beyond-client-server/7-083-mesh-1.png">
 
-With this topology, we can implement AllReduce with these steps: First, everyone sends their entire vector directly to every other node.
+З цією топологією AllReduce можна реалізувати такими кроками: спершу кожен надсилає весь свій вектор безпосередньо кожній іншій вершині.
 
 <img width="900px" src="/assets/beyond-client-server/7-084-mesh-2.png">
 
-Then, each node sums all the vectors it receives.
+Потім кожна вершина підсумовує всі отримані вектори.
 
 <img width="900px" src="/assets/beyond-client-server/7-085-mesh-3.png">
 
-How much bandwidth does this approach use? Each node needs to send its entire vector ($$D$$ bytes) to all $$p-1$$ other nodes, so each node sends $$D(p-1)$$ bytes. There are $$p$$ nodes in total, so the total data sent is $$Dp(p-1) = O(D \cdot p^2)$$ bytes.
+Скільки пропускної здатності використовує цей підхід? Кожна вершина має надіслати весь свій вектор ($$D$$ байтів) усім $$p-1$$ іншим вершинам, тож кожна вершина надсилає $$D(p-1)$$ байтів. Загалом вершин $$p$$, тож загальний обсяг надісланих даних — $$Dp(p-1) = O(D \cdot p^2)$$ байтів.
 
-How much time does this approach take? It depends on the exact resource limits of the nodes and the links, but assuming no resource limits, all of the vector sending can happen at the same time, completing in a single time step. In other words, Node 1 sends data to all other nodes, using all 3 of its outgoing links simultaneously. At the same time, Node 2 can also send data to all other nodes, using all 3 of its outgoing links simultaneously. Assuming no resource limits, this approach takes a single time step to complete, where each node needs to send and receive $$2 \cdot D \cdot (p-1)$$ bytes per time step. (Each node sends $$D \cdot (p-1)$$ bytes and receives $$D \cdot (p-1)$$ bytes, and summing those up gives us the extra factor of 2.)
+Скільки часу займає цей підхід? Це залежить від точних обмежень ресурсів вершин і каналів, але за відсутності обмежень ресурсів усе надсилання векторів може відбуватися одночасно, завершуючись за один крок часу. Іншими словами, вершина 1 надсилає дані всім іншим вершинам, одночасно використовуючи всі 3 свої вихідні канали. Водночас вершина 2 теж може надсилати дані всім іншим вершинам, одночасно використовуючи всі 3 свої вихідні канали. За відсутності обмежень ресурсів цей підхід завершується за один крок часу, де кожна вершина має надіслати й отримати $$2 \cdot D \cdot (p-1)$$ байтів за крок часу. (Кожна вершина надсилає $$D \cdot (p-1)$$ байтів і отримує $$D \cdot (p-1)$$ байтів, а їх сума дає додатковий множник 2.)
 
 
-## Approach 2: Reduce at One Node
+## Підхід 2: редукція на одній вершині
 
-In the next topology, let's have a single topology do all the computation work:
+У наступній топології нехай усю обчислювальну роботу виконує одна вершина:
 
 <img width="900px" src="/assets/beyond-client-server/7-086-root-1.png">
 
-To run AllReduce: First, everybody (except Node 1) sends their vector to Node 1.
+Щоб виконати AllReduce: спершу всі (окрім вершини 1) надсилають свій вектор вершині 1.
 
 <img width="800px" src="/assets/beyond-client-server/7-087-root-2.png">
 
-Then, Node 1 computes the sum, and sends the sum back to everybody.
+Потім вершина 1 обчислює суму й надсилає суму назад усім.
 
 <img width="900px" src="/assets/beyond-client-server/7-088-root-3.png">
 
-How much bandwidth does this approach use? Each node (except Node 1) needs to send its entire vector to Node 1, which means $$D$$ bytes are sent. There are $$p-1$$ nodes that need to send data, so the total data sent in the first step is $$D(p-1)$$ bytes.
+Скільки пропускної здатності використовує цей підхід? Кожна вершина (окрім вершини 1) має надіслати весь свій вектор вершині 1, тобто надсилається $$D$$ байтів. Є $$p-1$$ вершин, що мають надіслати дані, тож загальний обсяг даних, надісланих на першому кроці, — $$D(p-1)$$ байтів.
 
-Then, in the second step, Node 1 has to send the sum vector to everybody else. The sum vector is $$D$$ bytes, and it has to be sent to $$p-1$$ other nodes, so the total data sent in the second step is also $$D(p-1)$$ bytes.
+Потім на другому кроці вершина 1 має надіслати вектор суми всім іншим. Вектор суми має $$D$$ байтів, і його треба надіслати $$p-1$$ іншим вершинам, тож загальний обсяг даних, надісланих на другому кроці, теж $$D(p-1)$$ байтів.
 
-In total, across the two steps, we sent $$2 \cdot D \cdot (p-1) = O(D \cdot p)$$ bytes. Notice that this is a factor of $$p$$ better than the $$O(D \cdot p^2)$$ bytes sent in the full-mesh approach.
+Загалом за два кроки ми надіслали $$2 \cdot D \cdot (p-1) = O(D \cdot p)$$ байтів. Зверніть увагу, що це в $$p$$ разів краще за $$O(D \cdot p^2)$$ байтів, надісланих у повнозв'язному підході.
 
-How much time does this approach take? Again, it depends on the exact resource limits, but assuming no resource limits, everyone can send their vector to Node 1 at the same time. Then, we have to wait for Node 1 to compute the sum. After the sum is computed, Node 1 can send the sum back to everybody else at the same time. In total, this approach takes 2 time steps to complete, where Node 1 has to send or receive $$D \cdot (p-1)$$ bytes per time step.
+Скільки часу займає цей підхід? Знову ж таки, це залежить від точних обмежень ресурсів, але за відсутності обмежень ресурсів усі можуть одночасно надіслати свій вектор вершині 1. Потім нам доводиться чекати, поки вершина 1 обчислить суму. Після обчислення суми вершина 1 може одночасно надіслати суму назад усім іншим. Загалом цей підхід займає 2 кроки часу, де вершина 1 має надіслати чи отримати $$D \cdot (p-1)$$ байтів за крок часу.
 
-We aren't precisely measuring how long a "time step" is here, but the main point of comparison here is that with this approach, all the sending in the first step has to finish before sending in the second step can start. By contrast, in the first approach, all of the data sending could happen at the same time.
+Ми тут точно не вимірюємо, скільки триває «крок часу», але головний пункт порівняння в тому, що за цього підходу все надсилання на першому кроці має завершитися, перш ніж може початися надсилання на другому. Натомість у першому підході все надсилання даних могло відбуватися одночасно.
 
-One downside of this approach is that we have a single point of failure at Node 1. This approach is not commonly used in practice.
+Один недолік цього підходу — єдина точка відмови у вершині 1. На практиці цей підхід використовують нечасто.
 
 
-## Approach 3: Tree-Based
+## Підхід 3: на основі дерева
 
-In the next topology, we'll build a binary tree. Remember that binary here means that each node has at most 2 children.
+У наступній топології ми побудуємо двійкове дерево. Пам'ятайте, що двійкове тут означає, що кожна вершина має щонайбільше 2 дітей.
 
 <img width="800px" src="/assets/beyond-client-server/7-089-tree-1.png">
 
-To run AllReduce: Starting from the leaf nodes at the bottom, each node sends its vector to its parent.
+Щоб виконати AllReduce: починаючи з листків унизу, кожна вершина надсилає свій вектор своєму батькові.
 
 <img width="800px" src="/assets/beyond-client-server/7-090-tree-2.png">
 
-When you receive all of your children's vectors, you should sum them with your vector.
+Коли ви отримали вектори всіх своїх дітей, слід підсумувати їх зі своїм вектором.
 
 <img width="800px" src="/assets/beyond-client-server/7-091-tree-3.png">
 
-Then, you should send this resulting sum vector to your parent.
+Потім слід надіслати отриманий вектор суми своєму батькові.
 
 <img width="700px" src="/assets/beyond-client-server/7-092-tree-4.png">
 
-After repeating this step up all the layers of the tree, the root should have computed the overall sum.
+Після повторення цього кроку на всіх рівнях дерева корінь має обчислити загальну суму.
 
 <img width="700px" src="/assets/beyond-client-server/7-093-tree-5.png">
 
-Then, in the second step, the root sends the overall sum vector down the tree, to its children. When you receive the sum vector from your parent, you should send a copy of that sum vector to all your children.
+Потім на другому кроці корінь надсилає загальний вектор суми вниз деревом своїм дітям. Коли ви отримуєте вектор суми від свого батька, слід надіслати копію цього вектора суми всім своїм дітям.
 
 <img width="800px" src="/assets/beyond-client-server/7-094-tree-6.png">
 
 <img width="800px" src="/assets/beyond-client-server/7-095-tree-7.png">
 
-How much bandwidth does this approach use? In Step 1, each node receives up to 2 vectors from its children (recall: the tree is binary), and each node sends 1 vector to its parent. This gives us an upper-bound of $$3D$$ bytes per node, for a total of $$3D \cdot p$$ bytes in Step 1.
+Скільки пропускної здатності використовує цей підхід? На кроці 1 кожна вершина отримує до 2 векторів від своїх дітей (пригадайте: дерево двійкове) і надсилає 1 вектор своєму батькові. Це дає верхню межу $$3D$$ байтів на вершину, разом $$3D \cdot p$$ байтів на кроці 1.
 
-Then, in the second step, each each node receives 1 vector from its parent, and sends up to 2 vectors to its children. Again, we get an upper-bound of $$3D$$ bytes per node, for a total of $$3D \cdot p$$ bytes in Step 2.
+Потім на другому кроці кожна вершина отримує 1 вектор від свого батька й надсилає до 2 векторів своїм дітям. Знову отримуємо верхню межу $$3D$$ байтів на вершину, разом $$3D \cdot p$$ байтів на кроці 2.
 
-In total, across the two steps, we sent $$6 \cdot D \cdot p = O(D \cdot p)$$ bytes. This is a factor of $$p$$ better than the full-mesh, and the same as the reduce-at-one-node approach.
+Загалом за два кроки ми надіслали $$6 \cdot D \cdot p = O(D \cdot p)$$ байтів. Це в $$p$$ разів краще за повнозв'язну мережу і так само, як у підході з редукцією на одній вершині.
 
-How much time does this approach take? You have to wait to receive vectors from your children before you can send the sum (i.e. sum of your vector and your children's vectors) to your parent. In total, this approach takes $$O(\log p)$$ time steps to send vectors up the tree, and another $$O(\log p)$$ time steps to send the overall sum down the tree, for a total of $$O(\log p)$$ time steps. Each node has to send or receive $$3D$$ bytes per time step (note that this is fewer bytes per time step than the other approaches). An exact time comparison would require plugging in values for $$D$$ and the resource limits in the network, but roughly speaking, this approach requires more time steps, but each time step can probably complete faster since there's less data to transmit per time step.
+Скільки часу займає цей підхід? Вам треба дочекатися отримання векторів від своїх дітей, перш ніж надіслати суму (тобто суму свого вектора й векторів дітей) своєму батькові. Загалом цей підхід займає $$O(\log p)$$ кроків часу, щоб надіслати вектори вгору деревом, і ще $$O(\log p)$$ кроків, щоб надіслати загальну суму вниз деревом, разом $$O(\log p)$$ кроків часу. Кожна вершина має надіслати чи отримати $$3D$$ байтів за крок часу (зауважте, що це менше байтів за крок, ніж в інших підходах). Точне порівняння часу потребувало б підстановки значень $$D$$ і обмежень ресурсів у мережі, але, грубо кажучи, цей підхід потребує більше кроків часу, проте кожен крок, імовірно, може завершуватися швидше, бо за крок треба передати менше даних.
 
-Notice that we took advantage of the reduction operation in this implementation. Each node sums up its vector and its children's vectors, so that it only has to send up a single sum vector to its parent. In a more naive approach, each node would have sent up 3 vectors to its parent (its own vector, and both of its children's vectors), but we took advantage of the reduction to save bandwidth.
+Зверніть увагу, що в цій реалізації ми скористалися операцією редукції. Кожна вершина підсумовує свій вектор і вектори своїх дітей, тож має надіслати батькові лише один вектор суми. За наївнішого підходу кожна вершина надсилала б батькові 3 вектори (власний і обидва вектори дітей), але ми скористалися редукцією, щоб заощадити пропускну здатність.
 
-More generally, the consolidation collectives (Reduce, ReduceScatter, AllReduce) give us an opportunity to optimize their implementation. In Reduce and ReduceScatter, the total amount of data received is actually less than the amount of data sent, and we can take advantage of that in our implementations. For example, if we know that the output is a sum of all vectors, and we receive two vectors, we can sum up the vectors and forward a single, summed vector, instead of forwarding the two vectors separately.
+Загальніше, консолідаційні колективи (Reduce, ReduceScatter, AllReduce) дають нам нагоду оптимізувати їхню реалізацію. У Reduce і ReduceScatter загальний обсяг отриманих даних насправді менший за обсяг надісланих, і ми можемо цим скористатися у своїх реалізаціях. Наприклад, якщо ми знаємо, що вихід — сума всіх векторів, і ми отримуємо два вектори, можна підсумувати вектори й переслати один підсумований вектор замість пересилати два вектори окремо.
 
 
-## Approach 4: Ring-Based (Naive)
+## Підхід 4: на основі кільця (наївний)
 
-In the last two approaches, we'll build a ring-shaped topology. Note that there's nothing special about the wrap-around link from Node 1 to Node 5, compared to the other links (i.e. the link being longer doesn't mean anything).
+В останніх двох підходах ми побудуємо кільцеву топологію. Зауважте, що в каналі, який замикає кільце від вершини 1 до вершини 5, немає нічого особливого порівняно з іншими каналами (тобто те, що канал довший, нічого не означає).
 
 <img width="900px" src="/assets/beyond-client-server/7-096-naive-ring-1.png">
 
-To run AllReduce naively: Node 5 starts by sending its vector left.
+Щоб наївно виконати AllReduce: вершина 5 починає з надсилання свого вектора ліворуч.
 
 <img width="900px" src="/assets/beyond-client-server/7-097-naive-ring-2.png">
 
-When you receive a vector from your neighbor to the right, you should sum it with your vector.
+Коли ви отримуєте вектор від свого сусіда праворуч, слід підсумувати його зі своїм вектором.
 
 <img width="900px" src="/assets/beyond-client-server/7-098-naive-ring-3.png">
 
-Then, you should send this resulting sum vector to your left neighbor.
+Потім слід надіслати отриманий вектор суми своєму сусідові ліворуч.
 
 <img width="900px" src="/assets/beyond-client-server/7-099-naive-ring-4.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-100-naive-ring-5.png">
 
-Eventually, this process will work around the loop.
+Зрештою цей процес обійде все кільце.
 
 <img width="900px" src="/assets/beyond-client-server/7-101-naive-ring-6.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-102-naive-ring-7.png">
 
-To finish up, Node 1 will compute the overall sum.
+Наостанок вершина 1 обчислить загальну суму.
 
 <img width="900px" src="/assets/beyond-client-server/7-103-naive-ring-8.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-104-naive-ring-9.png">
 
-Then, in the second step, we will send the overall sum around the loop so that everyone has a copy. Node 5 starts by sending the overall sum left. When you receive the overall sum vector from your neighbor to the right, you should send a copy of the sum vector to your left neighbor. Eventually, this process works around the loop, and everyone receives a copy of the overall sum.
+Потім на другому кроці ми надішлемо загальну суму по кільцю, щоб кожен мав копію. Вершина 5 починає з надсилання загальної суми ліворуч. Коли ви отримуєте загальний вектор суми від свого сусіда праворуч, слід надіслати копію вектора суми своєму сусідові ліворуч. Зрештою цей процес обходить кільце, і кожен отримує копію загальної суми.
 
 <img width="900px" src="/assets/beyond-client-server/7-105-naive-ring-10.png">
 
-How much bandwidth does this approach use? In Step 1, each node receives a vector from its right neighbor, and sends a vector to its left neighbor. This gives us an upper-bound of $$2D$$ bytes per node, for a total of $$2D \cdot p$$ bytes in Step 1.
+Скільки пропускної здатності використовує цей підхід? На кроці 1 кожна вершина отримує вектор від свого сусіда праворуч і надсилає вектор своєму сусідові ліворуч. Це дає верхню межу $$2D$$ байтів на вершину, разом $$2D \cdot p$$ байтів на кроці 1.
 
-In the second step, each node again receives 1 vector and sends 1 vector. Again, we get an upper-bound of $$2D$$ bytes per node, for a total of $$2D \cdot p$$ bytes in Step 2.
+На другому кроці кожна вершина знову отримує 1 вектор і надсилає 1 вектор. Знову отримуємо верхню межу $$2D$$ байтів на вершину, разом $$2D \cdot p$$ байтів на кроці 2.
 
-In total, across the two steps, we sent $$4 \cdot D \cdot p = O(D \cdot p)$$ bytes.
+Загалом за два кроки ми надіслали $$4 \cdot D \cdot p = O(D \cdot p)$$ байтів.
 
-How much time does this approach take? You have to wait to receive a vector (from your left) before you can send a vector (to your right). In total, this approach takes $$p$$ time steps to circle the loop in the first step, and another $$p$$ time steps to send the overall sum in a loop in the second loop, for a total of $$2p = O(p)$$ time steps. Each node has to send or receive up to $$2D$$ bytes per time step.
+Скільки часу займає цей підхід? Вам треба дочекатися отримання вектора (зліва), перш ніж надіслати вектор (праворуч). Загалом цей підхід займає $$p$$ кроків часу, щоб обійти кільце на першому кроці, і ще $$p$$ кроків, щоб надіслати загальну суму по кільцю на другому, разом $$2p = O(p)$$ кроків часу. Кожна вершина має надіслати чи отримати до $$2D$$ байтів за крок часу.
 
-As in the tree-based topology, an exact time comparison would require plugging in values for $$D$$ and the resource limits in the network. Roughly speaking, compared to the first 2 approaches, this approach requires more time steps, but each time step can probably complete faster since there's less data to transmit per time step.
+Як і в деревоподібній топології, точне порівняння часу потребувало б підстановки значень $$D$$ і обмежень ресурсів у мережі. Грубо кажучи, порівняно з першими 2 підходами цей підхід потребує більше кроків часу, але кожен крок, імовірно, може завершуватися швидше, бо за крок треба передати менше даних.
 
-Note: We chose Node 5 as the starting point, but other starting points would have also worked. Likewise, we could have also moved left-to-right in the loop, instead of right-to-left.
+Примітка: як початкову точку ми обрали вершину 5, але працювали б і інші початкові точки. Так само ми могли б рухатися кільцем зліва направо, а не справа наліво.
 
 
-## Approach 5: Ring-Based (Optimized)
+## Підхід 5: на основі кільця (оптимізований)
 
-The approaches we've seen so far will give us the right answer, but they create bursty workloads. In the naive ring-based approach, each node spends most of its time idling and doing nothing. At one point, you suddenly receive an entire vector, and you have to immediately add that vector to your own vector, and send the result to your left. Everyone else has to wait for you to finish this operation.
+Підходи, які ми досі бачили, дадуть правильну відповідь, але створюють пульсуюче навантаження. У наївному підході на основі кільця кожна вершина більшу частину часу простоює й нічого не робить. В якийсь момент ви раптом отримуєте цілий вектор і мусите негайно додати його до власного вектора й надіслати результат ліворуч. Усі інші мають чекати, поки ви завершите цю операцію.
 
-To create a less bursty, more balanced workload, we can stagger the steps of the naive ring-based AllReduce. Sending your entire vector to the left at once creates a burst of work for your left neighbor. Instead, you can send your vector to the left incrementally, by sending one element per time step.
+Щоб створити менш пульсуюче, збалансованіше навантаження, можна розподілити в часі кроки наївного кільцевого AllReduce. Надсилання всього вектора ліворуч одразу створює сплеск роботи для вашого сусіда ліворуч. Натомість ви можете надсилати свій вектор ліворуч поступово, по одному елементу за крок часу.
 
 <img width="900px" src="/assets/beyond-client-server/7-106-optimized-ring-1.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-107-optimized-ring-2.png">
 
-When you receive a single element (from your left), you can add that element to your own corresponding element. You can then send out that resulting sum (still a single element) to your left.
+Коли ви отримуєте один елемент (зліва), ви можете додати цей елемент до власного відповідного елемента. Потім ви можете надіслати отриману суму (досі один елемент) ліворуч.
 
 <img width="900px" src="/assets/beyond-client-server/7-108-optimized-ring-3.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-109-optimized-ring-4.png">
 
-In addition to staggering the sending of each vector, notice that the starting points were also staggered. Instead of the starting point being Node 5 sending all of its elements, we now start by having the $$i$$th node send its $$i$$th element.
+Окрім розподілу в часі надсилання кожного вектора, зверніть увагу, що початкові точки теж розподілено. Замість того щоб починати з того, що вершина 5 надсилає всі свої елементи, тепер ми починаємо з того, що $$i$$-та вершина надсилає свій $$i$$-й елемент.
 
 <img width="900px" src="/assets/beyond-client-server/7-110-optimized-ring-5.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-111-optimized-ring-6.png">
 
-By staggering the operation along both of these dimensions (each node sends one element at a time, and each node starts at a different element), we can create a more balanced workload. At every time step, each node receives exactly one element from its right, computes one sum, and sends exactly one element to its left.
+Розподіляючи операцію за обома цими вимірами (кожна вершина надсилає по одному елементу за раз, і кожна вершина починає з іншого елемента), можна створити збалансованіше навантаження. На кожному кроці часу кожна вершина отримує рівно один елемент справа, обчислює одну суму й надсилає рівно один елемент ліворуч.
 
 <img width="900px" src="/assets/beyond-client-server/7-112-optimized-ring-7.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-113-optimized-ring-8.png">
 
-If we repeat this $$p$$ times, then each element will have cycled all the way around the ring.
+Якщо повторити це $$p$$ разів, кожен елемент обійде все кільце.
 
 <img width="900px" src="/assets/beyond-client-server/7-114-optimized-ring-9.png">
 
-However, not everyone knows all the elements of the sum vector, so we have to cycle around the ring one more time. Just like in the naive approach, in this second cycle, when you receive an element of the overall sum, you simply send a copy to your right.
+Однак не кожен знає всі елементи вектора суми, тож нам доведеться обійти кільце ще раз. Як і в наївному підході, у цьому другому обході, коли ви отримуєте елемент загальної суми, ви просто надсилаєте копію праворуч.
 
 <img width="900px" src="/assets/beyond-client-server/7-115-optimized-ring-10.png">
 
@@ -200,58 +200,58 @@ However, not everyone knows all the elements of the sum vector, so we have to cy
 
 <img width="900px" src="/assets/beyond-client-server/7-118-optimized-ring-13.png">
 
-When watching this animated demo, try to focus on the two dimensions in which we are staggering the operations. If you focus on a single column, you'll notice that we send the elements one at a time, and we receive elements one at a time.
+Переглядаючи цю анімовану демонстрацію, спробуйте зосередитися на двох вимірах, за якими ми розподіляємо операції. Якщо зосередитися на одному стовпці, ви помітите, що ми надсилаємо елементи по одному й отримуємо елементи по одному.
 
-Also, if you focus on a single row, you'll notice that every node receives the sum of all the $$i$$th elements so far, adds its own $$i$$th element, and sends the new sum left. Since this operation cycles through all the nodes, we know that we'll end up adding all the $$i$$th elements together.
+Крім того, якщо зосередитися на одному рядку, ви помітите, що кожна вершина отримує суму всіх $$i$$-х елементів на цей момент, додає власний $$i$$-й елемент і надсилає нову суму ліворуч. Оскільки ця операція проходить по всіх вершинах, ми знаємо, що зрештою складемо всі $$i$$-ті елементи разом.
 
-In summary, the optimized ring-based AllReduce does exactly the same operations as the naive ring-based AllReduce. The only difference is we have staggered the sending and receiving of vectors, to reduce the burstiness of the workload at each node.
+Підсумуємо: оптимізований кільцевий AllReduce виконує точнісінько ті самі операції, що й наївний кільцевий AllReduce. Єдина відмінність у тому, що ми розподілили в часі надсилання й отримання векторів, щоб зменшити пульсуючість навантаження на кожній вершині.
 
-The bandwidth and time analysis of the optimized ring-based AllReduce is the same as the naive ring-based AllReduce. Each node receives/sends $$2D$$ bytes in the first step, and another $$2D$$ bytes in the second step, for a total of $$4 \cdot D \cdot p = O(D \cdot p)$$ bytes. We still need $$O(p)$$ time steps to make two cycles around the ring.
+Аналіз пропускної здатності й часу оптимізованого кільцевого AllReduce такий самий, як і наївного. Кожна вершина отримує/надсилає $$2D$$ байтів на першому кроці й ще $$2D$$ байтів на другому, разом $$4 \cdot D \cdot p = O(D \cdot p)$$ байтів. Нам однаково потрібно $$O(p)$$ кроків часу, щоб двічі обійти кільце.
 
-However, the bandwidth per time step is has been improved in the optimized approach. In the naive approach, each node had to receive and send an entire vector of in a single time step, for a total of $$2D$$ bytes transmitted in a single time step. In the optimized approach, each node only has to receive and send a single element at each time step, for a total of $$2D/p$$ bytes transmitted in a single time step
+Однак пропускну здатність на крок часу в оптимізованому підході покращено. У наївному підході кожна вершина мала отримати й надіслати цілий вектор за один крок часу, разом $$2D$$ байтів, переданих за один крок часу. В оптимізованому підході кожна вершина має отримати й надіслати лише один елемент на кожному кроці часу, разом $$2D/p$$ байтів, переданих за один крок часу.
 
 
-## Overlay and Underlay Topologies
+## Накладені та базові топології
 
-Recall that these collective operations are defined such that the user (i.e. AI training program) can select any set of $$p$$ hosts, and ask them to run an AllReduce operation. When the user selects $$p$$ hosts, it's unlikely that they are already nicely connected in a ring topology. How can we implement the ring-based AllReduce, even if the hosts themselves aren't physically connected in the ring topology?
+Пригадайте, що ці колективні операції визначено так, що користувач (тобто програма навчання ШІ) може обрати будь-яку множину з $$p$$ хостів і попросити їх виконати операцію AllReduce. Коли користувач обирає $$p$$ хостів, малоймовірно, що вони вже зручно з'єднані в кільцеву топологію. Як реалізувати кільцевий AllReduce, навіть якщо самі хости фізично не з'єднані в кільцеву топологію?
 
-The answer is to use overlays. We can draw virtual links to connect the hosts in a ring topology:
+Відповідь — використовувати накладені мережі. Можна намалювати віртуальні канали, щоб з'єднати хости в кільцеву топологію:
 
 <img width="900px" src="/assets/beyond-client-server/7-119-ring-overlay-1.png">
 
-When Node D sends its vector to Node B, in the overlay perspective, Node D is sending the vector along a single (virtual) link to its direct neighbor. In the underlay perspective, this vector actually has to travel several hops before reaching its destination of Node B.
+Коли вершина D надсилає свій вектор вершині B, з погляду накладеної мережі вершина D надсилає вектор одним (віртуальним) каналом своєму прямому сусідові. З погляду базової мережі цей вектор насправді має пройти кілька переходів, перш ніж дістанеться свого пункту призначення — вершини B.
 
-As we saw when we discussed overlay-based multicast, overlay performance depends on how well the overlay topology matches the underlay network. In the context of AI training, performance is especially important because we're transmitting huge amounts of data.
+Як ми бачили, обговорюючи накладену багатоадресну розсилку, продуктивність накладеної мережі залежить від того, наскільки добре накладена топологія відповідає базовій мережі. У контексті навчання ШІ продуктивність особливо важлива, бо ми передаємо величезні обсяги даних.
 
-To demonstrate why overlay topology matters, suppose that 4 nodes want to run an AllReduce operation. How do we number the nodes to achieve the best performance?
+Щоб показати, чому накладена топологія важлива, припустімо, що 4 вершини хочуть виконати операцію AllReduce. Як пронумерувати вершини, щоб досягти найкращої продуктивності?
 
-First, note that any numbering of nodes will produce the correct AllReduce result. In other words, any of the nodes could be Node 1, and any of the nodes could be Node 2, and so on. (This is not true for all collective operations, but it is true for AllReduce.)
+По-перше, зауважте, що будь-яка нумерація вершин дасть правильний результат AllReduce. Іншими словами, будь-яка з вершин може бути вершиною 1, будь-яка — вершиною 2 тощо. (Це справджується не для всіх колективних операцій, але для AllReduce справджується.)
 
-Here are two possible numberings of the nodes:
+Ось дві можливі нумерації вершин:
 
 <img width="900px" src="/assets/beyond-client-server/7-120-ring-overlay-2.png">
 
-The first approach results in an average stretch of 3.5. In particular, notice that the C-to-D and B-to-A virtual links require traversing lots of links through the underlay network.
+Перший підхід дає середній розтяг 3,5. Зокрема, зверніть увагу, що віртуальні канали C–D і B–A потребують проходження багатьох каналів базової мережі.
 
 <img width="900px" src="/assets/beyond-client-server/7-121-ring-overlay-3.png">
 
-By contrast, the second approach results in an average stretch of 2.5. This set of virtual links puts neighboring links in the ring closer to each other.
+Натомість другий підхід дає середній розтяг 2,5. Цей набір віртуальних каналів розміщує сусідні канали в кільці ближче один до одного.
 
 <img width="900px" src="/assets/beyond-client-server/7-122-ring-overlay-4.png">
 
-More generally, to optimize the performance of ring-based AllReduce, we would like adjacent nodes (e.g. Node $$i$$ and Node $$i+1$$) to be near each other in the network.
+Загальніше, щоб оптимізувати продуктивність кільцевого AllReduce, ми хотіли б, щоб сусідні вершини (наприклад, вершина $$i$$ і вершина $$i+1$$) були близько одна до одної в мережі.
 
-This diagram shows an arbitrary underlay network topology, but the same idea holds for the highly-structured datacenter-like topologies we use for AI training. Recall that in these datacenter-like topologies, some nodes have very high-performance connections (e.g. two GPUs on the same machine), while other nodes have worse-performing connections (e.g. two GPUs on different racks).
+Ця діаграма показує довільну топологію базової мережі, але та сама ідея справджується й для високоструктурованих топологій на кшталт дата-центрів, які ми використовуємо для навчання ШІ. Пригадайте, що в цих топологіях на кшталт дата-центрів деякі вершини мають дуже продуктивні з'єднання (наприклад, два GPU на тій самій машині), а інші — менш продуктивні (наприклад, два GPU в різних стійках).
 
-AI training jobs are predictable, and the underlying topology is fixed and regular. This means that we have many opportunities to optimize the performance of our training job. For example, we can assign specific jobs to specific nodes, so that collective operations are performed on nearby nodes (e.g. all the nodes in the same rack). Finding ways to optimize AI training jobs is an active area of research.
+Завдання навчання ШІ передбачувані, а базова топологія фіксована й регулярна. Це означає, що в нас багато можливостей оптимізувати продуктивність завдання навчання. Наприклад, ми можемо призначати конкретні завдання конкретним вершинам, щоб колективні операції виконувалися на розташованих поруч вершинах (наприклад, усіх вершинах у тій самій стійці). Пошук способів оптимізувати завдання навчання ШІ — активна галузь досліджень.
 
 
-## Layers of Abstraction
+## Рівні абстракції
 
-In summary, you can think about collective operations at three layer of operations:
+Підсумуємо: про колективні операції можна думати на трьох рівнях:
 
-1. Definitions. At the highest layer of abstraction, we defined the operations by specifying the input and the expected output. The user only needs to understand these definitions to use the collectives. The user does not need to know how the operation is implemented.
+1. Визначення. На найвищому рівні абстракції ми визначили операції, вказавши вхід і очікуваний вихід. Користувачеві достатньо розуміти ці визначення, щоб використовувати колективи. Користувачеві не потрібно знати, як реалізовано операцію.
 
-2. Overlay. Going down one layer of abstraction, we can think about what data gets exchanged in the overlay topology. At this level, you can assume that the nodes are organized in a useful topology (e.g. tree or ring), and can send data along virtual links in that topology.
+2. Накладена мережа. Спускаючись на один рівень абстракції нижче, можна думати про те, якими даними обмінюються в накладеній топології. На цьому рівні можна вважати, що вершини впорядковано в корисну топологію (наприклад, дерево чи кільце) і вони можуть надсилати дані віртуальними каналами цієї топології.
 
-3. Underlay. At the lowest level of abstraction, we think about how the virtual links (overlay) correspond to actual physical links in the underlay. When Node 5 sends a vector to Node 4, that vector actually has to be forwarded across several physical routers and links.
+3. Базова мережа. На найнижчому рівні абстракції ми думаємо про те, як віртуальні канали (накладена мережа) відповідають реальним фізичним каналам базової мережі. Коли вершина 5 надсилає вектор вершині 4, цей вектор насправді має бути переслано кількома фізичними маршрутизаторами й каналами.

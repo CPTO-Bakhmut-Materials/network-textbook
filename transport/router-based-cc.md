@@ -1,93 +1,93 @@
 ---
-title: Router-Assisted Congestion Control
-parent: Transport
+title: Керування перевантаженням за участю маршрутизаторів
+parent: Транспортний рівень
 nav_order: 9
 layout: page-with-toc
 ---
 
-# Router-Assisted Congestion Control
+# Керування перевантаженням за участю маршрутизаторів
 
-## Congestion Control with Routers
+## Керування перевантаженням за допомогою маршрутизаторів
 
-Previously, we saw some issues with host-based congestion control algorithms. Many of these issues could be fixed with some help from routers!
+Раніше ми розглянули деякі проблеми алгоритмів керування перевантаженням на основі хоста. Багато з цих проблем можна було б виправити за певної допомоги маршрутизаторів!
 
-TCP confuses congestion and corruption. TCP fills up queues, has choppy rates, and performs poorly on short flows, all because hosts need to constantly adjust their rates to detect congestion. If routers could tell the sender about congestion, or even directly tell the sender the ideal rate, then many of these problems could be solved.
+TCP плутає перевантаження й пошкодження. TCP заповнює черги, має нерівномірну швидкість і погано працює з короткими потоками — і все тому, що хостам доводиться постійно коригувати швидкість, щоб виявляти перевантаження. Якби маршрутизатори могли повідомляти відправникові про перевантаження чи навіть безпосередньо повідомляти ідеальну швидкість, багато з цих проблем можна було б розв'язати.
 
-Also, if routers enforce fair sharing, then it becomes much harder for hosts to cheat.
+Крім того, якщо маршрутизатори забезпечуватимуть справедливий розподіл, хостам стане набагато складніше шахраювати.
 
-More philosophically, it's a natural design choice to have routers participate in congestion routing. Congestion happens at the routers, so they often have more information about congestion than the hosts.
+Якщо філософськи, то залучення маршрутизаторів до керування перевантаженням — природне проєктне рішення. Перевантаження виникає на маршрутизаторах, тож вони часто мають більше інформації про перевантаження, ніж хости.
 
-Router-assisted congestion control can be very effective and result in near-optimal performance (high link utilization, low delays), but deploying these protocols can be challenging. Routers now need to support additional functionality, and sometimes that functionality can be quite complex. Some protocols might even require every router to agree to add that functionality.
+Керування перевантаженням за участю маршрутизаторів може бути дуже ефективним і давати майже оптимальну продуктивність (високе використання каналів, низькі затримки), але розгортання таких протоколів може бути складним. Маршрутизатори тепер мають підтримувати додаткову функціональність, і іноді ця функціональність може бути доволі складною. Деякі протоколи можуть навіть вимагати, щоб кожен маршрутизатор погодився додати цю функціональність.
 
 
-## Enforcing Fair Queuing
+## Забезпечення справедливих черг
 
-How can a router ensure that every connection gets its fair share?
+Як маршрутизатор може гарантувати, що кожне з'єднання отримує свою справедливу частку?
 
-So far, a router is receiving packets, queuing them if needed, and sending them out, in first-in-first-out (FIFO) order. The router doesn't care which connection a packet comes from.
+Досі маршрутизатор отримував пакети, ставив їх у чергу за потреби й надсилав у порядку «перший прийшов — перший пішов» (first-in-first-out, FIFO). Маршрутизатору байдуже, з якого з'єднання надходить пакет.
 
-In our new model, the router would need to classify packets into connections. (For now, assume the connections are all TCP connections.) This means the router has to look inside the packet to learn the source and destination IP addresses and ports.
+У нашій новій моделі маршрутизатор мав би класифікувати пакети за з'єднаннями. (Поки що вважайте, що всі з'єднання — це з'єднання TCP.) Це означає, що маршрутизатор має зазирати всередину пакета, щоб дізнатися IP-адреси й порти джерела та призначення.
 
-To formally define fairness, the router could maintain a separate queue for each connection. When a packet arrives, the router adds the packet to the appropriate queue. Then, the router just needs to pick a queue each time, sending a packet from the front of that queue. As long as the router is picking queues in some fair way, then the router is enforcing fairness across connections.
+Щоб формально визначити справедливість, маршрутизатор може підтримувати окрему чергу для кожного з'єднання. Коли надходить пакет, маршрутизатор додає його до відповідної черги. Потім маршрутизатору достатньо щоразу обирати чергу й надсилати пакет із її початку. Якщо маршрутизатор обирає черги певним справедливим чином, то він забезпечує справедливість між з'єднаннями.
 
-If all packets are the same size, then the router could pick queues round-robin (send from the first queue, then the second queue, etc.). It turns out that this works, even if not all connections need the same bandwidth. Some connections might queue up packets more slowly than others. If we apply round-robin service to connections of different bandwidth, how do we compute the bandwidth allocated to each connection? For example, suppose we can send 10 packets per second, and A, B, and C sent 8, 6, and 2 packets per second, respectively.
+Якщо всі пакети однакового розміру, маршрутизатор може обирати черги по колу (round-robin; надсилати з першої черги, потім із другої тощо). Виявляється, це працює, навіть якщо не всім з'єднанням потрібна однакова пропускна здатність. Деякі з'єднання можуть ставити пакети в чергу повільніше за інші. Якщо застосувати обслуговування по колу до з'єднань із різною пропускною здатністю, як обчислити пропускну здатність, виділену кожному з'єднанню? Наприклад, припустімо, ми можемо надсилати 10 пакетів на секунду, а A, B і C надсилають 8, 6 і 2 пакети на секунду відповідно.
 
 <img width="500px" src="/assets/transport/3-094-fair-queuing-1.png">
 
-If we sent out packets round-robin, how many packets per second of each type would be sent? We can model this as a resource allocation problem and solve it.
+Якщо ми надсилаємо пакети по колу, скільки пакетів кожного типу надсилатиметься за секунду? Це можна змоделювати як задачу розподілу ресурсів і розв'язати її.
 
 <img width="600px" src="/assets/transport/3-095-fair-queuing2.png">
 
-For example, suppose we have a link capacity of 10. Connection A requests 8, B requests 6, and C requests 2. How should we distribute the capacity among the three connections? If we tried to be fair, everybody would receive 3.33. But C only asked for 2, so let's give C the 2 it asked for, with no extra.
+Наприклад, припустімо, пропускна здатність каналу дорівнює 10. З'єднання A запитує 8, B — 6, а C — 2. Як розподілити пропускну здатність між трьома з'єднаннями? Якби ми намагалися бути справедливими, кожен отримав би по 3,33. Але C запитувало лише 2, тож дамо C запитані 2, без надлишку.
 
-Now we have 8 left over, and A and B still need allocations. If we were fair, each would receive 4. This is less than what they asked for, but we have no way to satisfy their request, so we'll give each their fair share of 4.
+Тепер у нас залишилося 8, і A та B ще потребують розподілу. Якби ми були справедливими, кожне отримало б по 4. Це менше, ніж вони запитували, але ми ніяк не можемо задовольнити їхній запит, тож дамо кожному його справедливу частку 4.
 
-Formally, to define max-min fairness, suppose C is the total bandwidth available to the router. Each connection $$r_i$$ has a bandwidth demand, and we have to allocate a bandwidth $$a_i$$ to each connection. The max-min bandwidth allocations are $$a_i = \min(f, r_i)$$, where $$f$$ is the unique value (same value for all connections) such that $$\sum a_i = C$$. In this equation, the min term ensures that nobody gets more than they asked for, and the sum constraint ensures that no bandwidth is unused. Intuitively, $$f$$ is the fair share that we equally allocate to everybody (hence one $$f$$ value for all connections).
+Формально, щоб визначити max-min справедливість (max-min fairness), припустімо, що C — загальна пропускна здатність, доступна маршрутизатору. Кожне з'єднання $$r_i$$ має попит на пропускну здатність, і ми маємо виділити кожному з'єднанню пропускну здатність $$a_i$$. Max-min розподіли пропускної здатності: $$a_i = \min(f, r_i)$$, де $$f$$ — єдине значення (однакове для всіх з'єднань), таке, що $$\sum a_i = C$$. У цій формулі доданок min гарантує, що ніхто не отримає більше, ніж запитував, а обмеження на суму гарантує, що жодна пропускна здатність не залишиться невикористаною. Інтуїтивно, $$f$$ — справедлива частка, яку ми порівну виділяємо всім (звідси одне значення $$f$$ для всіх з'єднань).
 
-Another way to read this equation is: There is some magic fair-share number that we can distribute equally to everybody. If you requested less than the fair share, you get the fair share (no extra). If you requested more than the fair share, you are capped at the fair share, but nobody else gets more than you.
+Ще один спосіб прочитати цю формулу: є певне чарівне число справедливої частки, яке ми можемо порівну розподілити між усіма. Якщо ви запитали менше за справедливу частку, ви отримуєте запитане (без надлишку). Якщо ви запитали більше за справедливу частку, вас обмежено справедливою часткою, але ніхто інший не отримує більше за вас.
 
-In the previous example, $$f$$ was 4. A and B received $$f$$ (they wanted more), and C received 2 (it wanted less).
+У попередньому прикладі $$f$$ дорівнювало 4. A і B отримали $$f$$ (вони хотіли більше), а C отримало 2 (воно хотіло менше).
 
-If we apply max-min fairness, the equation guarantees that if you don't get your full demand, nobody else gets more than you. The round-robin approach is max-min fair (assuming equal packet size).
+Якщо застосувати max-min справедливість, формула гарантує: якщо ви не отримуєте свого повного попиту, ніхто інший не отримує більше за вас. Підхід по колу є max-min справедливим (за умови однакового розміру пакетів).
 
-What if we don't assume equal packet size? In real life, packet sizes can vary widely (e.g. 40 bytes vs. 1500 bytes). Ideally, we'd like to perform bit-by-bit round robin, where we take turns sending one bit from each connection's queue. This isn't practical (we don't send one bit at a time), but if we applied this theoretically, we could write down the time when the last bit of a packet is sent out, for every packet. We'll call this the deadline for that packet. Then, a fair approximation would be sending out packets in order of deadline (when their last bit would have been sent ideally).
+А що, як не вважати пакети однаковими за розміром? У реальному житті розміри пакетів можуть сильно відрізнятися (наприклад, 40 байтів проти 1500 байтів). В ідеалі ми хотіли б виконувати побітове обслуговування по колу, по черзі надсилаючи по одному біту з черги кожного з'єднання. Це непрактично (ми не надсилаємо по одному біту), але якби ми застосували це теоретично, то могли б для кожного пакета записати момент, коли надсилається його останній біт. Назвімо це крайнім терміном (deadline) цього пакета. Тоді справедливим наближенням було б надсилати пакети в порядку крайніх термінів (коли в ідеалі було б надіслано їхній останній біт).
 
-Fun fact: The paper about simulating fair queuing is extremely influential, and two of the co-authors are Scott Shenker (UC Berkeley faculty) and Srinivasan Keshav (EECS PhD student at the time).
+Цікавий факт: стаття про моделювання справедливих черг надзвичайно впливова, і двоє її співавторів — Скотт Шенкер (Scott Shenker; викладач UC Berkeley) і Срінівасан Кешав (Srinivasan Keshav; тоді аспірант EECS).
 
-Here's an example of exact bit-by-bit fair queuing on two connections (when a tie occurs, we pick the packet that arrives first).
+Ось приклад точних побітових справедливих черг для двох з'єднань (у разі нічиєї ми обираємо пакет, що надійшов першим).
 
 <img width="900px" src="/assets/transport/3-096-fair-queuing3.png">
 
 
-## Fair Queuing in Practice
+## Справедливі черги на практиці
 
-What's good about fair queuing? It ensures isolation between connections, and prevents cheating connections from getting more bandwidth. Connections wouldn't need to implement TCP (or a TCP-friendly alternative), and can pick their own (possibly unfriendly) congestion control algorithm.
+Що доброго в справедливих чергах? Вони забезпечують ізоляцію між з'єднаннями й не дають з'єднанням-шахраям отримувати більше пропускної здатності. З'єднанням не потрібно було б реалізовувати TCP (чи TCP-дружню альтернативу), і вони могли б обирати власний (можливо, недружній) алгоритм керування перевантаженням.
 
-Fundamentally, the benefit of fair queuing is its resilience to external factors like cheating and RTT variations. No matter what, everyone gets a fair share of a given link. But, we still need end hosts to discover and adapt to their fair share (e.g. slow down if they're requesting too much).
+По суті, перевага справедливих черг — у їхній стійкості до зовнішніх чинників, як-от шахрайство й відмінності в RTT. За будь-яких умов кожен отримує справедливу частку даного каналу. Але нам однаково потрібно, щоб кінцеві хости виявляли свою справедливу частку й пристосовувалися до неї (наприклад, сповільнювалися, якщо запитують забагато).
 
-What's bad about fair queuing? It's much more complicated than FIFO queuing. The process of computing deadlines is tricky and we have not shown an algorithm for doing so here. Also, routers would need to maintain multiple queues, and do extra parsing work on every packet.
+Що поганого в справедливих чергах? Вони набагато складніші за черги FIFO. Процес обчислення крайніх термінів непростий, і ми тут не показали алгоритму для цього. Крім того, маршрутизаторам довелося б підтримувати кілька черг і виконувати додатковий розбір кожного пакета.
 
-In practice, we can't implement perfect fair queuing in routers (too complicated to run at high speeds), but approximations do exist (e.g. Deficit Round Robin). Modern routers typically implement approximations, though with fewer queues. Fewer queues means that instead of one queue per connection, isolation is more coarse-grained (e.g. one queue per customer).
+На практиці ми не можемо реалізувати в маршрутизаторах ідеальні справедливі черги (надто складно для роботи на високих швидкостях), але наближення існують (наприклад, Deficit Round Robin). Сучасні маршрутизатори зазвичай реалізують наближення, хоча з меншою кількістю черг. Менша кількість черг означає, що замість однієї черги на з'єднання ізоляція грубіша (наприклад, одна черга на клієнта).
 
-Fair queuing cannot eliminate congestion. It is only an alternative way to manage congestion. For example, consider this bottleneck link: It might allocate 0.5 Gbps to each connection, which defeats cheating. But, if the top connection runs at 0.5 Gbps, then 0.4 Gbps will get dropped at the immediate next link. A better allocation would be to send 0.1 Gbps along the top connection, and 0.9 Gbps along the bottom connection.
+Справедливі черги не можуть усунути перевантаження. Це лише альтернативний спосіб керувати перевантаженням. Наприклад, розгляньте цей канал — вузьке місце: він може виділити кожному з'єднанню по 0,5 Гбіт/с, що перешкоджає шахрайству. Але якщо верхнє з'єднання працюватиме на 0,5 Гбіт/с, то 0,4 Гбіт/с буде відкинуто на наступному ж каналі. Кращим розподілом було б надсилати 0,1 Гбіт/с верхнім з'єднанням і 0,9 Гбіт/с — нижнім.
 
-Fundamentally, the problem is that this bottleneck link doesn't know what will happen at future (downstream) links. The only way to fix this is to make the sender host slow down (router queuing cannot help).
+По суті, проблема в тому, що цей канал — вузьке місце не знає, що відбуватиметься на наступних (нижчих за потоком) каналах. Єдиний спосіб виправити це — змусити хост-відправник сповільнитися (черги маршрутизатора не допоможуть).
 
-Fair queuing gives us per-connection fairness, but philosophically, we still have to ask if this is the right model of fairness. As we saw earlier, per-connection fairness means that someone with more connections still gets more bandwidth. Should we instead enforce fairness per source-destination pair, or perhaps per source? Should we penalize connections that use more congested links (hogging more scarce resources)?
+Справедливі черги дають нам справедливість на рівні з'єднань, але філософськи нам однаково треба запитати, чи це правильна модель справедливості. Як ми бачили раніше, справедливість на рівні з'єднань означає, що той, у кого більше з'єднань, однаково отримує більше пропускної здатності. Чи не слід натомість забезпечувати справедливість на рівні пар «джерело–призначення» чи, можливо, на рівні джерела? Чи слід карати з'єднання, що використовують більш перевантажені канали (захоплюючи більше дефіцитних ресурсів)?
 
 
-## Router-Assisted Congestion Control
+## Керування перевантаженням за участю маршрутизаторів
 
-Fair queuing enforces fairness over a specific link, but it doesn't tell the sender anything. What if the routers passed information back to the sender to help the sender adjust its rate?
+Справедливі черги забезпечують справедливість на конкретному каналі, але нічого не повідомляють відправникові. А що, як маршрутизатори передаватимуть відправникові інформацію, щоб допомогти йому скоригувати швидкість?
 
-One solution is to have routers directly tell senders the rate they should use. We could add a rate field in packets, and have routers fill in that field with the connection's fair share. When the packet arrives at the sender, the sender can read the header and set the rate to what the routers said. Now, the sender doesn't need to dynamically adjust to discover a good rate.
+Одне рішення — щоб маршрутизатори безпосередньо повідомляли відправникам швидкість, яку слід використовувати. Можна додати до пакетів поле швидкості, і маршрутизатори заповнюватимуть це поле справедливою часткою з'єднання. Коли пакет надходить до відправника, відправник може прочитати заголовок і встановити швидкість, яку вказали маршрутизатори. Тепер відправникові не потрібно динамічно коригуватися, щоб виявити добру швидкість.
 
-Another solution is to have routers notify senders about congestion (without specifying an exact rate). This is deployed in the form of an **Explicit Congestion Notification (ECN)** bit in the IP header. If a packet passes through a congested router, the router sets that bit to 1. When the recipient gets a packet with the ECN bit on, the ack reply will also have the ECN bit set, so the sender learns about congestion.
+Інше рішення — щоб маршрутизатори сповіщали відправників про перевантаження (не вказуючи точної швидкості). Це розгорнуто у вигляді біта **явного сповіщення про перевантаження** (Explicit Congestion Notification, ECN) у заголовку IP. Якщо пакет проходить через перевантажений маршрутизатор, маршрутизатор встановлює цей біт у 1. Коли отримувач отримує пакет з увімкненим бітом ECN, у підтвердженні-відповіді також буде встановлено біт ECN, тож відправник дізнається про перевантаження.
 
-There are many options for when routers set this bit. The router could be paranoid and set the bit frequently, which reduces delay but may lead to underused links. Or, the router could be more reckless and rarely set the bit, which increases delay but results in high link utilization.
+Є багато варіантів того, коли маршрутизатори встановлюють цей біт. Маршрутизатор може бути параноїдальним і встановлювати біт часто, що зменшує затримку, але може призвести до недовикористання каналів. Або маршрутизатор може бути необачнішим і встановлювати біт рідко, що збільшує затримку, але дає високе використання каналів.
 
-There are also many options for how the host reacts when this bit is set. For example, the host could pretend the packet was dropped and adjust accordingly.
+Є також багато варіантів того, як хост реагує, коли цей біт встановлено. Наприклад, хост може вдати, що пакет відкинуто, і відповідно скоригуватися.
 
-What's good about ECN? It solves the problem of confusing corruption and congestion. It allows routers to warn hosts about congestion earlier (e.g. before the queue is full), which can reduce delays. It's also lightweight to implement.
+Що доброго в ECN? Він розв'язує проблему плутанини між пошкодженням і перевантаженням. Він дає маршрутизаторам змогу попереджати хости про перевантаження раніше (наприклад, до заповнення черги), що може зменшити затримки. Крім того, його легко реалізувати.
 
-In practice, effective ECN requires most or all routers to support this protocol and turn the bit on when necessary. In the modern Internet, the ECN bit is deployed on some, but not all routers. However, the ECN bit can be effective in a small network (e.g. inside a datacenter's local network) where all routers agree to enable the bit.
+На практиці ефективний ECN вимагає, щоб більшість чи всі маршрутизатори підтримували цей протокол і вмикали біт за потреби. У сучасному Інтернеті біт ECN розгорнуто на деяких, але не на всіх маршрутизаторах. Однак біт ECN може бути ефективним у невеликій мережі (наприклад, у локальній мережі дата-центру), де всі маршрутизатори погоджуються вмикати цей біт.

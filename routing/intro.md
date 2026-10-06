@@ -1,46 +1,46 @@
 ---
-title: Introduction to Routing
-parent: Routing
+title: Вступ до маршрутизації
+parent: Маршрутизація
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Introduction to Routing
+# Вступ до маршрутизації
 
-## What is Routing?
+## Що таке маршрутизація?
 
-Suppose that machine A and machine B are both connected to the Internet. Machine A wants to send a message to machine B, but the two machines are not directly connected to each other. How does machine A know where to send the message, so that the message will eventually reach machine B? What path will the message take through the network to reach its destination of machine B? In this unit, we'll be studying **routing** to answer these questions.
+Припустімо, що машини A і B обидві під'єднані до Інтернету. Машина A хоче надіслати повідомлення машині B, але ці дві машини не з'єднані безпосередньо одна з одною. Як машина A дізнається, куди надіслати повідомлення, щоб воно зрештою дійшло до машини B? Яким шляхом повідомлення пройде мережею, щоб дістатися пункту призначення — машини B? У цьому розділі ми вивчатимемо **маршрутизацію** (routing), щоб відповісти на ці питання.
 
 <img width="600px" src="/assets/routing/2-001-intro-pic.png">
 
-First, we'll devise a model of the Internet so that we can pose routing as a well-defined problem. We'll also see what answers to the routing problem look like, and what makes an answer valid and good.
+Спершу ми побудуємо модель Інтернету, щоб можна було поставити маршрутизацію як чітко визначену задачу. Ми також побачимо, як виглядають розв'язки задачі маршрутизації і що робить розв'язок коректним і добрим.
 
-Next, we'll look at several different types of routing protocols that can be implemented to help generate answers to the routing problem. We'll also see how addressing protocols can be used to make our routing protocols scalable to the entire Internet.
+Далі ми розглянемо кілька різних типів протоколів маршрутизації, які можна реалізувати, щоб отримувати розв'язки задачі маршрутизації. Ми також побачимо, як протоколи адресації можна використати, щоб наші протоколи маршрутизації масштабувалися на весь Інтернет.
 
-Finally, we'll take a brief look at the real-life hardware we use to implement these routing protocols.
+Нарешті, ми коротко розглянемо реальне апаратне забезпечення, яке використовується для реалізації цих протоколів маршрутизації.
 
-## Inter-Domain and Intra-Domain Routing
+## Міждоменна та внутрішньодоменна маршрутизація
 
-One possible strategy for routing is to build a model of the Internet that includes every single machine in the world, and design a single giant routing protocol that will allow us to send packets anywhere in the world. However, this is infeasible in practice because of the scale of the Internet.
+Одна з можливих стратегій маршрутизації — побудувати модель Інтернету, яка охоплює кожну машину у світі, і спроєктувати один гігантський протокол маршрутизації, що дасть змогу надсилати пакети будь-куди у світі. Однак на практиці це нездійсненно через масштаб Інтернету.
 
-Instead, we'll take advantage of the fact that the Internet is a network of networks. In other words, the Internet consists of many local networks. Each local network implements its own routing protocol that specifies how to send packets within just that local network. Then, we can connect up all those local networks and implement a routing protocol across all the local networks, specifying how to send packets between different local networks.
+Натомість ми скористаємося тим, що Інтернет — це мережа мереж. Іншими словами, Інтернет складається з багатьох локальних мереж. Кожна локальна мережа реалізує власний протокол маршрутизації, який визначає, як надсилати пакети лише в межах цієї локальної мережі. Потім ми можемо з'єднати всі ці локальні мережі й реалізувати протокол маршрутизації для всіх локальних мереж, який визначає, як надсилати пакети між різними локальними мережами.
 
 <img width="900px" src="/assets/routing/2-002-network-of-networks.png">
 
-Local networks are not identical. For example, they might differ in size: Some networks might have more machines than others. Or, the machines might be spread out over a wider physical area (e.g. the entire UC Berkeley campus), or a smaller area (e.g. your home). Networks can also differ in the bandwidth they need to support, the allowable failure rate, the number of support staff available, the age of the infrastructure, the amount of money available to build and support it, and so on.
+Локальні мережі не однакові. Наприклад, вони можуть відрізнятися розміром: в одних мережах може бути більше машин, ніж в інших. Або машини можуть бути розкидані на більшій фізичній території (наприклад, увесь кампус UC Berkeley) чи на меншій (наприклад, ваш дім). Мережі також можуть відрізнятися пропускною здатністю, яку вони мають підтримувати, допустимою частотою відмов, кількістю доступного персоналу підтримки, віком інфраструктури, обсягом коштів на її побудову й підтримку тощо.
 
-Because each network has its own structure and requirements, different local networks might choose to use different routing protocols. A strategy for routing packets might be effective on one network, but not another one.
+Оскільки кожна мережа має власну структуру та вимоги, різні локальні мережі можуть обирати різні протоколи маршрутизації. Стратегія маршрутизації пакетів може бути ефективною в одній мережі, але не в іншій.
 
-With the network of networks model, we can let individual local networks choose a routing strategy for packets within their network. Each operator can choose the protocol that works best for them. The protocols for routing packets within a local network are called **intra-domain** routing protocols, or **interior gateway protocols (IGPs)**. Real-world examples include OSPF (Open Shortest Path First) and IS-IS (Intermediate System to Intermediate System).
+У моделі мережі мереж ми можемо дозволити окремим локальним мережам обирати стратегію маршрутизації пакетів у своїй мережі. Кожен оператор може обрати протокол, який найкраще підходить саме йому. Протоколи маршрутизації пакетів у межах локальної мережі називаються протоколами **внутрішньодоменної** (intra-domain) маршрутизації, або **протоколами внутрішнього шлюзу** (interior gateway protocols, IGP). Реальні приклади — OSPF (Open Shortest Path First) та IS-IS (Intermediate System to Intermediate System).
 
 <img width="900px" src="/assets/routing/2-003-intradomain.png">
 
-By contrast, protocols for routing packets across different networks are called **inter-domain** routing protocols, or **exterior gateway protocols (EGPs)**. In order to support sending packets across different local networks, every network needs to agree to use the same protocol for routing packets between each other. If different networks used different inter-domain protocols, there's no guarantee that that the entire Internet could be connected in a consistent way. What if one operator only implemented Protocol X, and another operator only implemented Protocol Y? It's not clear how these two local networks would be able to exchange messages.
+Натомість протоколи маршрутизації пакетів між різними мережами називаються протоколами **міждоменної** (inter-domain) маршрутизації, або **протоколами зовнішнього шлюзу** (exterior gateway protocols, EGP). Щоб підтримувати надсилання пакетів між різними локальними мережами, кожна мережа має погодитися використовувати той самий протокол для маршрутизації пакетів між собою. Якби різні мережі використовували різні міждоменні протоколи, не було б гарантії, що весь Інтернет можна з'єднати узгодженим чином. Що, як один оператор реалізував лише протокол X, а інший — лише протокол Y? Незрозуміло, як ці дві локальні мережі змогли б обмінюватися повідомленнями.
 
-Because every network must agree to use the same inter-domain protocol, there is only one protocol implemented at scale on the Internet, namely BGP (Border Gateway Protocol).
+Оскільки кожна мережа має погодитися використовувати той самий міждоменний протокол, в Інтернеті в масштабі реалізовано лише один протокол, а саме BGP (Border Gateway Protocol, протокол прикордонного шлюзу).
 
 <img width="900px" src="/assets/routing/2-004-interdomain.png">
 
-This model of interior and exterior gateway protocols is convenient for intuition, but in practice, there is not always a clear distinction between them. For example, BGP is sometimes also used inside a local network, in addition to between different networks.
+Ця модель протоколів внутрішнього та зовнішнього шлюзу зручна для інтуїції, але на практиці між ними не завжди є чітка межа. Наприклад, BGP іноді використовують і всередині локальної мережі, а не лише між різними мережами.
 
-Regardless of whether a protocol is deployed internally within a network, or externally between all networks, we can additionally classify the routing protocol by looking at what the underlying algorithm is doing. In particular, we'll study distance-vector protocols, link-state protocols, and path-vector protocols (more about each type later).
+Незалежно від того, чи протокол розгорнуто всередині мережі, чи зовні між усіма мережами, ми можемо додатково класифікувати протокол маршрутизації за тим, що робить його алгоритм. Зокрема, ми вивчатимемо дистанційно-векторні протоколи (distance-vector), протоколи стану каналів (link-state) і протоколи вектора шляху (path-vector) — про кожен тип детальніше пізніше.

@@ -1,68 +1,68 @@
 ---
-title: Congestion Control
-parent: Datacenters
+title: Керування перевантаженням
+parent: Дата-центри
 nav_order: 2
 layout: page-with-toc
 ---
 
-# Congestion Control in Datacenters
+# Керування перевантаженням у дата-центрах
 
-## Why are Datacenters Different?
+## Чим відрізняються дата-центри?
 
-We've seen that datacenter networks have additional constraints (e.g. physically in one building, owned by one operator) compared to general-purpose networks. This can lead to special protocols that exploit these special characteristics of the network. In this section, we'll explore TCP congestion control algorithms that may not work on the general Internet, but are effective in datacenter contexts. This is an active area of research and development.
+Ми бачили, що мережі дата-центрів мають додаткові обмеження (наприклад, фізично в одній будівлі, належать одному операторові) порівняно з мережами загального призначення. Це може приводити до спеціальних протоколів, що використовують ці особливі характеристики мережі. У цьому розділі ми розглянемо алгоритми керування перевантаженням TCP, які можуть не працювати в загальному Інтернеті, але ефективні в контексті дата-центрів. Це активна галузь досліджень і розробок.
 
-First, we should answer: What makes the congestion control different in a datacenter?
+Спершу слід відповісти: що робить керування перевантаженням у дата-центрі відмінним?
 
-Recall that packet delay consists of transmission delay (time to signal the bits on the wire, determined by bandwidth), propagation delay (time for bits to travel across wire), and queuing delay.
+Пригадайте, що затримка пакета складається із затримки передачі (часу на передавання бітів сигналом дротом, визначається пропускною здатністю), затримки поширення (часу, за який біти проходять дротом) і затримки в черзі.
 
-In datacenters, transmission delay is usually relatively small (remember, we have high-capacity 10 Gbps links). Propagation delay is also relatively small in datacenters (remember, all the servers are in the same building). As a result, in datacenters, queuing delay is often the dominant source of delay. By contrast, in the wide-area Internet, the propagation delay could be orders of magnitude larger (e.g. packets could have to travel across the country), and is a more common dominating source of delay.
+У дата-центрах затримка передачі зазвичай відносно мала (пам'ятайте, у нас канали з високою пропускною здатністю 10 Гбіт/с). Затримка поширення в дата-центрах теж відносно мала (пам'ятайте, усі сервери в тій самій будівлі). Як наслідок, у дата-центрах основним джерелом затримки часто є затримка в черзі. Натомість у глобальному Інтернеті затримка поширення може бути на порядки більшою (наприклад, пакетам може доводитися перетинати країну), і саме вона частіше є основним джерелом затримки.
 
-Recall that TCP congestion control deliberately fills up queues until packets get lost (we detect congestion by checking for loss). The TCP designers had not considered datacenter contexts, where queuing delay can have a much larger impact on performance.
+Пригадайте, що керування перевантаженням TCP навмисно заповнює черги, доки пакети не почнуть губитися (ми виявляємо перевантаження, перевіряючи втрати). Розробники TCP не враховували контексту дата-центрів, де затримка в черзі може набагато сильніше впливати на продуктивність.
 
-The problem of large queues is exacerbated in datacenters, because unlike in the wide-area Internet, most datacenter connections fall into one of two categories. Most connections are **mice**, which are short and latency-sensitive. For example, a web search query and the results page contain a very small amount of data, but we want to return the results to the user very quickly. By contrast, some connections are **elephants**, which are large and throughput-sensitive. For example, backing up data from one server to another server requires a long-running connection that sends a lot of data at high throughput.
+Проблема великих черг загострюється в дата-центрах, бо, на відміну від глобального Інтернету, більшість з'єднань у дата-центрі належать до однієї з двох категорій. Більшість з'єднань — **миші** (mice), короткі й чутливі до латентності. Наприклад, пошуковий запит і сторінка результатів містять дуже мало даних, але ми хочемо дуже швидко повернути результати користувачеві. Натомість деякі з'єднання — **слони** (elephants), великі й чутливі до пропускної спроможності. Наприклад, резервне копіювання даних з одного сервера на інший потребує довготривалого з'єднання, що надсилає багато даних із високою пропускною спроможністю.
 
-If we run TCP congestion control with these two types of connections, the elephants will increase their rates until the queues are all filled up. Now, any subsequent mice will be stuck in the queues, causing the mice to be delayed.
+Якщо виконувати керування перевантаженням TCP з цими двома типами з'єднань, слони збільшуватимуть швидкість, доки всі черги не заповняться. Тепер будь-які наступні миші застрягатимуть у чергах, що спричинятиме затримку мишей.
 
-In order to maximize performance for these specific types of connections, datacenter congestion control algorithms must avoid filling up queues. Many datacenter-specific solutions have been developed in recent years.
+Щоб максимізувати продуктивність для цих конкретних типів з'єднань, алгоритми керування перевантаженням у дата-центрах мають уникати заповнення черг. Останніми роками розроблено багато рішень, специфічних для дата-центрів.
 
-For example, BBR was released by Google in 2016. In this approach, instead of detecting congestion by checking for loss (which requires queues to be full), we instead detect congestion by checking for packet delay.
+Наприклад, BBR випустила Google у 2016 році. За цього підходу замість виявляти перевантаження, перевіряючи втрати (що вимагає заповнення черг), ми натомість виявляємо перевантаження, перевіряючи затримку пакетів.
 
 
-## DCTCP: Feedback from Routers
+## DCTCP: зворотний зв'язок від маршрутизаторів
 
-DCTCP (Datacenter TCP) was released in 2010 by Microsoft, and is now widely used (e.g. implemented in the Linux kernel).
+DCTCP (Datacenter TCP) випустила Microsoft у 2010 році, і нині він широко використовується (наприклад, реалізований у ядрі Linux).
 
-Recall that the IP header has an ECN bit, and the router can enable this bit to indicate that it's congested. When the packet reaches the destination, the ack will also have the ECN bit set, and this tells the sender to slow down.
+Пригадайте, що заголовок IP має біт ECN, і маршрутизатор може ввімкнути цей біт, щоб вказати, що він перевантажений. Коли пакет дістається пункту призначення, у підтвердженні теж буде встановлено біт ECN, і це каже відправникові сповільнитися.
 
-In DCTCP, routers will enable the ECN bit when the queue length exceeds some threshold. This allows senders to detect and adapt to congestion earlier (as the queue is filling up, before the queue gets totally full).
+У DCTCP маршрутизатори вмикають біт ECN, коли довжина черги перевищує певний поріг. Це дає відправникам змогу раніше виявляти перевантаження й пристосовуватися до нього (поки черга заповнюється, ще до того, як вона повністю заповниться).
 
-In response to congestion, the sender reduces the rate in proportion to the number of packets with ECN markings. This allows the sender to adapt to congestion more gently. Instead of binary decision (congestion or no congestion), the sender can detect that some congestion might be happening, and slightly decrease the rate to compensate.
+У відповідь на перевантаження відправник зменшує швидкість пропорційно кількості пакетів із позначкою ECN. Це дає відправникові змогу м'якше пристосовуватися до перевантаження. Замість двійкового рішення (перевантаження є чи немає) відправник може виявити, що, можливо, відбувається певне перевантаження, і трохи зменшити швидкість, щоб це компенсувати.
 
-The ECN bit is not very effective in the wide-area Internet because not all routers support it. However, in a datacenter, the operator controls all the switches and can have them all toggle the ECN in a consistent way. In practice, implementing DCTCP at hosts and routers is a relatively small change.
+Біт ECN не надто ефективний у глобальному Інтернеті, бо не всі маршрутизатори його підтримують. Однак у дата-центрі оператор контролює всі комутатори й може змусити їх усіх перемикати ECN узгоджено. На практиці реалізація DCTCP на хостах і маршрутизаторах — відносно невелика зміна.
 
-To measure how DCTCP performs, we can measure **flow completion time (FCT)**, which measures the time between the first byte being sent and the last byte being received. As a benchmark, the ideal FCT is the completion time if we used an omniscient scheduler that had global knowledge of the entire network and all connections. The scheduler could then use that knowledge to optimally schedule flows and allocate bandwidth to flows.
+Щоб виміряти продуктивність DCTCP, можна виміряти **час завершення потоку** (flow completion time, FCT), тобто час між надсиланням першого байта й отриманням останнього. Як еталон, ідеальний FCT — це час завершення, якби ми використовували всезнаючий планувальник із глобальним знанням усієї мережі та всіх з'єднань. Тоді планувальник міг би використати це знання, щоб оптимально планувати потоки й розподіляти між ними пропускну здатність.
 
 <img width="500px" src="/assets/datacenter/6-031-fct-chart1.png">
 
-This graph shows the normalized FCT, which is a ratio of actual FCT to ideal FCT. This tells us how much worse we're doing, compared to the ideal congestion control algorithm. We can see that standard TCP congestion control performs 3x worse than ideal, and up to 10x worse than ideal if the load on the network is higher. By contrast, DCTCP performs significantly better than standard TCP congestion control. DCTCP connections are finishing much faster, with less queuing delay.
+Цей графік показує нормалізований FCT — відношення фактичного FCT до ідеального. Він показує, наскільки гірше ми працюємо порівняно з ідеальним алгоритмом керування перевантаженням. Видно, що стандартне керування перевантаженням TCP працює втричі гірше за ідеал і до 10 разів гірше за ідеал, якщо навантаження на мережу вище. Натомість DCTCP працює значно краще за стандартне керування перевантаженням TCP. З'єднання DCTCP завершуються набагато швидше, з меншою затримкою в черзі.
 
 
-## pFabric: Packet Priorities
+## pFabric: пріоритети пакетів
 
-We saw that the issue in datacenters is that mice can be trapped in queues behind elephants. What if we gave the mice some way to skip to the front of the queue so they could complete faster?
+Ми бачили, що проблема в дата-центрах полягає в тому, що миші можуть застрягати в чергах позаду слонів. Що, як дати мишам спосіб переходити на початок черги, щоб вони могли завершуватися швидше?
 
-To prioritize mice, we will assign a priority number to every packet. The priority is computed as the remaining flow size (number of unacknowledged bytes). Lower numbers have higher priority.
+Щоб пріоритезувати мишей, ми призначатимемо кожному пакету число пріоритету. Пріоритет обчислюється як залишковий розмір потоку (кількість непідтверджених байтів). Менші числа мають вищий пріоритет.
 
-With this system, mice packets will be high-priority (flow sizes are very low). Elephants will be low-priority, though the last few bytes in an elephant connection will be higher-priority. This has the effect of prioritizing connections that are almost-done (even if they're larger elephant connections).
+За такої системи пакети мишей будуть високопріоритетними (розміри потоків дуже малі). Слони будуть низькопріоритетними, хоча останні кілька байтів зі з'єднання-слона матимуть вищий пріоритет. Це фактично пріоритезує з'єднання, що майже завершені (навіть якщо це більші з'єднання-слони).
 
-To implement this idea, recall that IP packet headers have fields to indicate the priority of a packet. In pFabric, each packet carries a single priority number, and switches are modified so that they send the highest-priority packet. If the queue is full, the switch will drop the lowest-priority packet.
+Щоб реалізувати цю ідею, пригадайте, що заголовки IP-пакетів мають поля для позначення пріоритету пакета. У pFabric кожен пакет несе одне число пріоритету, а комутатори змінено так, щоб вони надсилали пакет із найвищим пріоритетом. Якщо черга заповнена, комутатор відкине пакет із найнижчим пріоритетом.
 
-With the priority system in place, senders can now safely transmit and retransmit packets at full line rate, without needing to adjust their rate for congestion control. Senders only need to reduce their rate in cases of extreme loss (e.g. timeout).
+Маючи систему пріоритетів, відправники тепер можуть безпечно передавати й повторно передавати пакети на повній лінійній швидкості, без потреби коригувати швидкість для керування перевантаженням. Відправникам треба зменшувати швидкість лише у випадках екстремальних втрат (наприклад, тайм-ауту).
 
-If we look at the graph of FCTs again, we see that pFabric performance is even better than DCTCP, and is very close to ideal.
+Якщо знову подивитися на графік FCT, видно, що продуктивність pFabric ще краща, ніж у DCTCP, і дуже близька до ідеалу.
 
 <img width="500px" src="/assets/datacenter/6-032-fct-chart2.png">
 
-Why does pFabric work so well? Elephants and mice travel together, and everybody is sending at full line rate, which ensures full utilization of the available bandwidth. We don't have to waste time on slow start. Also, we can avoid collapses because most of the packets in large elephants are low-priority. The priority system ensures that mice packets still get through the queue with low latency.
+Чому pFabric працює так добре? Слони й миші мандрують разом, і всі надсилають на повній лінійній швидкості, що гарантує повне використання доступної пропускної здатності. Нам не треба марнувати час на повільний старт. Крім того, ми можемо уникати колапсів, бо більшість пакетів великих слонів низькопріоритетні. Система пріоритетів гарантує, що пакети мишей однаково проходять чергу з низькою латентністю.
 
-Implementing this system requires non-trivial changes at both switches and end hosts, and requires full control of both switches and end hosts. Switches need to implement a priority system, and senders need to replace their TCP implementation to send at full line rate. Still, pFabric is a good example of networks (switches) and end hosts cooperating to achieve good performance.
+Реалізація цієї системи потребує нетривіальних змін і на комутаторах, і на кінцевих хостах, і вимагає повного контролю над комутаторами й кінцевими хостами. Комутатори мають реалізувати систему пріоритетів, а відправники — замінити свою реалізацію TCP, щоб надсилати на повній лінійній швидкості. Утім, pFabric — добрий приклад того, як мережі (комутатори) і кінцеві хости співпрацюють для досягнення доброї продуктивності.

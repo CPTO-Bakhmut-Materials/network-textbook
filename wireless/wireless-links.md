@@ -1,391 +1,390 @@
 ---
-title: Wireless Links
-parent: Wireless
+title: Бездротові канали
+parent: Бездротові мережі
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Wireless Links
+# Бездротові канали
 
-## Introduction to Wireless Technologies
+## Вступ до бездротових технологій
 
-Wireless communication technologies actually predate the Internet. In the 1880s, the photophone (Bell and Tainter) attempted to send data wireless using a light beam. In the 1890s, the wireless telegraph (Marconi) attempted to send data using radio waves. Also in the 1890s, experiments with millimeter waves (Bose) were attempted, and today, millimeter wave is becoming an active area of research again.
+Технології бездротового зв'язку насправді старші за Інтернет. У 1880-х роках фотофон (Белл і Тейнтер, Bell and Tainter) намагався бездротово передавати дані за допомогою світлового променя. У 1890-х роках бездротовий телеграф (Марконі, Marconi) намагався передавати дані за допомогою радіохвиль. Також у 1890-х роках проводилися експерименти з міліметровими хвилями (Бозе, Bose), і сьогодні міліметрові хвилі знову стають активною галуззю досліджень.
 
-Conceptually, you might imagine that wireless communication consists of invisible particles traveling along an imaginary link from point A to point B, but that's not actually very accurate. In reality, wireless communication is more like ripples on a pond. When you transmit data wirelessly, you create ripples that propagate outward and weaken over distance. If others are also transmitting data, the ripples can constructively and destructively interfere with each. The ripples can also reflect or refract against objects like boats on the pond, or the edge of the pond.
+Концептуально ви можете уявляти бездротовий зв'язок як невидимі частинки, що мандрують уявним каналом від точки A до точки B, але це насправді не надто точно. Насправді бездротовий зв'язок більше схожий на брижі на ставку. Коли ви передаєте дані бездротово, ви створюєте брижі, що поширюються назовні й слабшають з відстанню. Якщо інші теж передають дані, брижі можуть конструктивно й деструктивно інтерферувати між собою. Брижі також можуть відбиватися чи заломлюватися на об'єктах, як-от човнах на ставку чи березі ставка.
 
 <img width="500px" src="/assets/wireless/8-001-wireless-intro.png">
 
-In this section, we'll look at four key differences between wired and wireless communications. The differences mostly affect Layer 1 (physical) and Layer 2 (link), with a few exceptions that we'll look at elater (notably, breaking the end-to-end principle and implementing reliability at Layer 2 for performance).
+У цьому розділі ми розглянемо чотири ключові відмінності між дротовим і бездротовим зв'язком. Відмінності здебільшого стосуються рівня 1 (фізичного) і рівня 2 (канального), з кількома винятками, які ми розглянемо пізніше (зокрема, порушення наскрізного принципу й реалізація надійності на рівні 2 заради продуктивності).
 
-Difference 1: Wireless is a fundamentally shared medium. Wired is not.
+Відмінність 1: бездротовий зв'язок — принципово спільне середовище. Дротовий — ні.
 
-Difference 2: Wireless signals get weaker over longer distances. Wired signals do not.
+Відмінність 2: бездротові сигнали слабшають на більших відстанях. Дротові — ні.
 
-Difference 3: Wireless environments can change rapidly. Wired environments do not.
+Відмінність 3: бездротові середовища можуть швидко змінюватися. Дротові — ні.
 
-Difference 4: Packet collisions are much harder to detect in wireless systems.
-
-
-## Difference: Wireless is a Shared Medium
-
-Difference 1: Wireless is a fundamentally shared medium. Wired is not.
-
-Wired links are private (point-to-point) by default. Intuitively, a wire connects two devices. Creating a multi-point bus, where a single wire is connected to many devices, requires extra work. It's difficult for external signals to interfere with the signal on the wire (e.g. we can wrap a shield around the wire). Along the wire, we use electrical signals to transmit data (e.g. high voltage is 1, low voltage is 0).
-
-Wireless links have the opposite properties. By default, wireless links are shared. Intuitively, if you transmit a signal, the signal radiates outwards in all directions. Creating a private point-to-point link between two hosts requires extra work. It's difficult to shield a signal from external interference. Instead of electrical signals, we encode bits using radio waves to transmit data.
+Відмінність 4: колізії пакетів набагато складніше виявляти в бездротових системах.
 
 
-## Encoding Data over Wireless Link
+## Відмінність: бездротовий зв'язок — спільне середовище
 
-How do we encode data into electromagnetic waves at Layer 1? We could just take our sequence of 1s and 0s and draw it as a wave, but the resulting wave is probably low-frequency, and it turns out a low-frequency signal is weak and difficult to transmit.
+Відмінність 1: бездротовий зв'язок — принципово спільне середовище. Дротовий — ні.
+
+Дротові канали за замовчуванням приватні (точка–точка). Інтуїтивно дріт з'єднує два пристрої. Створення багатоточкової шини, де один дріт під'єднано до багатьох пристроїв, потребує додаткової роботи. Зовнішнім сигналам складно заважати сигналу в дроті (наприклад, дріт можна обгорнути екраном). Уздовж дроту ми використовуємо для передавання даних електричні сигнали (наприклад, висока напруга — 1, низька — 0).
+
+Бездротові канали мають протилежні властивості. За замовчуванням бездротові канали спільні. Інтуїтивно, якщо ви передаєте сигнал, він випромінюється назовні в усіх напрямках. Створення приватного каналу «точка–точка» між двома хостами потребує додаткової роботи. Захистити сигнал від зовнішніх завад складно. Замість електричних сигналів ми кодуємо біти радіохвилями, щоб передавати дані.
+
+
+## Кодування даних у бездротовому каналі
+
+Як закодувати дані в електромагнітні хвилі на рівні 1? Можна просто взяти нашу послідовність одиниць і нулів і намалювати її як хвилю, але отримана хвиля, найімовірніше, низькочастотна, а виявляється, що низькочастотний сигнал слабкий і його складно передавати.
 
 <img width="500px" src="/assets/wireless/8-002-modulation1.png">
 
-Instead, we have to use **modulation** to transmit our data. We start with the carrier signal, which is just a constant-frequency wave (e.g. a sine wave). This wave carries no information, but it's high-frequency, so it's much easier to transmit. Then, we impose our data signal (also called the modulation signal) on top of the carrier signal. The resulting wave is high-frequency (easy to transmit), and also contains the data we want to send! Note that the receiver will need to take the modulated waveform and re-extract the 1s and 0s out of that waveform.
+Натомість для передавання даних нам доводиться використовувати **модуляцію** (modulation). Ми починаємо з несучого сигналу (carrier signal), який є просто хвилею сталої частоти (наприклад, синусоїдою). Ця хвиля не несе інформації, але вона високочастотна, тож її набагато легше передавати. Потім ми накладаємо наш сигнал даних (також званий модулювальним сигналом) поверх несучого. Отримана хвиля високочастотна (легко передавати) і водночас містить дані, які ми хочемо надіслати! Зауважте, що отримувачеві доведеться взяти модульовану хвилю й знову виділити з неї одиниці й нулі.
 
-There are several strategies for modulating our data signal on top of the carrier signal. In amplitude modulation (AM), we vary the height of the carrier signal based on the input signal. To transmit a 1, make the sine wave tall, and to transmit a 0, make the sine wave short. In frequency modulation (FM), we vary the frequency (width) of the carrier signal based on the input signal. To transmit a 1, make the sine wave skinny (higher-frequency), and to transmit a 0, make the sine wave fat (lower-frequency). Other more complex modulation strategies exist, such as phase modulation, or a combination of amplitude and phase modulation.
+Існує кілька стратегій модуляції сигналу даних поверх несучого сигналу. В амплітудній модуляції (AM) ми змінюємо висоту несучого сигналу залежно від вхідного сигналу. Щоб передати 1, синусоїду роблять високою, а щоб передати 0 — низькою. У частотній модуляції (FM) ми змінюємо частоту (ширину) несучого сигналу залежно від вхідного сигналу. Щоб передати 1, синусоїду роблять вузькою (вища частота), а щоб передати 0 — широкою (нижча частота). Існують і інші, складніші стратегії модуляції, як-от фазова модуляція чи поєднання амплітудної й фазової модуляції.
 
 <img width="900px" src="/assets/wireless/8-003-modulation2.png">
 
 
-## Noise and Interference
+## Шум і завади
 
-Because wireless is a shared medium, we need to deal with noise and interference, which can corrupt the received signal. Noise always exists, even if nobody else nearby is transmitting data. (As an analogy, even if nobody around you is talking, there's still ambient noise from nature.) This ambient background noise is called the noise floor. By contrast, interference refers to other transmitters intentionally sending signals that interfere with our signal.
+Оскільки бездротовий зв'язок — спільне середовище, нам доводиться мати справу з шумом і завадами, які можуть пошкоджувати отриманий сигнал. Шум існує завжди, навіть якщо поблизу ніхто інший не передає даних. (Як аналогія: навіть якщо поруч з вами ніхто не говорить, однаково є фоновий шум природи.) Цей фоновий шум називається рівнем шуму (noise floor). Натомість завади (interference) — це інші передавачі, що навмисно надсилають сигнали, які заважають нашому сигналу.
 
-**SINR (Signal to Interference and Noise Ratio)** is a metric we can use to measure the quality of a wireless connection at the receiver. As the name implies, SINR is the power of the signal, divided by the power of the interference plus noise.
+**SINR** (Signal to Interference and Noise Ratio, відношення сигналу до завад і шуму) — метрика, за допомогою якої можна вимірювати якість бездротового з'єднання на отримувачі. Як випливає з назви, SINR — це потужність сигналу, поділена на потужність завад плюс шуму.
 
 $$\text{SINR} = \frac{P_\text{signal}}{P_\text{interference} + P_\text{noise}}$$
 
-SINR is a dimensionless quantity, since it's a ratio of two numbers. It can also be expressed in terms of decibels (dB), which is a logarithmic way to measure a ratio. At 0 dB, the ratio is 1, and when the SINR increases by 10 dB, the underlying ratio is 10 times greater (e.g. signal is 10 times more powerful, or noise/interference is 10 times weaker).
+SINR — безрозмірна величина, бо це відношення двох чисел. Її також можна виражати в децибелах (dB) — логарифмічному способі вимірювання відношення. За 0 dB відношення дорівнює 1, а коли SINR зростає на 10 dB, відповідне відношення в 10 разів більше (наприклад, сигнал у 10 разів потужніший або шум/завади в 10 разів слабші).
 
 <img width="400px" src="/assets/wireless/8-004-decibels.png">
 
 $$\text{SINR}_\text{dB} = 10 \cdot \log_{10}\left(\frac{P_\text{signal}}{P_\text{interference} + P_\text{noise}}\right)$$
 
-What does this equation tell us? It tells us that if there's more noise, we have to transmit the signal with more power. It's also possible to employ coding gain (think: error-correcting codes), so that even if the signal is weak and gets mixed in with noise and interference, we're sending the signal with enough redundancy to allow the receiver to re-extract the signal.
+Що каже нам ця формула? Вона каже, що якщо шуму більше, нам доводиться передавати сигнал з більшою потужністю. Також можна застосовувати виграш від кодування (coding gain; згадайте коди з виправленням помилок), щоб навіть якщо сигнал слабкий і змішується з шумом і завадами, ми надсилали сигнал із достатньою надлишковістю, щоб отримувач міг знову виділити сигнал.
 
-The Shannon capacity gives us a theoretical limit on how much data per unit time we can send along a channel, given the amount of noise and interference along that channel. The equation works not just for wireless links, but also other types of links (e.g. wires).
+Пропускна здатність Шеннона (Shannon capacity) дає теоретичну межу того, скільки даних за одиницю часу можна надіслати каналом за певного рівня шуму й завад у цьому каналі. Формула працює не лише для бездротових каналів, а й для інших типів каналів (наприклад, дротів).
 
 $$C = B \cdot \log_2(1 + \text{SINR})$$
 
-In this equation, $$B$$ is the bandwidth of the channel. $$\text{SINR}$$ is the signal-to-interference-and-noise ratio. $$C$$ is the theoretical limit of how much data per unit time we can send along this channel, measured in bits per second. Note that in this equation, bandwidth is measured as the difference between the highest frequency and the lowest frequency that the receiver understands.
+У цій формулі $$B$$ — ширина смуги (bandwidth) каналу. $$\text{SINR}$$ — відношення сигналу до завад і шуму. $$C$$ — теоретична межа того, скільки даних за одиницю часу можна надіслати цим каналом, у бітах за секунду. Зауважте, що в цій формулі ширина смуги вимірюється як різниця між найвищою й найнижчою частотами, які розуміє отримувач.
 
-What does this equation tell us? It tells us that as bandwidth increases, we can send more data per unit time. It also tells us that as the SINR increases (stronger signal, or less noise), we can send more data per unit time. If we need a link with a specific target capacity (e.g. 1 Mbps), we can plug in the physical characteristics of our link into this equation to see if our link meets the desired capacity.
+Що каже нам ця формула? Вона каже, що зі зростанням ширини смуги ми можемо надсилати більше даних за одиницю часу. Вона також каже, що зі зростанням SINR (сильніший сигнал чи менше шуму) ми можемо надсилати більше даних за одиницю часу. Якщо нам потрібен канал із певною цільовою пропускною здатністю (наприклад, 1 Мбіт/с), можна підставити фізичні характеристики нашого каналу в цю формулу, щоб перевірити, чи відповідає канал бажаній пропускній здатності.
 
-As an example, consider the plain old telephone system. This system has 3 kHz bandwidth, which means that telephones understand frequencies between 300 Hz and 3300 Hz. Also, this system has a SINR of roughly 20 dB, which translates to a ratio of 100 (0 db = 1x, 10 dB = 10x, 20 dB = 100x, 30 dB = 1000x, etc.). Plugging these values into our equation, we get that $$C = 4000 \cdot \log_2(1 + 100) \approx 20000$$, which tells us that the telephone system can transmit roughly 20 kbps (kilobits per second).
-
-
-## Difference: Attenuation
-
-Wireless signals get significantly weaker over longer distances. By contrast, wired signals do get slightly weaker over distance, but the effect is far smaller. In wireless systems, our design must account for attenuating signals, whereas in wired systems, attenuation is usually not a key design concern.
-
-This creates a fundamental trade-off when designing wireless systems. We want to maximize performance by making our link accurate, fast, and long-range. But, we also want to minimize our resource use by conserving energy (e.g. laptop power) and using less of the frequency spectrum (which can be expensive to reserve). Unfortunately, a better signal requires more power or more frequency bandwidth.
+Як приклад розгляньте стару звичайну телефонну систему. Ця система має ширину смуги 3 кГц, тобто телефони розуміють частоти від 300 Гц до 3300 Гц. Крім того, ця система має SINR приблизно 20 dB, що відповідає відношенню 100 (0 dB = 1x, 10 dB = 10x, 20 dB = 100x, 30 dB = 1000x тощо). Підставивши ці значення в нашу формулу, отримуємо $$C = 4000 \cdot \log_2(1 + 100) \approx 20000$$, що каже нам, що телефонна система може передавати приблизно 20 кбіт/с (кілобіт за секунду).
 
 
-## Free Space Model
+## Відмінність: загасання
 
-One simple way to model signal attenuation is the free-space model (also known as the line-of-sight model), where we assume that the transmitter and receiver exist in a totally empty environment. Signals radiate outwards in all directions, with no obstacles (not even the Earth's surface).
+Бездротові сигнали значно слабшають на більших відстанях. Натомість дротові сигнали теж трохи слабшають з відстанню, але цей ефект набагато менший. У бездротових системах наш дизайн має враховувати загасання (attenuation) сигналів, тоді як у дротових системах загасання зазвичай не є ключовим проєктним питанням.
 
-In this model, the power of the signal is inversely proportional to the distance between the transmitter and receiver. This is due to the inverse-square law:
+Це створює фундаментальний компроміс під час проєктування бездротових систем. Ми хочемо максимізувати продуктивність, роблячи канал точним, швидким і далекобійним. Але ми також хочемо мінімізувати використання ресурсів, заощаджуючи енергію (наприклад, заряд ноутбука) і використовуючи менше частотного спектра (бронювання якого може бути дорогим). На жаль, кращий сигнал потребує більшої потужності чи ширшої смуги частот.
+
+
+## Модель вільного простору
+
+Один простий спосіб моделювати загасання сигналу — модель вільного простору (free-space model; також відома як модель прямої видимості, line-of-sight model), де ми вважаємо, що передавач і отримувач перебувають у цілком порожньому середовищі. Сигнали випромінюються назовні в усіх напрямках без жодних перешкод (навіть поверхні Землі).
+
+У цій моделі потужність сигналу обернено пропорційна відстані між передавачем і отримувачем. Це випливає із закону обернених квадратів:
 
 $$P_r \propto \frac{P_t}{d^2}$$
 
-In this equation, $$P_r$$ is the power at the receiver, $$P_t$$ is the power at the transmitter, and $$d$$ is the distance between the transmitter and receiver. If we double the distance, the signal at the receiver is $$1/4$$ as strong. If the distance is 10 times larger, the signal at the receiver is $$1/100$$ as strong.
+У цій формулі $$P_r$$ — потужність на отримувачі, $$P_t$$ — потужність на передавачі, а $$d$$ — відстань між передавачем і отримувачем. Якщо подвоїти відстань, сигнал на отримувачі стане вчетверо ($$1/4$$) слабшим. Якщо відстань у 10 разів більша, сигнал на отримувачі стане в 100 разів ($$1/100$$) слабшим.
 
 <img width="200px" src="/assets/wireless/8-005-freespace1.png">
 
-Intuitively, the inverse-square law applies here because the signal is radiating outwards in all directions. At any instant, the signal has radiated out to a sphere around the transmitter, and the sphere grows as the signal radiates further outwards. The surface area of a sphere with radius $$r$$ is $$4\pi r^2$$, so as the signal propagates out, it's spread out over an area that grows quadratically (with the square of the distance). For exapmle, when the distance doubles, the resulting sphere has 4 times larger surface area. Therefore, the signal is spread out over an area that's 4 times larger, so the signal is $$1/4$$ as strong.
+Інтуїтивно закон обернених квадратів застосовується тут тому, що сигнал випромінюється назовні в усіх напрямках. У будь-яку мить сигнал поширився до сфери навколо передавача, і сфера зростає в міру того, як сигнал поширюється далі. Площа поверхні сфери радіуса $$r$$ дорівнює $$4\pi r^2$$, тож, поширюючись, сигнал розподіляється по площі, що зростає квадратично (з квадратом відстані). Наприклад, коли відстань подвоюється, отримана сфера має вчетверо більшу площу поверхні. Тому сигнал розподілено по вчетверо більшій площі, тож він у 4 рази ($$1/4$$) слабший.
 
 <img width="300px" src="/assets/wireless/8-006-freespace2.png">
 
-Besides the distance, we also need to consider the antennas being used by the transmitter and receiver. This leads us to the Friis equation for measuring signal strength across a distance:
+Окрім відстані, треба також враховувати антени, які використовують передавач і отримувач. Це приводить нас до рівняння Фрііса (Friis equation) для вимірювання сили сигналу на відстані:
 
 $$\begin{align*}
     P_r &= P_t \cdot G_t \cdot G_r \cdot \left(\frac{\lambda^2}{4\pi}\right) \left(\frac{1}{4\pi d^2}\right) \\
     &= P_t \cdot G_t \cdot G_r \cdot \left(\frac{\lambda}{4\pi d}\right)^2 \\
 \end{align*}$$
 
-In this equation, as before, $$P_r$$ is the power at the receiver, and $$P_t$$ is the power at the transmitter. $$G_t$$ is the gain at the transmitter, and $$G_r$$ is the gain at the receiver. $$\lambda$$ is the wavelength, and it's used in this equation to represent the area of the antenna. $$d$$ represents the distance between the antennas.
+У цьому рівнянні, як і раніше, $$P_r$$ — потужність на отримувачі, а $$P_t$$ — потужність на передавачі. $$G_t$$ — коефіцієнт підсилення на передавачі, а $$G_r$$ — на отримувачі. $$\lambda$$ — довжина хвилі, і в цьому рівнянні вона використовується для представлення площі антени. $$d$$ — відстань між антенами.
 
-What does this equation tell us? To compute the signal strength at the receiver, we start with the signal strength at the transmitter, $$P_t$$. Then, we multiply by the gains of the two antennas, $$G_t$$ and $$G_r$$. Intuitively, a higher gain means that the antenna is better at sending or receiving signals.
+Що каже нам це рівняння? Щоб обчислити силу сигналу на отримувачі, ми починаємо із сили сигналу на передавачі, $$P_t$$. Потім множимо на коефіцієнти підсилення двох антен, $$G_t$$ і $$G_r$$. Інтуїтивно вищий коефіцієнт підсилення означає, що антена краще надсилає чи отримує сигнали.
 
-As we saw earlier, distance affects signal strength according to the inverse-square law, which explains the $$\frac{1}{4\pi d^2}$$ term.
+Як ми бачили раніше, відстань впливає на силу сигналу відповідно до закону обернених квадратів, що пояснює доданок $$\frac{1}{4\pi d^2}$$.
 
-Finally, the $$\frac{\lambda^2}{4\pi}$$ term relates to the aperture (think of it like area) of the receiver antenna. Intuitively, if you shine a light on a piece of paper, the light will hit that paper. If you use a larger sheet of paper, more light will hit the paper. The effective aperture (think: area) of the antenna can be computed as $$\frac{\lambda^2}{4\pi}$$, though we won't prove it here. Note that the $$(4\pi)^2$$ in the equation actually comes from two factors of $$4\pi$$, one from the inverse-square law and one from the effective aperture equation.
+Нарешті доданок $$\frac{\lambda^2}{4\pi}$$ пов'язаний з апертурою (уявляйте її як площу) антени отримувача. Інтуїтивно: якщо посвітити на аркуш паперу, світло падатиме на цей папір. Якщо взяти більший аркуш, на папір падатиме більше світла. Ефективну апертуру (згадайте: площу) антени можна обчислити як $$\frac{\lambda^2}{4\pi}$$, хоча ми не доводитимемо цього тут. Зауважте, що $$(4\pi)^2$$ у рівнянні насправді походить від двох множників $$4\pi$$: один — із закону обернених квадратів, другий — з формули ефективної апертури.
 
 % paper analogy from here: https://www.cdt21.com/design_guide/friis-equation-and-antenna-effective-area/#What_is_the_effective_area_of_an_antenna
 
-We can also rewrite the Friis equation by dividing both sides by $$P_t$$:
+Рівняння Фрііса можна також переписати, поділивши обидві частини на $$P_t$$:
 
 $$\frac{P_r}{P_t} = G_t \cdot G_r \cdot \left(\frac{\lambda}{4\pi d}\right)^2$$
 
-What does this equation tell us? The relative signal strength at the receiver (e.g. half as strong, or $$1/100$$ as strong, as the signal strength at the transmitter) is a function of the antenna gains, the inverse of the square of the distance, and the effective aperture (think: area) of the antenna.
+Що каже нам це рівняння? Відносна сила сигналу на отримувачі (наприклад, удвічі слабша чи становить $$1/100$$ від сили сигналу на передавачі) є функцією коефіцієнтів підсилення антен, оберненого квадрата відстані та ефективної апертури (згадайте: площі) антени.
 
-Yet another way to rewrite the same Friis equation is to take the log of both sides, allowing us to express the power and gain in terms of decibels:
+Ще один спосіб переписати те саме рівняння Фрііса — прологарифмувати обидві частини, що дає змогу виразити потужність і підсилення в децибелах:
 
 $$P_r^\text{dB} = P_t^\text{dB} + G_t^\text{dB} + G_r^\text{dB} + 20 \log_{10} \left(\frac{\lambda}{4\pi d}\right)$$
 
-The free space model is a useful theoretical model to measure the ideal signal strength at the receiver, though in practice, physical obstacles (e.g. the Earth's surface) prevent us from achieving this ideal value.
+Модель вільного простору — корисна теоретична модель для вимірювання ідеальної сили сигналу на отримувачі, хоча на практиці фізичні перешкоди (наприклад, поверхня Землі) не дають досягти цього ідеального значення.
 
 
-## Link Budget
+## Енергетичний бюджет каналу
 
-If signals get weaker over distance, how do we know if a link will actually work? In other words, how do we know if the receiver will actually detect an intelligible signal?
+Якщо сигнали слабшають з відстанню, як дізнатися, чи справді працюватиме канал? Іншими словами, як дізнатися, чи справді отримувач виявить зрозумілий сигнал?
 
-To measure if a link is viable, we can compute a link budget, which accounts for all gains and losses along the link.
+Щоб виміряти, чи життєздатний канал, можна обчислити енергетичний бюджет каналу (link budget), що враховує всі підсилення й втрати вздовж каналу.
 
 $$P_r^\text{dB} = P_t^\text{dB} + \sum \text{gains} - \sum \text{losses}$$
 
-In this equation, $$P_r$$ is the signal power at the receiver, and $$P_t$$ is the signal power at the sender. All gains (e.g. a stronger antenna gain) add to our link budget, and all losses (e.g. path loss from long distance) cost us link budget.
+У цьому рівнянні $$P_r$$ — потужність сигналу на отримувачі, а $$P_t$$ — потужність сигналу на відправнику. Усі підсилення (наприклад, сильніше підсилення антени) додаються до нашого бюджету каналу, а всі втрати (наприклад, втрати на шляху через велику відстань) коштують нам бюджету каналу.
 
-Adding all gains and subtracting all losses tells us the signal strength at the receiver. We can compare this against the sensitivity of the receiver, which is the signal strength needed for the receiver to extract useful information. This comparison tells us our link budget. If the overall budget ends up positive, then this is a viable link, and we're in the money. If the overall budget ends up negative, then this is not a viable link, and we're in trouble.
+Додавши всі підсилення й віднявши всі втрати, ми отримуємо силу сигналу на отримувачі. Її можна порівняти з чутливістю отримувача — силою сигналу, потрібною отримувачеві, щоб виділити корисну інформацію. Це порівняння показує наш бюджет каналу. Якщо загальний бюджет зрештою додатний, канал життєздатний, і ми «в плюсі». Якщо загальний бюджет зрештою від'ємний, канал нежиттєздатний, і в нас проблеми.
 
-Notice that the link budget is computed in decibels, which are logarithmic. This allows us to use addition and subtraction instead of multiplication and division. For example, a gain of 1000x power is represented by adding 30 decibels, and a loss down to 1% of power is represented by subtracting 20 decibels.
+Зверніть увагу, що бюджет каналу обчислюється в децибелах, які логарифмічні. Це дає змогу використовувати додавання й віднімання замість множення й ділення. Наприклад, підсилення потужності в 1000 разів подається додаванням 30 децибел, а втрата до 1% потужності — відніманням 20 децибел.
 
 <img width="900px" src="/assets/wireless/8-007-link-budget.png">
 
-Here's an example of computing the link budget. The signal power at the transmitter is 10 dB. The signal travels along a cable, a lightning arrestor (you don't have to know what this is), and another cable, losing 0.44 dB, 0.1 dB, and 2.21 dB along the way. Then, the signal is broadcast on an antenna, which gives us a 25 dB increase. Then, the signal travels across 10 kilometers of space, losing 120 dB along the way. Then, the signal is received by an antenna, giving us a 25 dB increase. Then, the signal travels along some more cables, losing 0.44 dB, 0.1 dB, and 2.21 dB, before finally reaching the receiver. If we add up all the gains and subtract all the losses, we can compute that the signal strength at the receiver is -65.5 dB.
+Ось приклад обчислення бюджету каналу. Потужність сигналу на передавачі — 10 dB. Сигнал проходить кабелем, грозорозрядником (не треба знати, що це) і ще одним кабелем, втрачаючи дорогою 0,44 dB, 0,1 dB і 2,21 dB. Потім сигнал випромінюється антеною, що дає нам підсилення на 25 dB. Потім сигнал проходить 10 кілометрів простору, втрачаючи дорогою 120 dB. Потім сигнал приймає антена, що дає нам підсилення на 25 dB. Потім сигнал проходить ще кількома кабелями, втрачаючи 0,44 dB, 0,1 dB і 2,21 dB, перш ніж нарешті дістатися отримувача. Якщо скласти всі підсилення й відняти всі втрати, можна обчислити, що сила сигналу на отримувачі становить -65,5 dB.
 
-We can now compare this signal strength against the receiver sensitivity, which is -80 dB. This tells us that the receiver can pick up any signals above -80 dB. Since -65.5 dB is above -80 dB, our link budget is positive, and our link should work!
+Тепер цю силу сигналу можна порівняти з чутливістю отримувача, яка становить -80 dB. Це означає, що отримувач може вловлювати будь-які сигнали понад -80 dB. Оскільки -65,5 dB вище за -80 dB, наш бюджет каналу додатний, і наш канал має працювати!
 
-The **link margin** is the difference between the signal strength at the receiver, and the receiver sensitivity. If we received a 30 dB signal, and our sensitivity lets us detect anything over 10 dB, we have a link margin of 20 dB. In the example from before, our link margin was 14.5 dB.
+**Запас каналу** (link margin) — різниця між силою сигналу на отримувачі й чутливістю отримувача. Якби ми отримали сигнал 30 dB, а наша чутливість дає змогу виявляти будь-що понад 10 dB, у нас запас каналу 20 dB. У попередньому прикладі наш запас каналу становив 14,5 dB.
 
-The link margin tells us about the quality of our link. If the link margin is negative, the link won't work, and the signals won't be received. A higher link margin is good because it means our signal is more reliable and more robust to interference and other issues.
+Запас каналу показує якість нашого каналу. Якщо запас каналу від'ємний, канал не працюватиме, і сигнали не буде отримано. Більший запас каналу — добре, бо це означає, що наш сигнал надійніший і стійкіший до завад та інших проблем.
 
 
-## Difference: Environments Change
+## Відмінність: середовища змінюються
 
-Wireless environments can change rapidly. The devices can move around. The environment could change (e.g. a physical obstacle moves in between the devices). Other communications could start interfering with our communication.
+Бездротові середовища можуть швидко змінюватися. Пристрої можуть переміщуватися. Середовище може змінюватися (наприклад, між пристроями з'являється фізична перешкода). Інший зв'язок може почати заважати нашому.
 
-In the free-space model from earlier, we set the distance between the devices, $$d$$, to be a constant. But what if the devices are moving? Also, we assumed there were no obstacles and no interfering signals in the environment. How does our model change in the presence of these factors?
+У моделі вільного простору ми вважали відстань між пристроями, $$d$$, сталою. А що, як пристрої рухаються? Крім того, ми вважали, що в середовищі немає перешкод і сигналів, що заважають. Як змінюється наша модель за наявності цих чинників?
 
-In the free-space model, assuming the antennas stay the same (same gain, same aperture), we got a nice, smooth graph where signal strength decreased as distance increased. After accounting for a changing environment, the resulting graph of distance vs. signal strength is much more wobbly.
+У моделі вільного простору, якщо антени залишаються тими самими (те саме підсилення, та сама апертура), ми отримували гарний плавний графік, де сила сигналу зменшувалася зі зростанням відстані. Після врахування мінливого середовища отриманий графік залежності сили сигналу від відстані набагато більш хвилястий.
 
 <img width="900px" src="/assets/wireless/8-008-obstacle1.png">
 
-This graph is actually the sum of three smaller graphs. Each one shows how a different characteristic of the environment affects the signal strength, as a function of distance. Notice that some characteristics change slowly as distance increases, while others change rapidly and erratically as distance increases.
+Цей графік насправді є сумою трьох менших графіків. Кожен показує, як інша характеристика середовища впливає на силу сигналу як функцію відстані. Зверніть увагу, що деякі характеристики змінюються повільно зі зростанням відстані, а інші — швидко й хаотично.
 
 <img width="900px" src="/assets/wireless/8-009-obstacle2.png">
 
-The first characteristic is free-space path loss. We've already seen this from the free-space model, which shows us that the signal strength decreases slowly and consistently over longer distances, according to the inverse-square loss.
+Перша характеристика — втрати на шляху у вільному просторі (free-space path loss). Ми вже бачили їх у моделі вільного простору, яка показує, що сила сигналу повільно й стабільно зменшується на більших відстанях відповідно до закону обернених квадратів.
 
-The second characteristic is shadowing. This occurs when physical obstacles between the transmitter and the receiver block the signal. The signal must now be refracted or reflected to get around the obstacle, and the resulting signal at the receiver ends up weaker.
+Друга характеристика — затінення (shadowing). Воно виникає, коли фізичні перешкоди між передавачем і отримувачем блокують сигнал. Тепер сигнал має заломлюватися чи відбиватися, щоб обійти перешкоду, і отриманий сигнал на отримувачі зрештою слабшає.
 
-Depending on where the obstacles are located, the signal could get weaker or stronger as distance increases. For example, if I walk in front of a building, the signal will get a lot weaker, but if I eventually walk past the building, the signal might get stronger again.
+Залежно від того, де розташовані перешкоди, сигнал може слабшати чи сильнішати зі зростанням відстані. Наприклад, якщо я проходжу перед будівлею, сигнал стане набагато слабшим, але якщо я зрештою пройду повз будівлю, сигнал може знову стати сильнішим.
 
-The third characteristic is multipath fading. This occurs when waves reflect and refract on physical obstacles, which causes offset versions of the signal to arrive at the receiver. In particular, if a signal takes different paths of different lengths to reach the receiver, the signals might arrive out-of-phase with each other, causing interference.
+Третя характеристика — багатопроменеве завмирання (multipath fading). Воно виникає, коли хвилі відбиваються й заломлюються на фізичних перешкодах, через що до отримувача надходять зсунуті версії сигналу. Зокрема, якщо сигнал іде до отримувача різними шляхами різної довжини, сигнали можуть надходити не у фазі один з одним, спричиняючи інтерференцію.
 
-Multipath fading can cause very fine-grained changes in the signal strength. Changing the distance just a little bit might cause the signal strength to get stronger or weaker.
+Багатопроменеве завмирання може спричиняти дуже дрібномасштабні зміни сили сигналу. Зміна відстані зовсім трохи може зробити сигнал сильнішим чи слабшим.
 
-Ultimately, if we want to consider how all three characteristics together affect signal strength over various distances, we have to look at the sum of the three graphs. If the sender and receiver stayed stationary, the signal strength would be a specific point on this graph. However, if the devices are moving, then the signal strength travels along this curve. Also, if the environment changes and obstacles enter and leave, then the graph itself would change as well.
+Зрештою, якщо ми хочемо розглянути, як усі три характеристики разом впливають на силу сигналу на різних відстанях, нам треба подивитися на суму трьох графіків. Якби відправник і отримувач залишалися нерухомими, сила сигналу була б конкретною точкою на цьому графіку. Однак якщо пристрої рухаються, сила сигналу рухається вздовж цієї кривої. Крім того, якщо середовище змінюється і перешкоди з'являються та зникають, змінюватиметься й сам графік.
 
 
-## Approximating Path Loss
+## Наближення втрат на шляху
 
-It can be difficult to approximate path loss (from free-space loss, shadowing, and multipath fading). This is especially difficult in the presence of obstacles that result in a signal taking multiple paths, causing out-of-phase signals to interfere with each other at the receiver.
+Наближено оцінити втрати на шляху (від втрат у вільному просторі, затінення й багатопроменевого завмирання) може бути складно. Це особливо складно за наявності перешкод, через які сигнал іде кількома шляхами, і сигнали не у фазі інтерферують між собою на отримувачі.
 
-One relatively simple model for approximating path loss is the **two-ray model**. In this model, we assume that the signal travels along only two paths: one line-of-sight path directly from the sender to the receiver, and one ground-bounce path that reflects off the ground to the receiver. Remember, this is still one signal radiating from the transmitter, but some waves directly reach the receiver, while others bounce off the ground to the receiver.
+Одна відносно проста модель наближення втрат на шляху — **двопроменева модель** (two-ray model). У цій моделі ми вважаємо, що сигнал іде лише двома шляхами: одним шляхом прямої видимості безпосередньо від відправника до отримувача й одним шляхом із відбиттям від землі до отримувача. Пам'ятайте, це однаково один сигнал, що випромінюється передавачем, але деякі хвилі безпосередньо доходять до отримувача, а інші відбиваються від землі до отримувача.
 
 <img width="900px" src="/assets/wireless/8-010-obstacle3.png">
 
-If the sender and receiver are far enough apart, the waves from the two paths will be 180 degrees out of phase. As a result, the waves from the two paths will destructively interfere and cancel out, significantly weakening the signal at the receiver. When this happens, the signal strength is no longer proportional to $$1/d^2$$, but instead is proportional to $$1/d^4$$. In other words, signal strength now falls off much faster as the distance increases.
+Якщо відправник і отримувач досить далеко один від одного, хвилі з двох шляхів будуть у протифазі (зсунуті на 180 градусів). Як наслідок, хвилі з двох шляхів деструктивно інтерферуватимуть і взаємно гаситимуться, суттєво послаблюючи сигнал на отримувачі. Коли це відбувається, сила сигналу вже не пропорційна $$1/d^2$$, а натомість пропорційна $$1/d^4$$. Іншими словами, сила сигналу тепер спадає набагато швидше зі зростанням відстані.
 
-Remember, our free-space model assumed no obstacles (not even Earth's surface), which is why we derived that signal strength is proportional to $$1/d^2$$. In the two-ray model, accounting for Earth's surface causes signal strength to now be proportional to $$1/d^4$$.
+Пам'ятайте, наша модель вільного простору не враховувала перешкод (навіть поверхні Землі), саме тому ми вивели, що сила сигналу пропорційна $$1/d^2$$. У двопроменевій моделі врахування поверхні Землі робить силу сигналу пропорційною $$1/d^4$$.
 
 <img width="900px" src="/assets/wireless/8-011-obstacle4.png">
 
-What if there are additional obstacles besides Earth's surface? The two-ray model doesn't account for those. In more complicated environments, we can create general ray tracing models, which account for signals being reflected, scattered, and diffracted. These models require specific information about the environment (e.g. where the obstacles are), and can be built using computer simulations. In these models, reflected versions of the signal usually dominate the signal, compared to the unobstructed line-of-sight version of the signal.
+А що, як окрім поверхні Землі є додаткові перешкоди? Двопроменева модель їх не враховує. У складніших середовищах можна створювати загальні моделі трасування променів (ray tracing), що враховують відбиття, розсіювання й дифракцію сигналів. Ці моделі потребують конкретної інформації про середовище (наприклад, де розташовані перешкоди) і можуть будуватися за допомогою комп'ютерного моделювання. У цих моделях у сигналі зазвичай переважають відбиті версії сигналу порівняно з незатуленою версією прямої видимості.
 
 <img width="900px" src="/assets/wireless/8-012-obstacle5.png">
 
-From these models, we can derive a simplified path loss model to relate distance and signal strength:
+З цих моделей можна вивести спрощену модель втрат на шляху, що пов'язує відстань і силу сигналу:
 
 $$P_r = P_t K d^\gamma$$
 
-In this equation, as before, $$P_r$$ and $$P_t$$ represent the receiver signal power and the transmitter signal power, and $$d$$ represents the distance.
+У цьому рівнянні, як і раніше, $$P_r$$ і $$P_t$$ позначають потужність сигналу на отримувачі й на передавачі, а $$d$$ — відстань.
 
-$$K$$ and $$\gamma$$ are empirically-determined constants, based on the environment and the model. For example, if there are lots of inconveniently-placed obstacles, $$K$$ might be really small, causing the receiver signal strength to be weak.
+$$K$$ і $$\gamma$$ — емпірично визначені сталі, що залежать від середовища й моделі. Наприклад, якщо є багато незручно розташованих перешкод, $$K$$ може бути справді малою, через що сила сигналу на отримувачі буде слабкою.
 
-In practice, $$\gamma$$ is between 2 and 8. In the best case, signal strength is proportional to $$1/d^2$$, similar to the free space model. In the worst case, signal strength is proportional to $$1/d^8$$, and the signal gets weaker much more rapidly as you move further away.
+На практиці $$\gamma$$ лежить між 2 і 8. У найкращому випадку сила сигналу пропорційна $$1/d^2$$, подібно до моделі вільного простору. У найгіршому випадку сила сигналу пропорційна $$1/d^8$$, і сигнал слабшає набагато швидше, коли ви віддаляєтеся.
 
+## Відмінність: виявлення колізій
 
-## Difference: Detecting Collisions
+Дротові колізії часто легко виявляти. На каналі «точка–точка» їх може взагалі не бути. Зазвичай колізії можна виявити, просто відчуваючи сигнал у дроті. Можуть бути проблеми із затримкою поширення, але зрештою в дроті лише один сигнал, який нам треба відчути.
 
-Wired collisions are often easy to detect. On a point-to-point link, they might not happen at all. We can usually detect collisions just by sensing the wire. There can be issues with propagation delay, but ultimately, there's just one signal on the wire that we have to sense.
-
-By contrast, wireless collisions are much harder to detect, because there is now a spatial aspect to collisions. Waves might collide in one place, but not another.
+Натомість бездротові колізії набагато складніше виявляти, бо колізії тепер мають просторовий аспект. Хвилі можуть стикатися в одному місці, але не в іншому.
 
 <img width="500px" src="/assets/wireless/8-013-collision1.png">
 
-Designing collision detection and collision avoidance is much harder in a wireless system, but it's still necessary so that multiple devices can send over the shared medium. Recall that there are many different approaches to multiple access, including fixed allocations of frequencies, and coordinating who's sending at what times. Which approach works best depends on your environment. For example, if you're in the middle of nowhere, it might be okay to just let collisions happen and deal with them when they do. In this section, though, we'll focus on the CSMA (Carrier Sense Multiple Access) approach, where you listen for signals and don't transmit if someone else is talking.
+Проєктувати виявлення й уникнення колізій у бездротовій системі набагато складніше, але це однаково потрібно, щоб кілька пристроїв могли передавати через спільне середовище. Пригадайте, що є багато різних підходів до множинного доступу, зокрема фіксований розподіл частот і координація того, хто й коли передає. Який підхід працює найкраще, залежить від вашого середовища. Наприклад, якщо ви десь у глушині, може бути нормально просто дозволяти колізіям траплятися й розбиратися з ними, коли вони трапляються. Утім, у цьому розділі ми зосередимося на підході CSMA (Carrier Sense Multiple Access, множинний доступ із контролем несучої), де ви слухаєте сигнали й не передаєте, якщо говорить хтось інший.
 
-In this section, for simplicity, we'll ignore obstacles, which means that signals radiate outwards in all directions. We'll assume that signals radiate up until a certain distance at full-strength, and that signals are undetectable past that distance. Also, in our running examples, we'll simplify and assume all devices are arranged in a line, so we just need to consider signals propagating left and right. Remember, though, in real life, signals radiate outwards in three dimensions.
+Для простоти в цьому розділі ми ігноруватимемо перешкоди, тобто сигнали випромінюються назовні в усіх напрямках. Ми вважатимемо, що сигнали поширюються на повній силі до певної відстані, а далі цієї відстані їх неможливо виявити. Крім того, у наших наскрізних прикладах ми спростимо й вважатимемо, що всі пристрої розташовані на одній лінії, тож нам достатньо розглядати сигнали, що поширюються ліворуч і праворуч. Утім, пам'ятайте, що в реальному житті сигнали випромінюються назовні в трьох вимірах.
 
 
-## Problems with CSMA
+## Проблеми CSMA
 
-To check if someone else is talking, the radio tries to detect energy exceeding a certain threshold. If it does detect, then we conclude that somebody else is transmitting.
+Щоб перевірити, чи говорить хтось інший, радіо намагається виявити енергію, що перевищує певний поріг. Якщо виявляє, ми робимо висновок, що хтось інший передає.
 
-This strategy works fine if two well-separated pairs of devices are communicating.
+Ця стратегія добре працює, якщо спілкуються дві пари пристроїв, добре віддалені одна від одної.
 
 <img width="800px" src="/assets/wireless/8-014-collision2.png">
 
-In this example, A and B want to talk, and C and D want to talk. A senses nothing, and starts transmitting to B. Notice that A's signal propagates in all directions, not just toward B. Later, C senses nothing (since it's out of A's range), so it can start transmitting to D.
+У цьому прикладі A і B хочуть поспілкуватися, і C та D хочуть поспілкуватися. A нічого не відчуває й починає передавати до B. Зверніть увагу, що сигнал A поширюється в усіх напрямках, а не лише до B. Пізніше C нічого не відчуває (бо перебуває поза зоною дії A), тож може почати передавати до D.
 
-This strategy also works fine if the two pairs of devices are within range of each other.
+Ця стратегія також добре працює, якщо дві пари пристроїв перебувають у зоні дії одна одної.
 
 <img width="600px" src="/assets/wireless/8-015-collision3.png">
 
-Again, A and B want to talk, and C and D want to talk. A senses nothing, and starts transmitting to B. Later, C senses a signal, since A is talking and C is within range of that signal. Therefore, C will wait until A is done, and only start transmitting to D afterward.
+Знову A і B хочуть поспілкуватися, і C та D хочуть поспілкуватися. A нічого не відчуває й починає передавати до B. Пізніше C відчуває сигнал, бо A говорить, а C перебуває в зоні дії цього сигналу. Тому C чекатиме, поки A закінчить, і лише потім почне передавати до D.
 
-Sometimes, this strategy leads to problems.
+Іноді ця стратегія призводить до проблем.
 
 <img width="700px" src="/assets/wireless/8-016-collision4.png">
 
-Suppose that A and C both want to talk to B. A senses nothing, and starts transmitting to B. Later, C senses nothing, because it's out-of-range of A, so C also starts transmitting to B. There's a collision at B!
+Припустімо, що і A, і C хочуть поговорити з B. A нічого не відчуває й починає передавати до B. Пізніше C нічого не відчуває, бо перебуває поза зоною дії A, тож C теж починає передавати до B. Колізія на B!
 
-This is called the **hidden terminal problem**. In this case, the two transmitters (A and C) were out of range of each other, so they could not sense that a transmission was happening.
+Це називається **проблемою прихованого термінала** (hidden terminal problem). У цьому випадку два передавачі (A і C) були поза зоною дії один одного, тож не могли відчути, що відбувається передавання.
 
-Here's another case where CSMA is problematic:
+Ось ще один випадок, коли CSMA проблематичний:
 
 <img width="600px" src="/assets/wireless/8-017-collision5.png">
 
-In this case, suppose that B wants to talk to A, and C wants to talk to D. First, B senses nothing and starts transmitting to A. Remember, B's signal propagates in all directions, including to C. Now, C wants to talk to D, but senses B's signal and stays quiet.
+У цьому випадку припустімо, що B хоче поговорити з A, а C хоче поговорити з D. Спершу B нічого не відчуває й починає передавати до A. Пам'ятайте, сигнал B поширюється в усіх напрямках, зокрема й до C. Тепер C хоче поговорити з D, але відчуває сигнал B і мовчить.
 
-If you look carefully, B and C could have actually transmitted at the same time. It's true that collisions would happen in the space between B and C, but the receivers (A and D) won't sense any collisions.
+Якщо придивитися, B і C насправді могли б передавати одночасно. Справді, колізії відбувалися б у просторі між B і C, але отримувачі (A і D) не відчують жодних колізій.
 
-This is called the **exposed terminal problem**. In this case, the two transmissions could have occurred at the same time, but instead, one transmission is prevented from happening because C is falsely detecting a collision.
+Це називається **проблемою відкритого термінала** (exposed terminal problem). У цьому випадку два передавання могли б відбуватися одночасно, але натомість одному передаванню не дають відбутися, бо C хибно виявляє колізію.
 
 
-## MACA for Collision Avoidance
+## MACA для уникнення колізій
 
-Instead of using CSMA, **MACA (Multiple Access with Collision Avoidance** is an approach to multiple access that will help us solve the hidden terminal problem.
+Замість використання CSMA, **MACA** (Multiple Access with Collision Avoidance, множинний доступ з уникненням колізій) — підхід до множинного доступу, що допоможе розв'язати проблему прихованого термінала.
 
-The key problem with CSMA was, the sender was detecting collisions at the sender, but the real problem is collisions at the receiver. To solve this, we will have the receiver announce whether it detects any collisions.
+Ключова проблема CSMA полягала в тому, що відправник виявляв колізії на відправнику, а справжня проблема — колізії на отримувачі. Щоб розв'язати це, ми змусимо отримувача оголошувати, чи виявляє він якісь колізії.
 
-Suppose A wants to send data to B. A successful data transfer involves a sequence of 3 steps:
+Припустімо, A хоче надіслати дані до B. Успішне передавання даних складається з послідовності з 3 кроків:
 
 <img width="900px" src="/assets/wireless/8-018-maca1.png">
 
-1. A transmits a **Request To Send (RTS)** packet with the length of the data. This is A saying: "I'd like to send k bits to B."
+1. A передає пакет **запиту на надсилання** (Request To Send, RTS) із довжиною даних. Цим A каже: «Я хотів би надіслати B k бітів».
 
-2. B transmits a **Clear To Send (CTS)** packet with the length of the data. This tells A that it's safe to send, and confirms that there are no collisions at the receiver. The CTS also warns everybody in B's range: "I'm B, and I'm about to receive k bits, so please don't talk during this time."
+2. B передає пакет **дозволу на надсилання** (Clear To Send, CTS) із довжиною даних. Це каже A, що надсилати безпечно, і підтверджує, що на отримувачі немає колізій. CTS також попереджає всіх у зоні дії B: «Я — B, і я збираюся отримати k бітів, тож, будь ласка, не говоріть у цей час».
 
-3. A transmits the data, and B receives the data. The CTS warning ensures that everybody else in range of the receiver stays quiet during this time.
+3. A передає дані, а B їх отримує. Попередження CTS гарантує, що всі інші в зоні дії отримувача мовчать у цей час.
 
-This protocol solves the hidden terminal problem. Remember, in the hidden terminal problem, A and C both sense quiet and start transmitting, causing a collision at B. With this protocol, if A sends an RTS, B will transmit a CTS, warning everybody in B's range (including C) to be quiet.
+Цей протокол розв'язує проблему прихованого термінала. Пам'ятайте, у проблемі прихованого термінала і A, і C відчувають тишу й починають передавати, спричиняючи колізію на B. З цим протоколом, якщо A надсилає RTS, B передасть CTS, попереджаючи всіх у зоні дії B (зокрема C) мовчати.
 
 <img width="700px" src="/assets/wireless/8-019-maca2.png">
 
-If you hear an RTS packet, this means you're in range of the sender. The sender is about to listen for a CTS. Therefore, you need to be quiet and wait for one time slot, which is long enough so that you don't clobber out the CTS at the sender with data of your own. In other words, you need to be quiet and let the sender receive a CTS.
+Якщо ви чуєте пакет RTS, це означає, що ви в зоні дії відправника. Відправник збирається слухати CTS. Тому вам треба мовчати й чекати один часовий слот, достатньо довгий, щоб ви не заглушили CTS на відправнику власними даними. Іншими словами, вам треба мовчати й дати відправникові отримати CTS.
 
-After the RTS, if you then hear a CTS, that means you're also in the range of the receiver, so you must also be quiet during the data transfer. If you don't hear the CTS, that means that you're out of range of the receiver, and you can transmit data yourself.
+Якщо після RTS ви чуєте й CTS, це означає, що ви також у зоні дії отримувача, тож теж маєте мовчати під час передавання даних. Якщо ви не чуєте CTS, це означає, що ви поза зоною дії отримувача й можете самі передавати дані.
 
-Under certain assumptions, this protocol solves the exposed terminal problem. Remember, in the exposed terminal problem, B is sending to A, and C is sending to D. With CSMA, C senses B's signal and stays quiet, though it could have safely transmitted. With this protocol, if B sends an RTS, C will defer for one time slot (to avoid clobbering the CTS at B). Then, because C didn't hear the CTS, this means that C is out of range of the receiver (A), so C can safely start transmitting to D.
+За певних припущень цей протокол розв'язує проблему відкритого термінала. Пам'ятайте, у проблемі відкритого термінала B надсилає до A, а C — до D. З CSMA C відчуває сигнал B і мовчить, хоча міг би безпечно передавати. З цим протоколом, якщо B надсилає RTS, C почекає один часовий слот (щоб не заглушити CTS на B). Потім, оскільки C не почув CTS, це означає, що C поза зоною дії отримувача (A), тож C може безпечно почати передавати до D.
 
 <img width="900px" src="/assets/wireless/8-020-maca3.png">
 
-The assumption we make for this to work is, C must be able to hear the CTS from D. Remember, even though C is the sender, it must receive the CTS before it can start sending. However, C is actually hearing the data from B as well, so it might not be able to hear the CTS to start sending. The key problem here is: In CSMA, the sender only ever sends. But in MACA, the sender actually has to receive a CTS before it can start sending, and that CTS might be clobbered in the exposed terminal case.
+Припущення, яке ми робимо, щоб це працювало: C має мати змогу почути CTS від D. Пам'ятайте, хоча C — відправник, він має отримати CTS, перш ніж почати надсилати. Однак C насправді чує й дані від B, тож може не почути CTS, щоб почати надсилати. Ключова проблема тут така: у CSMA відправник лише надсилає. Але в MACA відправник насправді має отримати CTS, перш ніж почати надсилати, і цей CTS може бути заглушено у випадку відкритого термінала.
 
 <img width="900px" src="/assets/wireless/8-021-maca4.png">
 
-If we send an RTS, but we don't hear a corresponding CTS, this means that we are not clear to send. There's a collision at the receiver, maybe because the receiver is currently receiving data, or because the receiver gets two requests at the same time. If this happens, we apply binary exponential backoff (similar to CSMA/CD), and wait up to twice as long before sending another RTS. 
+Якщо ми надсилаємо RTS, але не чуємо відповідного CTS, це означає, що нам не дозволено надсилати. На отримувачі колізія — можливо, тому що отримувач саме отримує дані, або тому що отримувач отримує два запити одночасно. Якщо таке трапляється, ми застосовуємо двійкову експоненційну затримку (подібно до CSMA/CD) і чекаємо до вдвічі довше, перш ніж надіслати ще один RTS.
 
-In MACA, each device maintains a CW (Contention Window) value, which tells us how long after a collision we should wait before re-requesting. If we detect a collision (no CTS), we pick a random number between 0 and CW, and wait that long before re-requesting. The minimum value is 2 slots, and the maximum value is 64 slots, where one slot is the time it takes to transmit an RTS. On a successful RTS/CTS, we reset the contention window back to the minimum value of 2. On a failed RTS (no CTS), we double the contention window, clamped to avoid exceeding the maximum value of 64.
+У MACA кожен пристрій підтримує значення CW (Contention Window, вікно конкуренції), що показує, скільки чекати після колізії, перш ніж повторити запит. Якщо ми виявляємо колізію (немає CTS), ми обираємо випадкове число від 0 до CW і чекаємо стільки, перш ніж повторити запит. Мінімальне значення — 2 слоти, а максимальне — 64 слоти, де один слот — час, потрібний для передавання RTS. У разі успішного RTS/CTS ми скидаємо вікно конкуренції назад до мінімального значення 2. У разі невдалого RTS (немає CTS) ми подвоюємо вікно конкуренції, обмежуючи його, щоб не перевищити максимальне значення 64.
 
 
-## MACAW Feature: ACK (For Reliability)
+## Функція MACAW: ACK (для надійності)
 
-**MACAW (Multiple Access Collision Avoidance for Wireless**) offers some improvements over the MACA protocol.
+**MACAW** (Multiple Access Collision Avoidance for Wireless, множинний доступ з уникненням колізій для бездротових мереж) пропонує кілька вдосконалень порівняно з протоколом MACA.
 
-The first improvement is adding acknowledgements for reliability. As before, the sender transmits an RTS, and the receiver transmits a CTS, and the sender transmits data. Now, we have an extra step at the end, where the receiver transmits an ack.
+Перше вдосконалення — додавання підтверджень для надійності. Як і раніше, відправник передає RTS, отримувач передає CTS, а відправник передає дані. Тепер у нас є додатковий крок наприкінці, де отримувач передає підтвердження.
 
 <img width="300px" src="/assets/wireless/8-022-macaw-acks.png">
 
-If the data is lost, then there won't be an ack, and the sender will have to retry, starting over with a new RTS. If the data is correctly sent but the ack is lost, then the sender will retry with a new RTS, but the receiver can immediately reply with the ack instead of the CTS.
+Якщо дані втрачено, підтвердження не буде, і відправникові доведеться повторити спробу, почавши з нового RTS. Якщо дані правильно надіслано, але підтвердження втрачено, відправник повторить спробу з новим RTS, але отримувач може одразу відповісти підтвердженням замість CTS.
 
-Why did we add acks? Remember, the end-to-end principle said that reliability must be implemented at the end hosts for correctness. However, in this case, we're implementing reliability in the network, along a single link, solely in order to improve performance. If we didn't implement reliability on the link, TCP would still guarantee correctness, but a lost packet would cause TCP to slow down significantly (recall, congestion window halves). By contrast, by implementing reliability on the link, we can recover from packet losses more efficiently.
+Навіщо ми додали підтвердження? Пам'ятайте, наскрізний принцип казав, що для правильності надійність має реалізовуватися на кінцевих хостах. Однак у цьому випадку ми реалізуємо надійність у мережі, на одному каналі, виключно заради покращення продуктивності. Якби ми не реалізували надійність на каналі, TCP однаково гарантував би правильність, але втрачений пакет змусив би TCP суттєво сповільнитися (пригадайте, вікно перевантаження зменшується вдвічі). Натомість, реалізуючи надійність на каналі, ми можемо ефективніше відновлюватися після втрат пакетів.
 
 
-## MACAW Feature: Better Backoff (For Fairness)
+## Функція MACAW: краща затримка (для справедливості)
 
-The MACA protocol is unfair when two colliding hosts want to send data. In particular, winners tend to keep winning, while losers keep to keep losing.
+Протокол MACA несправедливий, коли два хости, що стикаються, хочуть надіслати дані. Зокрема, переможці мають тенденцію й далі вигравати, а переможені — й далі програвати.
 
-Here's an example of unfairness. Suppose A and B both have their windows set to 2, and they simultaneously attempt to reserve the channel. Let's assume A wins, and B loses. Then A's window stays at 2, while B's window doubles to 4. This means that A probably gets to reserve the channel again sooner, and will probably win again. This also means that by the time B tries again, A has already captured the channel again, and B's window doubles again to 8. This pattern continues, and A keeps re-capturing the channel quickly, while B keeps failing and waiting increasingly longer before trying (and failing) again.
+Ось приклад несправедливості. Припустімо, і A, і B мають вікна, встановлені на 2, і одночасно намагаються зарезервувати канал. Припустімо, A виграє, а B програє. Тоді вікно A залишається 2, а вікно B подвоюється до 4. Це означає, що A, найімовірніше, швидше знову зарезервує канал і, найімовірніше, знову виграє. Це також означає, що на момент, коли B спробує знову, A вже знову захопить канал, і вікно B знову подвоїться до 8. Цей шаблон триває, і A раз у раз швидко знову захоплює канал, тоді як B раз у раз зазнає невдачі й чекає дедалі довше, перш ніж знову спробувати (і знову зазнати невдачі).
 
 <img width="800px" src="/assets/wireless/8-023-maca-unfair.png">
 
-To solve this problem, instead of each device having its own CW, we'll have everybody share the same CW. The packet header now contains a field for the CW value, and if you receive a packet, you set the CW to the value in the packet. Since everybody now has the same CW, the retry mechanism doesn't favor any one device. Everybody picks a random value between 0 and CW and waits that long. (Note: We're slightly simplifying here, but this is true if all devices are in range of each other.)
+Щоб розв'язати цю проблему, замість того щоб кожен пристрій мав власне CW, ми змусимо всіх ділити те саме CW. Заголовок пакета тепер містить поле для значення CW, і якщо ви отримуєте пакет, ви встановлюєте своє CW рівним значенню в пакеті. Оскільки тепер усі мають однакове CW, механізм повторних спроб не надає переваги жодному пристрою. Кожен обирає випадкове значення від 0 до CW і чекає стільки. (Примітка: тут ми трохи спрощуємо, але це справджується, якщо всі пристрої в зоні дії один одного.)
 
-MACAW also changes the CW update rules to be more gentle. As before, the minimum value is 2 and the maximum value is 64. On a failed RTS (no CTS), we multiply CW by 1.5 (instead of doubling), and again clamp to avoid exceeding 64. On a successful RTS/CTS/DATA/ACK transmission, we decrease CW by 1 (instead of resetting all the way to 2). Note that on a successful RTS/CTS, but a failed ACK, the CW does not change. This approach is sometimes called Multiplicative Increase, Linear Decrease (MILD).
+MACAW також змінює правила оновлення CW, роблячи їх м'якшими. Як і раніше, мінімальне значення — 2, а максимальне — 64. У разі невдалого RTS (немає CTS) ми множимо CW на 1,5 (замість подвоєння) і знову обмежуємо, щоб не перевищити 64. У разі успішного передавання RTS/CTS/DATA/ACK ми зменшуємо CW на 1 (замість скидання аж до 2). Зауважте, що в разі успішного RTS/CTS, але невдалого ACK, CW не змінюється. Цей підхід іноді називають мультиплікативним збільшенням і лінійним зменшенням (Multiplicative Increase, Linear Decrease, MILD).
 
 
-## MACAW Feature: DS (For Exposed Terminals)
+## Функція MACAW: DS (для відкритих терміналів)
 
-Recall our exposed terminal example from earlier, where B wants to communicate with A. B sends an RTS, A sends a CTS, and B starts transmitting data. At this point, C did not hear the CTS, which means C is out-of-range of the receiver and can safely transmit data. However, in order to transmit, C must hear the CTS. This might not happen, since C is also hearing B's data, and there might be a collision between B's data and D's CTS.
+Пригадайте наш попередній приклад відкритого термінала, де B хоче спілкуватися з A. B надсилає RTS, A надсилає CTS, і B починає передавати дані. На цьому етапі C не почув CTS, що означає, що C поза зоною дії отримувача й може безпечно передавати дані. Однак, щоб передавати, C має почути CTS. Цього може не статися, бо C також чує дані B, і може відбутися колізія між даними B і CTS від D.
 
-MACAW concludes that in the exposed terminal case, B-to-A and C-to-D actually cannot send data simultaneously. Yes, we're admitting defeat, and it turns out neither MACAW nor CSMA solves the exposed terminal problem.
+MACAW доходить висновку, що у випадку відкритого термінала B–A і C–D насправді не можуть надсилати дані одночасно. Так, ми визнаємо поразку, і виявляється, що ні MACAW, ні CSMA не розв'язують проблеми відкритого термінала.
 
-This means that if we're in the range of the other sender, we actually can't send data (even if we aren't in the range of the other receiver). To repeat, this is because we'll be hearing the data from the other sender, which means we can't hear the CTS we need to start sending.
+Це означає, що якщо ми в зоні дії іншого відправника, ми насправді не можемо надсилати дані (навіть якщо ми не в зоні дії іншого отримувача). Повторимо: це тому, що ми чутимемо дані від іншого відправника, а отже, не зможемо почути CTS, потрібний нам, щоб почати надсилати.
 
-To solve this problem, we add an extra Data Sending (DS) packet before the data. This is the sender warning everybody: I'm about to send k bits of data, so you need to be quiet during this time.
+Щоб розв'язати цю проблему, ми додаємо перед даними додатковий пакет **надсилання даних** (Data Sending, DS). Цим відправник попереджає всіх: я збираюся надіслати k бітів даних, тож вам треба мовчати в цей час.
 
 <img width="900px" src="/assets/wireless/8-024-ds1.png">
 
-The protocol now has 5 steps:
+Тепер протокол має 5 кроків:
 
-1. Sender transmits RTS, requesting to transmit k bits of data.
+1. Відправник передає RTS, запитуючи передати k бітів даних.
 
-2. Receiver transmits CTS, telling everyone in range: Be quiet, I'm receiving k bits of data.
+2. Отримувач передає CTS, кажучи всім у зоні дії: мовчіть, я отримую k бітів даних.
 
-3. Sender transmits DS, telling everyone in range: Be quiet, I'm sending k bits of data. (Others can't send data, because my data will clobber the CTS you need to receive for your transmission.)
+3. Відправник передає DS, кажучи всім у зоні дії: мовчіть, я надсилаю k бітів даних. (Інші не можуть надсилати дані, бо мої дані заглушать CTS, який вам треба отримати для вашого передавання.)
 
-4. Sender transmits the data.
+4. Відправник передає дані.
 
-5. Receiver transmits the ack.
+5. Отримувач передає підтвердження.
 
-Note that the RTS and DS are not redundant. The RTS is a request that might not be granted (e.g. maybe no CTS). The DS confirms that the request is actually granted, and enforces that everyone in the sender's range must be quiet.
+Зауважте, що RTS і DS не надлишкові. RTS — запит, який може бути не задоволено (наприклад, CTS може не надійти). DS підтверджує, що запит справді задоволено, і вимагає, щоб усі в зоні дії відправника мовчали.
 
 
-## MACAW Feature: DS (For Synchronization)
+## Функція MACAW: DS (для синхронізації)
 
-The DS has a second important purpose. Let's revisit the exposed terminal again, remembering that MACAW accepts defeat and forces the two transmissions to happen separately.
+DS має й друге важливе призначення. Знову повернімося до відкритого термінала, пам'ятаючи, що MACAW визнає поразку й змушує два передавання відбуватися окремо.
 
-Assume there's no DS packet. Then, as before, B sends an RTS, A sends a CTS, and B starts transmitting data. C hears the RTS, and defers for one time slot (to avoid interrupting B). However, C does not hear the CTS. At this point, C is doomed to send a futile RTS, and will never hear the CTS (because it's drowned out by the data from B). C will keep retrying and sending out futile RTS requests, but it has no idea when B will stop sending data.
+Припустімо, що пакета DS немає. Тоді, як і раніше, B надсилає RTS, A надсилає CTS, і B починає передавати дані. C чує RTS і чекає один часовий слот (щоб не перервати B). Однак C не чує CTS. На цьому етапі C приречений надсилати марні RTS і ніколи не почує CTS (бо його заглушують дані від B). C раз у раз повторюватиме спроби й надсилатиме марні запити RTS, але гадки не має, коли B припинить надсилати дані.
 
-By contrast, B knows exactly when it will stop sending data. This gives B a huge advantage in the next round of contention. When B is done sending data, it can immediately send out another request, and it will probably win and get to keep sending data. On the other hand, C has no idea when B will stop sending data, so it has to randomly guess when to send out another request. Most likely, C will guess a time and re-request while B is still sending data, so C will lose and the request won't be granted (collision).
+Натомість B точно знає, коли припинить надсилати дані. Це дає B величезну перевагу в наступному раунді конкуренції. Коли B закінчить надсилати дані, він може одразу надіслати ще один запит і, найімовірніше, виграє й продовжить надсилати дані. З іншого боку, C гадки не має, коли B припинить надсилати дані, тож мусить навмання вгадувати, коли надіслати ще один запит. Найімовірніше, C вгадає час і повторить запит, поки B ще надсилає дані, тож C програє, і запит не буде задоволено (колізія).
 
 <img width="900px" src="/assets/wireless/8-025-ds2.png">
 
-This lack of synchronization leads to unfairness. If I win, I'll probably win again, because I know exactly when the next round of contention will happen (it's when I'm done sending). If you lose, you'll probably lose again, because you don't know when the next round of contention will happen (you don't know when I'm done). The contention time is usually a tiny sliver of time, since most of the time is spent sending data. I know exactly when that time is, and you don't, so I'll keep winning.
+Ця відсутність синхронізації призводить до несправедливості. Якщо я виграю, я, найімовірніше, виграю знову, бо точно знаю, коли відбудеться наступний раунд конкуренції (коли я закінчу надсилати). Якщо ви програєте, ви, найімовірніше, програєте знову, бо не знаєте, коли відбудеться наступний раунд конкуренції (не знаєте, коли я закінчу). Час конкуренції зазвичай — крихітний проміжок, бо більшість часу витрачається на надсилання даних. Я точно знаю, коли настає цей час, а ви — ні, тож я й далі буду вигравати.
 
-The DS packet solves this problem, because it allows the sender to tell everybody when the next round of contention occurs. Now, B is using the DS packet to tell everybody: I'm starting to send k bits. Not only does C now know to not send futile RTS requests, but it also knows when B will be done sending. This gives C a much fairer shot at winning the next round of contention.
+Пакет DS розв'язує цю проблему, бо дає відправникові змогу повідомити всім, коли відбудеться наступний раунд конкуренції. Тепер B за допомогою пакета DS каже всім: я починаю надсилати k бітів. Тепер C не лише знає, що не треба надсилати марні запити RTS, а й знає, коли B закінчить надсилати. Це дає C набагато справедливіший шанс виграти наступний раунд конкуренції.
 
 <img width="900px" src="/assets/wireless/8-026-ds3.png">
 
 
-## MACAW Feature: RRTS (For Synchronization)
+## Функція MACAW: RRTS (для синхронізації)
 
-There's another case where synchronization is critical to ensure fairness. Suppose A wants to send to B, and D wants to send to C.
+Є ще один випадок, коли синхронізація критично важлива для забезпечення справедливості. Припустімо, A хоче надсилати до B, а D — до C.
 
-A transmits to B (A sends RTS, B sends CTS, A sends DS and sends data). C hears the CTS and must stay quiet while the data is sent. Now, D is clueless and doomed. D will send an RTS, and won't hear a CTS because C is staying quiet. D will keep retrying at random times, and will keep failing, because it has no idea when A will stop sending data.
+A передає до B (A надсилає RTS, B надсилає CTS, A надсилає DS і дані). C чує CTS і мусить мовчати, поки надсилаються дані. Тепер D нічого не знає й приречений. D надішле RTS і не почує CTS, бо C мовчить. D раз у раз повторюватиме спроби у випадкові моменти й раз у раз зазнаватиме невдачі, бо гадки не має, коли A припинить надсилати дані.
 
-By contrast, A knows exactly when it will stop sending data. Just like before, this gives A a huge advantage in the next round of contention. A can immediately re-request and win. On the other hand, D has no idea when to re-request. The only way D will win is if it gets really lucky and sends the request immediately after A is done sending, but before A re-requests.
+Натомість A точно знає, коли припинить надсилати дані. Як і раніше, це дає A величезну перевагу в наступному раунді конкуренції. A може одразу повторити запит і виграти. З іншого боку, D гадки не має, коли повторювати запит. Єдиний спосіб для D виграти — якщо йому справді пощастить і він надішле запит одразу після того, як A закінчить надсилати, але до того, як A повторить запит.
 
 <img width="900px" src="/assets/wireless/8-027-rrts1.png">
 
-Notice that the DS packet doesn't help us here, because the two senders, A and D, are out-of-range of each other. A will send a DS packet and announce when it's sending data, but D won't hear it, so D is still doomed to lose.
+Зверніть увагу, що пакет DS тут не допомагає, бо два відправники, A і D, поза зоною дії один одного. A надішле пакет DS і оголосить, коли надсилає дані, але D його не почує, тож D однаково приречений програти.
 
-To solve this problem, we'll let the receiver do the contending on behalf of the sender. D doesn't know when to re-request, but C does, so let's make C do the requesting instead.
+Щоб розв'язати цю проблему, ми дозволимо отримувачеві конкурувати від імені відправника. D не знає, коли повторювати запит, а C знає, тож змусьмо C робити запити натомість.
 
-When D sends the RTS, C learns that D wants to talk, but C must stay quiet until the next round of contention. Notice that C knows when the next round of contention occurs, because it will hear the ack from B. When the next round of contention occurs, C sends a new packet called a Request-for-RTS (RRTS). This immediately alerts D that the next round has begun, and allows D to immediately send an RTS. This gives D a much fairer shot at winning the contention round.
+Коли D надсилає RTS, C дізнається, що D хоче поговорити, але C мусить мовчати до наступного раунду конкуренції. Зверніть увагу, що C знає, коли відбудеться наступний раунд конкуренції, бо почує підтвердження від B. Коли настає наступний раунд конкуренції, C надсилає новий пакет під назвою **запит на RTS** (Request-for-RTS, RRTS). Це негайно сповіщає D, що почався наступний раунд, і дає D змогу одразу надіслати RTS. Це дає D набагато справедливіший шанс виграти раунд конкуренції.
 
 <img width="900px" src="/assets/wireless/8-028-rrts2.png">
 
-If you hear an RRTS, this means that someone in your range is trying to request, so you should be quiet for 2 time slots while they perform the RTS/CTS exchange.
+Якщо ви чуєте RRTS, це означає, що хтось у вашій зоні дії намагається зробити запит, тож вам слід мовчати 2 часові слоти, поки вони виконують обмін RTS/CTS.
 
-In the example, if C sends out an RRTS, B hears this and stays quiet for two time slots, which allows D to send an RTS, and C to send a CTS. The CTS tells B to be quiet, and allows the D-to-C transmission to happen.
+У прикладі, якщо C надсилає RRTS, B чує це й мовчить два часові слоти, що дає D змогу надіслати RTS, а C — надіслати CTS. CTS каже B мовчати й дає змогу відбутися передаванню від D до C.
 
-More generally, you should send an RRTS if you hear an RTS, but you're not allowed to respond, because someone else has told you to be quiet.
+Загальніше, вам слід надсилати RRTS, якщо ви чуєте RTS, але вам не дозволено відповідати, бо хтось інший сказав вам мовчати.
 
-DS and RRTS help with synchronization and ensure more fair contention rounds, but they don't solve all our problems. Consider A sending to B, and C sending to D. Suppose C starts sending to D. At this point, if A sends an RTS, B can't hear it because the RTS is getting drowned out by C's transmissions. The only way A's RTS will reach B is during the short gap in between C's transmissions. Here, A is doomed to lose, because it has no idea when C will stop sending, while C knows exactly when it's sending. Note that RRTS doesn't save us here, because the RRTS is only sent if you hear an RTS, but B never even hears the RTS. B never learns that A wants to communicate, so B will never send an RRTS request on behalf of A. The original MACAW paper leaves this problem unsolved.
+DS і RRTS допомагають із синхронізацією й забезпечують справедливіші раунди конкуренції, але не розв'язують усіх наших проблем. Розгляньте ситуацію, коли A надсилає до B, а C — до D. Припустімо, C починає надсилати до D. На цьому етапі, якщо A надсилає RTS, B не може його почути, бо RTS заглушують передавання C. Єдиний спосіб, у який RTS від A дістанеться B, — у короткому проміжку між передаваннями C. Тут A приречений програти, бо гадки не має, коли C припинить надсилати, а C точно знає, коли надсилає. Зауважте, що RRTS нас тут не рятує, бо RRTS надсилається, лише якщо ви чуєте RTS, а B навіть не чує RTS. B ніколи не дізнається, що A хоче спілкуватися, тож B ніколи не надішле запит RRTS від імені A. Оригінальна стаття про MACAW залишає цю проблему нерозв'язаною.

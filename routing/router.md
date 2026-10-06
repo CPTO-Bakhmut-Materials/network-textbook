@@ -1,230 +1,230 @@
 ---
-title: Router Hardware
-parent: Routing
+title: Апаратне забезпечення маршрутизатора
+parent: Маршрутизація
 nav_order: 7
 layout: page-with-toc
 ---
 
-# Router Hardware
+# Апаратне забезпечення маршрутизатора
 
-## What Do Routers Do?
+## Що роблять маршрутизатори?
 
-A router runs some routing protocol to populate the forwarding table.
+Маршрутизатор виконує певний протокол маршрутизації, щоб заповнити таблицю пересилання.
 
-Then, when a packet comes in, the router looks at its destination IP and uses the forwarding table to select a link to forward the packet along. Remember, the forwarding table could contain ranges of addresses.
+Потім, коли надходить пакет, маршрутизатор дивиться на IP-адресу призначення й за допомогою таблиці пересилання обирає канал, яким переслати пакет. Пам'ятайте, що таблиця пересилання може містити діапазони адрес.
 
-So far, we've drawn routers as boxes on a diagram. In reality, a router is a specialized computer optimized for performing routing and forwarding tasks. In this section, we'll explore the hardware inside routers.
+Досі ми зображали маршрутизатори як прямокутники на діаграмі. Насправді маршрутизатор — це спеціалізований комп'ютер, оптимізований для виконання завдань маршрутизації та пересилання. У цьому розділі ми розглянемо апаратне забезпечення всередині маршрутизаторів.
 
 
-## Where Are Routers?
+## Де розташовані маршрутизатори?
 
-In real life, homes and offices have small routers to connect hosts to the Internet. Where do all these routers all connect to each other?
+У реальному житті в будинках і офісах стоять невеликі маршрутизатори, що під'єднують хости до Інтернету. Де всі ці маршрутизатори з'єднуються між собою?
 
 <img width="700px" class="real-photo" src="/assets/routing/2-114-carrier-hotel.png">
 
-**Colocation facilities** or **carrier hotels** are buildings where multiple ISPs install routers to connect to each other. These buildings are specially designed to have power and cooling infrastructure, and ISPs can rent space to install routers and connect them to other routers in the same building.
+**Центри колокації** (colocation facilities), або **операторські готелі** (carrier hotels), — це будівлі, у яких кілька провайдерів встановлюють маршрутизатори, щоб з'єднатися між собою. Ці будівлі спеціально спроєктовані з інфраструктурою живлення й охолодження, і провайдери можуть орендувати там місце, щоб встановлювати маршрутизатори й з'єднувати їх з іншими маршрутизаторами в тій самій будівлі.
 
-Inside a carrier hotel, routers are stacked together into racks (6-7 feet tall, 19 inches wide).
+Усередині операторського готелю маршрутизатори встановлюють у стійки (висотою 6–7 футів, шириною 19 дюймів).
 
 
-## Router Sizes and Capacities
+## Розміри та потужність маршрутизаторів
 
-Routers come in all sizes, depending on the user requirements. Home routers only forward traffic for a few users, and the forwarding table has a single default entry. Industrial routers might need to forward traffic from thousands of customers, with a huge forwarding table.
+Маршрутизатори бувають усіх розмірів залежно від вимог користувачів. Домашні маршрутизатори пересилають трафік лише кількох користувачів, а таблиця пересилання має єдиний запис за замовчуванням. Промисловим маршрутизаторам може знадобитися пересилати трафік тисяч клієнтів, маючи величезну таблицю пересилання.
 
 <img width="800px" class="real-photo" src="/assets/routing/2-115-router-sizes.png">
 
-There are different ways we can measure the size of a router. We could consider its physical size, the number of physical ports it has, and its bandwidth.
+Є різні способи виміряти розмір маршрутизатора. Можна розглядати його фізичний розмір, кількість фізичних портів і пропускну здатність.
 
-We can measure a router's capacity as the number of physical ports, multiplied by the bandwidth of each physical port. The speed or bandwidth of a physical port is often called its **line rate**.
+Потужність маршрутизатора можна виміряти як кількість фізичних портів, помножену на пропускну здатність кожного фізичного порту. Швидкість, або пропускну здатність, фізичного порту часто називають його **лінійною швидкістю** (line rate).
 
-Not all physical ports need to have the same line rate. For example, a modern home router might have 4 physical ports that can send at 100 Mbps, and 1 physical port that can send at 1 Gbps. The total capacity of this router is 1.4 Gbps.
+Не всі фізичні порти мусять мати однакову лінійну швидкість. Наприклад, сучасний домашній маршрутизатор може мати 4 фізичні порти, що можуть передавати зі швидкістю 100 Мбіт/с, і 1 фізичний порт, що може передавати зі швидкістю 1 Гбіт/с. Загальна потужність цього маршрутизатора — 1,4 Гбіт/с.
 
 <img width="200px" class="real-photo" src="/assets/routing/2-116-modern-router.png">
 
-A modern state-of-the-art router used by ISPs might have a line rate of up to 400 Gbps per physical port.
+Сучасний передовий маршрутизатор, який використовують провайдери, може мати лінійну швидкість до 400 Гбіт/с на фізичний порт.
 
-This router contains multiple removable **line cards**, where each line card contains a set of physical ports. A modern router might have 8 line cards, with 36 physical ports per line card, for a total of 288 physical ports.
+Такий маршрутизатор містить кілька знімних **лінійних карт** (line cards), кожна з яких містить набір фізичних портів. Сучасний маршрутизатор може мати 8 лінійних карт по 36 фізичних портів на кожній, тобто загалом 288 фізичних портів.
 
-288 physical ports, each with 400 Gbps bandwidth, gives our router a total capacity of 115.2 Tbps.
+288 фізичних портів, кожен із пропускною здатністю 400 Гбіт/с, дають нашому маршрутизатору загальну потужність 115,2 Тбіт/с.
 
-This router could cost upwards of \$1 million. Breaking up a router into line cards allows us to install more line cards as more capacity is needed.
+Такий маршрутизатор може коштувати понад \$1 мільйон. Розбиття маршрутизатора на лінійні карти дає змогу встановлювати додаткові лінійні карти, коли потрібна більша потужність.
 
-In the future, next-generation routers will have 800 Gbps physical ports. Physical space for routers is constrained, so modern improvements are focused on improving the speed per port, instead of increasing the number of ports. (Stuffing more ports into the same space is also difficult because of power and cooling constraints.)
+У майбутньому маршрутизатори наступного покоління матимуть фізичні порти на 800 Гбіт/с. Фізичний простір для маршрутизаторів обмежений, тож сучасні вдосконалення зосереджені на підвищенні швидкості на порт, а не на збільшенні кількості портів. (Упхнути більше портів у той самий простір також складно через обмеження живлення й охолодження.)
 
 <img width="700px" class="real-photo" src="/assets/routing/2-117-router-evolution.png">
 
-Router capacity has increased over the years in response to the growth in user demand (e.g. video quality has increased from 720p to 8K = 8000p). In 2010, state-of-the-art routers had 1.7 Tbps capacity, and that's increased by a factor of 100 in the past decade. Much of this improvement came from increasing the link speed, from 10 Gbps in 2010 to 100 Gbps around 2016 to 400 Gbps today. These improvements are starting to slow down because of constraints like Moore's law slowing and physical challenges with sending signals at high rate. The next improvement to 800 Gbps is only a 2x increase (compared to the earlier 10x and 4x increases).
+Потужність маршрутизаторів з роками зростала у відповідь на зростання попиту користувачів (наприклад, якість відео зросла з 720p до 8K = 8000p). У 2010 році передові маршрутизатори мали потужність 1,7 Тбіт/с, і за останнє десятиліття вона зросла в 100 разів. Значна частина цього покращення походить від підвищення швидкості каналів: від 10 Гбіт/с у 2010 році до 100 Гбіт/с близько 2016 року й до 400 Гбіт/с сьогодні. Ці покращення починають сповільнюватися через такі обмеження, як уповільнення закону Мура та фізичні труднощі передавання сигналів із високою швидкістю. Наступне покращення до 800 Гбіт/с — лише дворазове зростання (порівняно з попередніми десятиразовим і чотириразовим).
 
 
-## Data, Control, Management Planes
+## Площини даних, керування та управління
 
-The hardware and software components of the router can conceptually be split into three planes. The **data plane** is mainly responsible for forwarding packets. The data plane is used every time a packet arrives and needs to be forwarded. The data plane operates locally, without coordinating with other routers.
+Апаратні та програмні компоненти маршрутизатора концептуально можна поділити на три площини. **Площина даних** (data plane) відповідає переважно за пересилання пакетів. Площина даних задіюється щоразу, коли надходить пакет і його треба переслати. Площина даних працює локально, без координації з іншими маршрутизаторами.
 
-The **control plane** is mainly responsible for communicating with other routers and running routing protocols. The result of those routing protocols (e.g. the forwarding table) can then be used by the data plane. The control plane is used every time the topology of the network changes (e.g. when links are added or removed).
+**Площина керування** (control plane) відповідає переважно за взаємодію з іншими маршрутизаторами та виконання протоколів маршрутизації. Результат цих протоколів маршрутизації (наприклад, таблицю пересилання) потім може використовувати площина даних. Площина керування задіюється щоразу, коли змінюється топологія мережі (наприклад, коли канали додаються чи видаляються).
 
-Because the data plane and control plane operate at different time scales, and are running different protocols, the hardware and software of a router are optimized for different tasks. In practice, packets arrive much more frequently than the network topology changing. Therefore, the data plane is optimized for performing very simple tasks (table lookup and forwarding) very quickly. By contrast, the control plane is optimized for more complex tasks (re-computing paths in the network).
+Оскільки площина даних і площина керування працюють у різних часових масштабах і виконують різні протоколи, апаратне та програмне забезпечення маршрутизатора оптимізоване для різних завдань. На практиці пакети надходять набагато частіше, ніж змінюється топологія мережі. Тому площина даних оптимізована для дуже швидкого виконання дуже простих завдань (пошук у таблиці та пересилання). Натомість площина керування оптимізована для складніших завдань (переобчислення шляхів у мережі).
 
-The **management plane** is used to tell routers what to do, and see what they are doing. Systems and humans interact with the management plane to configure and monitor the router. This is where operators can configure the device functionality. What costs should be assigned to each link? What routing protocol should be run? These need to be manually decided by the operator.
+**Площина управління** (management plane) використовується, щоб казати маршрутизаторам, що робити, і бачити, що вони роблять. Системи й люди взаємодіють із площиною управління, щоб конфігурувати маршрутизатор і стежити за ним. Саме тут оператори можуть налаштовувати функціональність пристрою. Які вартості призначити кожному каналу? Який протокол маршрутизації запускати? Це оператор має вирішувати вручну.
 
-In addition to configuration, the management plane also provides monitoring tools. How much traffic is being carried over each link? Has any physical component of the router failed? This information can be relayed back to the operator.
+Окрім конфігурування, площина управління надає також інструменти моніторингу. Скільки трафіку передається кожним каналом? Чи відмовив якийсь фізичний компонент маршрутизатора? Цю інформацію можна передавати назад операторові.
 
-The management plane is the main place where operators access and interact with the router from outside the device. If the operator is using some piece of code to interact with the router, we usually consider that part of the management plane as well.
+Площина управління — основне місце, де оператори отримують доступ до маршрутизатора й взаємодіють із ним ззовні пристрою. Якщо оператор використовує певний код для взаємодії з маршрутизатором, ми зазвичай теж вважаємо його частиною площини управління.
 
-The data plane and control plane operate in real-time, receiving and processing packets on the order of nanoseconds (data) and seconds (control). By contrast, the management plane works on the order of tens to hundreds of seconds. If the operator changes a configuration, the router might spend time performing validation checks and processing the configuration before fully applying the update.
+Площина даних і площина керування працюють у реальному часі, отримуючи й обробляючи пакети в масштабі наносекунд (дані) і секунд (керування). Натомість площина управління працює в масштабі десятків і сотень секунд. Якщо оператор змінює конфігурацію, маршрутизатор може витратити час на перевірки коректності та обробку конфігурації, перш ніж повністю застосувати оновлення.
 
-The **network management system (NMS)** is some piece of software run by the operator to interact with the routers. This software computes a network configuration (maybe with the help of manual operator input), and then applies that configuration to the routers. The router publishes some API that the system can use to talk to the router.
+**Система керування мережею** (network management system, NMS) — це певне програмне забезпечення, яке оператор запускає для взаємодії з маршрутизаторами. Це програмне забезпечення обчислює конфігурацію мережі (можливо, з ручним введенням оператора), а потім застосовує цю конфігурацію до маршрутизаторів. Маршрутизатор надає певний API, через який система може з ним спілкуватися.
 
-The network management system also allows telemetry (statistics and running state) to be read from routers.
+Система керування мережею також дає змогу зчитувати з маршрутизаторів телеметрію (статистику й поточний стан).
 
-The complexity of the network management system depends on what the operator is trying to achieve.
+Складність системи керування мережею залежить від того, чого намагається досягти оператор.
 
-All three planes are needed to run a router. If we only had the data plane and no control plane, we could forward packets, but we wouldn't know where to forward them.
+Для роботи маршрутизатора потрібні всі три площини. Якби в нас була лише площина даних без площини керування, ми могли б пересилати пакети, але не знали б, куди їх пересилати.
 
 
-## What's Inside a Router?
+## Що всередині маршрутизатора?
 
-We defined a router as a computer that performs routing tasks, but in reality, inside the router, there are many smaller computers (e.g. CPUs, specialized chips) that work together to perfom routing tasks.
+Ми визначили маршрутизатор як комп'ютер, що виконує завдання маршрутизації, але насправді всередині маршрутизатора є багато менших комп'ютерів (наприклад, процесори, спеціалізовані мікросхеми), які спільно виконують завдання маршрутизації.
 
-The physical shelf that makes up an industrial-size router is called a **chassis**. Inside the chassis, we install many **line cards**, and we have several physical ports on each line card. Each physical port can be used for either input or output.
+Фізична полиця, з якої складається промисловий маршрутизатор, називається **шасі** (chassis). Усередину шасі встановлюють багато **лінійних карт**, і на кожній лінійній карті є кілька фізичних портів. Кожен фізичний порт можна використовувати або для введення, або для виведення.
 
 <img width="900px" src="/assets/routing/2-118-router1.png">
 
-Every physical port has to be connected to every other physical port in the router (both in the same linecard and other linecards). You might receive a packet through one port, and need to forward it out of a port on a different linecard.
+Кожен фізичний порт має бути з'єднаний із кожним іншим фізичним портом маршрутизатора (і на тій самій лінійній карті, і на інших). Ви можете отримати пакет через один порт і мати потребу переслати його через порт на іншій лінійній карті.
 
-It would be pretty inefficient to physically wire each port to every other port. Instead, we have a fabric of wires to connect linecards together. Each linecard also has chips to facilitate connections to the fabric.
+Фізично з'єднувати дротом кожен порт із кожним іншим було б доволі неефективно. Натомість у нас є комутаційна матриця (fabric) з дротів для з'єднання лінійних карт між собою. Кожна лінійна карта також має мікросхеми для забезпечення з'єднання з матрицею.
 
-Separate from all the linecards, we have a controller card with its own CPU, which talks with other routers to perform routing protocols. After running some algorithm to compute paths, the controller programs the forwarding chips with the correct forwarding table entries. 
+Окремо від усіх лінійних карт у нас є карта контролера з власним процесором, яка спілкується з іншими маршрутизаторами, виконуючи протоколи маршрутизації. Виконавши певний алгоритм для обчислення шляхів, контролер програмує мікросхеми пересилання правильними записами таблиці пересилання.
 
 <img width="900px" src="/assets/routing/2-119-router2.png">
 
-Each linecard has its own local CPU to control linecard functions (e.g. populate the forwarding table). The linecard also has hardware for basic processing of packets (e.g. updating its TTL before sending it out). The linecard contains one or more chips specifically optimized for forwarding.
+Кожна лінійна карта має власний локальний процесор для керування функціями лінійної карти (наприклад, заповнення таблиці пересилання). Лінійна карта також має апаратне забезпечення для базової обробки пакетів (наприклад, оновлення TTL перед надсиланням). Лінійна карта містить одну чи кілька мікросхем, спеціально оптимізованих для пересилання.
 
 <img width="700px" src="/assets/routing/2-120-router3.png">
 
-We can also categorize the router components by the different planes. The data plane is supported by forwarding chips on linecards, the fabric connecting linecards, and the fabric chips connecting the linecards to the fabric. The control plane and management plane are supported by the controller card.
+Компоненти маршрутизатора також можна розподілити за різними площинами. Площину даних забезпечують мікросхеми пересилання на лінійних картах, матриця, що з'єднує лінійні карти, і мікросхеми матриці, що під'єднують лінійні карти до матриці. Площину керування та площину управління забезпечує карта контролера.
 
 <img width="800px" src="/assets/routing/2-121-router4.png">
 
-Here's a picture of an industrial router. This router has 6 slots, where 4 of them have line cards, and the other 2 have controller cards. There's also a fan tray for cooling. The fabric connecting linecards is in the back (not pictured).
+Ось фотографія промислового маршрутизатора. Цей маршрутизатор має 6 слотів, у 4 з яких встановлено лінійні карти, а в інших 2 — карти контролерів. Є також лоток із вентиляторами для охолодження. Матриця, що з'єднує лінійні карти, розташована ззаду (на фото не видно).
 
 <img width="900px" src="/assets/routing/2-122-router5.png">
 
 
-## Types of Packets
+## Типи пакетів
 
-The most common packet is a **user packet**, containing data from an end host. When the router receives this packet, the forwarding chip first reads the destination field in the header and looks up the appropriate port. If that port is on a different linecard, the packet is sent through the fabric to the appropriate linecard. Once the packet reaches the correct linecard, the packet is sent along the appropriate port.
+Найпоширеніший пакет — **користувацький пакет** (user packet), що містить дані від кінцевого хоста. Коли маршрутизатор отримує такий пакет, мікросхема пересилання спершу читає поле призначення в заголовку й шукає відповідний порт. Якщо цей порт на іншій лінійній карті, пакет надсилається через матрицю на відповідну лінійну карту. Щойно пакет дістається правильної лінійної карти, його надсилають через відповідний порт.
 
 <img width="900px" src="/assets/routing/2-123-user-traffic.png">
 
-Some packets are **control-plane traffic**, which are destined for the router itself. In particular, when we run routing protocols, advertisements are sent to the router itself. When the router receives this packet, the forwarding chip sends the packet up to the controller card. The CPU on the controller card processes the packet accordingly.
+Деякі пакети є **трафіком площини керування** (control-plane traffic) і призначені самому маршрутизатору. Зокрема, коли ми виконуємо протоколи маршрутизації, оголошення надсилаються самому маршрутизатору. Коли маршрутизатор отримує такий пакет, мікросхема пересилання передає пакет нагору, карті контролера. Процесор на карті контролера відповідно обробляє пакет.
 
-The last type of traffic is **punt traffic**. These are user packets, but they require some additional special processing. For example, if we receive a packet with a TTL of 1, the packet has expired, and we shouldn't forward it. We might also need to send an error message back to the sender. When the router receives a punt packet, the forwarding chip "punts" the packet to the controller card for special processing.
+Останній тип трафіку — **трафік, що передається на обробку** (punt traffic). Це користувацькі пакети, які потребують певної додаткової спеціальної обробки. Наприклад, якщо ми отримуємо пакет із TTL, що дорівнює 1, термін дії пакета сплив, і пересилати його не слід. Можливо, нам також треба надіслати відправникові повідомлення про помилку. Коли маршрутизатор отримує такий пакет, мікросхема пересилання «передає» (punts) його карті контролера для спеціальної обробки.
 
 <img width="900px" src="/assets/routing/2-124-punt-traffic.png">
 
 
-## Scaling Routers
+## Масштабування маршрутизаторів
 
-Why is our router broken down into this specific architecture, with forwarding chips and controller cards? Couldn't we run everything on a general-purpose CPU?
+Чому наш маршрутизатор поділено саме на таку архітектуру з мікросхемами пересилання й картами контролерів? Хіба не можна виконувати все на процесорі загального призначення?
 
-The problem is, state-of-the-art routers need to run at enormous scale. At modern speeds of 400 Gbps per second, and assuming 64-byte packets, we have to process 781 million packets per second, per port. Across 36 ports, the entire router has to process 56 billion packets per second. (In practice, the numbers might be slightly lower if some packets are larger.)
+Проблема в тому, що передові маршрутизатори мають працювати у величезному масштабі. За сучасних швидкостей 400 Гбіт/с і за припущення про 64-байтові пакети нам доводиться обробляти 781 мільйон пакетів на секунду на кожен порт. Для 36 портів увесь маршрутизатор має обробляти 56 мільярдів пакетів на секунду. (На практиці числа можуть бути дещо меншими, якщо деякі пакети більші.)
 
-This scale is not achievable in software on a general-purpose CPU. To get a sense of scale, if we tried writing a program for forwarding packets, and we ran that program on a CPU, it would be pretty impressive if we could forward one packet every 10 microseconds = 0.00001 seconds. A state-of-the-art router needs to process one packet roughly every 10 nanoseconds = 0.00000001 seconds. Even the most optimized software cannot process packets at this scale. Instead, we need to implement router functionality directly on hardware.
+Такого масштабу неможливо досягти програмно на процесорі загального призначення. Щоб відчути масштаб: якби ми спробували написати програму для пересилання пакетів і запустили її на процесорі, було б доволі вражаюче, якби вдалося пересилати один пакет кожні 10 мікросекунд = 0,00001 секунди. Передовий маршрутизатор має обробляти приблизно один пакет кожні 10 наносекунд = 0,00000001 секунди. Навіть найоптимізованіше програмне забезпечення не може обробляти пакети в такому масштабі. Натомість функціональність маршрутизатора нам доводиться реалізовувати безпосередньо в апаратному забезпеченні.
 
-By splitting the router into specialized data plane linecards and control plane controller cards, we create a fast path and slow path. The fast path only involves forwarding hardware and is optimized for forwarding packets at very high rate. The slow path with the control CPU is only used when necessary, and most packets are sent through the fast path. These specialized components make routers much more efficient (uses less power, cheaper, uses less physical space).
+Розділяючи маршрутизатор на спеціалізовані лінійні карти площини даних і карти контролерів площини керування, ми створюємо швидкий шлях (fast path) і повільний шлях (slow path). Швидкий шлях задіює лише апаратне забезпечення пересилання й оптимізований для пересилання пакетів із дуже високою швидкістю. Повільний шлях із процесором керування використовується лише за потреби, і більшість пакетів проходить швидким шляхом. Ці спеціалізовані компоненти роблять маршрутизатори набагато ефективнішими (споживають менше енергії, дешевші, займають менше фізичного простору).
 
 
-## Linecard Functionality
+## Функціональність лінійної карти
 
-What specific tasks does a linecard need to do when it receives a packet?
+Які конкретні завдання має виконати лінійна карта, коли отримує пакет?
 
-First, the linecard needs to take the signal (e.g. optical, electrical) and decode this signal into ones and zeros that make up the packet. This is the **PHY** part of the linecard, which handles the physical layer (Layer 1) functionality.
+Спершу лінійна карта має прийняти сигнал (наприклад, оптичний, електричний) і декодувати його в одиниці й нулі, з яких складається пакет. Це **PHY**-частина лінійної карти, яка відповідає за функціональність фізичного рівня (рівня 1).
 
-Once we have a sequence of ones and zeros, we have to read those bits and parse them (e.g. find out which bits correspond to the IP header). We might also have to perform other link-layer operations (e.g. if a link is connected to more than 2 machines). The **MAC** part of the linecard handles the link layer functionality (Layer 2).
+Щойно в нас є послідовність одиниць і нулів, ми маємо прочитати ці біти й розібрати їх (наприклад, з'ясувати, які біти відповідають заголовку IP). Можливо, нам також доведеться виконати інші операції канального рівня (наприклад, якщо канал під'єднаний до понад 2 машин). **MAC**-частина лінійної карти відповідає за функціональність канального рівня (рівня 2).
 
-Now that we have an IP packet, we have to parse the packet. For example, we need to check if the packet is IPv4 or IPv6. Then, we have to read the destination address and perform a lookup for forwarding (or discover that we need to punt the packet).
+Тепер, коли в нас є IP-пакет, ми маємо розібрати пакет. Наприклад, треба перевірити, чи це пакет IPv4 чи IPv6. Потім ми маємо прочитати адресу призначення й виконати пошук для пересилання (або виявити, що пакет треба передати на обробку).
 
-We may also need to update various IP header fields. We have to decrease the TTL. Since we updated the header, we also need to update the checksum in the header. We might also need to update other fields like options and fragment (discussed in more detail in the IP header section).
+Можливо, нам також треба оновити різні поля заголовка IP. Ми маємо зменшити TTL. Оскільки ми оновили заголовок, нам також треба оновити контрольну суму в заголовку. Можливо, треба оновити й інші поля, як-от параметри (options) і фрагментацію (докладніше про це в розділі про заголовок IP).
 
 <img width="900px" src="/assets/routing/2-125-pipeline.png">
 
-All of this functionality has to happen in a matter of nanoseconds. Even if we somehow did all the processing in one clock cycle, the linecard still has to operate at 0.2 GHz. In practice, all these operations will take more than one clock cycle. Also, we have to do all this processing for every port on the linecard (one forwarding chip supports all the ports).
+Уся ця функціональність має відпрацювати за лічені наносекунди. Навіть якби ми якимось чином виконали всю обробку за один такт, лінійна карта однаково мала б працювати на частоті 0,2 ГГц. На практиці всі ці операції займуть більше одного такту. Крім того, нам доводиться виконувати всю цю обробку для кожного порту лінійної карти (одна мікросхема пересилання обслуговує всі порти).
 
-In order to make these operations fast, forwarding chips are extremely specialized for the limited tasks that they perform (e.g. reading packet header, table lookup). You can't write a general-purpose program and run it on a forwarding chip. If a packet requires functionality that the forwarding chip can't support, we can always punt the packet to the general-purpose CPU on the controller card.
+Щоб ці операції були швидкими, мікросхеми пересилання вкрай спеціалізовані для обмеженого кола завдань, які вони виконують (наприклад, читання заголовка пакета, пошук у таблиці). Не можна написати програму загального призначення й запустити її на мікросхемі пересилання. Якщо пакет потребує функціональності, яку мікросхема пересилання не підтримує, ми завжди можемо передати пакет процесору загального призначення на карті контролера.
 
-Simple operations, like decrementing the TTL, are easy to implement in hardware. More complex operations, like special options, usually require punting to the controller card. In the modern Internet, we avoid special options whenever possible, in order to maximize use of the fast path and avoid punting (if we punted everything, controller cards would be overwhelmed).
+Прості операції, як-от зменшення TTL, легко реалізувати апаратно. Складніші операції, як-от спеціальні параметри, зазвичай потребують передачі на карту контролера. У сучасному Інтернеті ми за можливості уникаємо спеціальних параметрів, щоб максимально використовувати швидкий шлях і уникати передачі на обробку (якби ми передавали на обробку все, карти контролерів були б перевантажені).
 
-The fabric interconnect chips are also similarly specialized. These chips help send packets across the fabric to other linecards. These chips tend to be the most specialized and most high-performance chips in the whole router.
+Мікросхеми з'єднання з матрицею так само спеціалізовані. Ці мікросхеми допомагають надсилати пакети через матрицю на інші лінійні карти. Вони, як правило, найспеціалізованіші й найпродуктивніші мікросхеми в усьому маршрутизаторі.
 
 
-## Packet Queuing
+## Черги пакетів
 
 TODO
 
 <img width="900px" src="/assets/routing/2-126-queuing.png">
 
 
-## Efficient Forwarding Table Lookup
+## Ефективний пошук у таблиці пересилання
 
-We now know that routers need to perform lookups in forwarding tables at extremely high rates. One major challenge is that our table entries can contain ranges of IP addresses (192.0.1.0/24) in addition to individual IP addresses. Also, these ranges could be overlapping (a destination could match multiple ranges). How can we make lookups extremely fast?
+Тепер ми знаємо, що маршрутизатори мають виконувати пошук у таблицях пересилання з надзвичайно високою швидкістю. Одна з головних проблем полягає в тому, що записи наших таблиць можуть містити, окрім окремих IP-адрес, діапазони IP-адрес (192.0.1.0/24). Крім того, ці діапазони можуть перетинатися (пункт призначення може збігатися з кількома діапазонами). Як зробити пошук надзвичайно швидким?
 
-Ideally, for maximum speed, the forwarding table could contain one entry per destination, with no ranges. Then, we just need to take the destination in the packet, and look up an exact match to learn the next hop.
+В ідеалі для максимальної швидкості таблиця пересилання могла б містити по одному запису на пункт призначення, без діапазонів. Тоді нам достатньо взяти пункт призначення з пакета й знайти точний збіг, щоб дізнатися наступний перехід.
 
-To achieve this ideal approach, we could expand every range into its individual IP addresses. For example, an entry for the 24-bit prefix 192.0.1.0/24 would be expanded into 256 entries.
+Щоб досягти цього ідеального підходу, ми могли б розгорнути кожен діапазон в окремі IP-адреси. Наприклад, запис для 24-бітового префікса 192.0.1.0/24 розгорнувся б у 256 записів.
 
 <img width="200px" src="/assets/routing/2-127-forwarding1.png">
 
-This is space-inefficient (remember, this is being implemented in hardware). Also, if a route changes, we'd have to update tons of entries in the table. Expanding routes isn't going to work, so we'll have to work with ranges.
+Це неефективно з погляду пам'яті (пам'ятайте, що це реалізується апаратно). Крім того, якщо маршрут змінюється, нам довелося б оновлювати безліч записів у таблиці. Розгортання маршрутів не спрацює, тож нам доведеться працювати з діапазонами.
 
-Recall that forwarding table lookup is done using longest prefix matching. If multiple ranges match the destination, we pick the most specific range (most prefix bits fixed). If none of the ranges match, we pick the default route (*.*, 0.0.0.0/32, matches all destinations). If there's no default route, we drop the packet.
+Пригадайте, що пошук у таблиці пересилання виконується за найдовшим збігом префікса. Якщо з пунктом призначення збігаються кілька діапазонів, ми обираємо найконкретніший діапазон (з найбільшою кількістю фіксованих бітів префікса). Якщо не збігається жоден діапазон, ми обираємо маршрут за замовчуванням (*.*, 0.0.0.0/32, збігається з усіма пунктами призначення). Якщо маршруту за замовчуванням немає, ми відкидаємо пакет.
 
-How do we implement longest prefix matching in hardware efficiently?
+Як ефективно реалізувати пошук найдовшого збігу префікса апаратно?
 
 <img width="900px" src="/assets/routing/2-128-forwarding2.png">
 
 TODO rewrite this to match the diagram
 
-First, for readability, we rewrite all the ranges and the destination in binary. Then, we scan the destination bits, one by one. For the first 21 bits, all four ranges match, so all four ranges are still in play. Then, the 22nd bit is a 1. The first row has a 0 in the 22nd bit, so we can eliminate this row (not a match). The other three rows still match in the first 22 bits, so they're still in play.
+Спершу для зручності читання ми переписуємо всі діапазони й пункт призначення у двійковому вигляді. Потім переглядаємо біти пункту призначення один за одним. Для перших 21 біта збігаються всі чотири діапазони, тож усі чотири діапазони досі в грі. Далі 22-й біт дорівнює 1. Перший рядок має 0 у 22-му біті, тож цей рядок можна виключити (не збігається). Інші три рядки досі збігаються в перших 22 бітах, тож вони досі в грі.
 
-Next, we check the 23rd bit, which is also a 1. The second and third rows have a 0 in the 23rd bit, so we eliminate them (not a match). The fourth row is still a match.
+Далі ми перевіряємо 23-й біт, який теж дорівнює 1. Другий і третій рядки мають 0 у 23-му біті, тож ми їх виключаємо (не збігаються). Четвертий рядок досі збігається.
 
-At this point, we can confirm that the fourth row is a full match, because it's a 23-bit prefix, and all 23 bits match. No further checking of this row is needed.
+На цьому етапі можна підтвердити, що четвертий рядок — повний збіг, бо це 23-бітовий префікс і всі 23 біти збігаються. Подальша перевірка цього рядка не потрібна.
 
-We continue checking bit-by-bit, eliminating rows that don't match, and confirming rows that are full matches. Eventually, we have one or more rows that match, and we pick the match with the longest prefix.
+Ми продовжуємо перевіряти біт за бітом, виключаючи рядки, що не збігаються, і підтверджуючи рядки, що є повними збігами. Зрештою в нас залишається один чи кілька рядків, що збігаються, і ми обираємо збіг із найдовшим префіксом.
 
-If we implemented this naively, then for every bit, we would have to match that bit against every entry in the forwarding table. The asymptotic runtime would scale with the number of entries in the forwarding table. Can we do any better?
+Якби ми реалізували це наївно, то для кожного біта нам довелося б порівнювати цей біт із кожним записом таблиці пересилання. Асимптотичний час роботи зростав би з кількістю записів у таблиці пересилання. Чи можна зробити краще?
 
 
-## Efficient Lookup with Tries
+## Ефективний пошук за допомогою префіксних дерев
 
-Thinking back to a data structures class (like CS 61B in UC Berkeley), you might remember that tries are a data structure that efficiently store maps where the keys are strings (in this case, bitstrings). Tries store the key-value pairs by writing out the keys one character (bit) at a time, which enables efficient longest prefix matching.
+Згадуючи курс структур даних (як-от CS 61B в UC Berkeley), ви, можливо, пам'ятаєте, що префіксні дерева (tries) — це структура даних, яка ефективно зберігає відображення, ключами яких є рядки (у нашому випадку — рядки бітів). Префіксні дерева зберігають пари «ключ–значення», розписуючи ключі по одному символу (біту) за раз, що уможливлює ефективний пошук найдовшого збігу префікса.
 
-For example, this trie stores a map of words to numbers. If you don't remember tries, it's okay.
+Наприклад, це префіксне дерево зберігає відображення слів на числа. Якщо ви не пам'ятаєте префіксних дерев, нічого страшного.
 
 <img width="800px" src="/assets/routing/2-129-trie1.png">
 
-If we want to find the longest prefix, just like before, we read the word one letter at a time. This allows us to trace a path down the tree, from the root to a leaf. Along this path, we look for all prefixes in the table (nodes with colors), and pick the longest prefix.
+Якщо ми хочемо знайти найдовший префікс, то, як і раніше, читаємо слово по одній літері за раз. Це дає змогу простежити шлях деревом униз, від кореня до листка. Уздовж цього шляху ми шукаємо всі префікси, що є в таблиці (кольорові вершини), і обираємо найдовший префікс.
 
 <img width="800px" src="/assets/routing/2-130-trie2.png">
 
-We can use a similar approach for our forwarding table. Each layer of the trie represents one of the digits in the IP address. The zeroth layer is the root (empty string), the first layer represents the first bit, the second layer represents the second bit, etc.
+Схожий підхід можна використати для нашої таблиці пересилання. Кожен рівень префіксного дерева відповідає одній із цифр IP-адреси. Нульовий рівень — корінь (порожній рядок), перший рівень відповідає першому біту, другий рівень — другому біту тощо.
 
-Each node in the trie represents a prefix. For example, the 2-bit prefix 11* is at the second layer of the tree, and the 3-bit prefix 100 is at the third layer of the tree. The trie has all possible 3-bit prefixes. If a prefix is in the forwarding table, at the corresponding node, we write the next hop. If the prefix is not in the forwarding table, we don't write anything in the node (in the picture, colored white).
+Кожна вершина префіксного дерева відповідає префіксу. Наприклад, 2-бітовий префікс 11* розташований на другому рівні дерева, а 3-бітовий префікс 100 — на третьому рівні дерева. Префіксне дерево містить усі можливі 3-бітові префікси. Якщо префікс є в таблиці пересилання, у відповідній вершині ми записуємо наступний перехід. Якщо префікса немає в таблиці пересилання, ми нічого не записуємо у вершину (на рисунку вона біла).
 
 <img width="900px" src="/assets/routing/2-131-trie3.png">
 
-Tracing the path down the tree can be done in constant time. We visit one node per bit of the destination address, and the destination address is always 32 bits (constant). Even if the forwarding table had millions of entries, we'd still pick out 32 nodes.
+Простежити шлях деревом униз можна за сталий час. Ми відвідуємо одну вершину на кожен біт адреси призначення, а адреса призначення завжди має 32 біти (стала). Навіть якби таблиця пересилання мала мільйони записів, ми однаково обрали б 32 вершини.
 
-If there's no overlapping ranges, every valid prefix corresponds to a leaf node. If ranges are overlapping, a non-leaf node could also be a valid prefix.
+Якщо діапазони не перетинаються, кожен коректний префікс відповідає листку. Якщо діапазони перетинаються, коректним префіксом може бути й вершина, що не є листком.
 
-As before, we use the destination address to trace a path down the tree. If we fall off the tree, we stop early and pick the longest prefix out of the nodes we visited.
+Як і раніше, ми використовуємо адресу призначення, щоб простежити шлях деревом униз. Якщо ми «випадаємо» з дерева, ми зупиняємося раніше й обираємо найдовший префікс серед відвіданих вершин.
 
-As a slight optimization, as we walk down the tree, we could keep track of the longest prefix match seen so far. This will always be the most recent match, because the prefixes get longer as we move down the tree. If we fall off the tree, we use the longest prefix match (the most recent match we found).
+Як невелику оптимізацію, спускаючись деревом, ми можемо відстежувати найдовший збіг префікса, знайдений на цей момент. Це завжди буде найостанніший збіг, бо префікси стають довшими, коли ми рухаємося деревом униз. Якщо ми випадаємо з дерева, то використовуємо найдовший збіг префікса (найостанніший знайдений збіг).
 
 <img width="900px" src="/assets/routing/2-132-trie4.png">
 
-Note that the default route would be stored in the root node (0-length prefix). Our algorithm of walking down the tree ensures that we only use the default route if no other prefixes match.
+Зауважте, що маршрут за замовчуванням зберігався б у кореневій вершині (префікс нульової довжини). Наш алгоритм спуску деревом гарантує, що маршрут за замовчуванням використовується лише тоді, коли не збігається жоден інший префікс.
 
 <img width="900px" src="/assets/routing/2-133-trie5.png">
 
-All routers have some form of longest prefix matching functionality, but some use more advanced solutions than others. For example, we could add heuristics and optimizations based on real-world Internet assumptions. Some destinations might be more popular, so we might want to look them up more efficiently. Some ports might be used for more ranges. The modern Internet has some conventions for prefix sizes (e.g. the longest IPv4 prefix for routes to other networks is 24 bits). We could also make optimizations for updating the forwarding tables.
+Усі маршрутизатори мають певну функціональність пошуку найдовшого збігу префікса, але деякі використовують складніші розв'язки, ніж інші. Наприклад, можна додати евристики й оптимізації на основі припущень про реальний Інтернет. Деякі пункти призначення можуть бути популярнішими, тож ми можемо захотіти шукати їх ефективніше. Деякі порти можуть використовуватися для більшої кількості діапазонів. Сучасний Інтернет має певні домовленості щодо розмірів префіксів (наприклад, найдовший префікс IPv4 для маршрутів до інших мереж має 24 біти). Можна також оптимізувати оновлення таблиць пересилання.

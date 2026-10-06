@@ -1,62 +1,62 @@
 ---
-title: Introduction to the Internet
-parent: Introduction
+title: Вступ до Інтернету
+parent: Вступ
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Introduction to the Internet
+# Вступ до Інтернету
 
-## What is the Internet?
+## Що таке Інтернет?
 
-The Internet is ubiquitous as a tool for transferring data between devices around the world. In this class, we'll be focusing on the infrastructure (both hardware and software) that supports this.
+Інтернет — повсюдно поширений інструмент для передавання даних між пристроями по всьому світу. У цьому курсі ми зосередимося на інфраструктурі (як апаратній, так і програмній), яка це забезпечує.
 
-The Internet and the World Wide Web are not the same thing. You can think of the web as applications built on top of the Internet (e.g. Facebook, Twitter) that you can access through a web browser (e.g. Firefox, Chrome). Other applications besides the web can also use Internet infrastructure, too. Examples of non-web applications are Zoom or online games, or even Internet-of-things (IoT) devices like a sensor in your refrigerator or car.
-
-
-## Why is the Internet Interesting?
-
-The Internet is not a new type of network technology (e.g. electrical wires already existed), but is instead about a completely new problem of tying together different, existing networks. Solving this problem required a new design paradigm that influenced other computer science fields.
-
-Networking is a relatively new addition to the field of computer science. The Internet introduced many new challenges that are different from many traditional computer science fields. For example, unlike theory fields, we don't have a formal model of the Internet. Unlike hardware fields, we don't have a measurable benchmark for performance.
-
-Unlike previous classes you might have taken, it's no longer enough to write code that simply works. The code you write has to scale to billions of users. The code you write also has to align with the business relationships of different operators (otherwise, they might not agree to run your code).
-
-Code that works for a lightweight application (e.g. your home computer) might not work for a heavy-duty server. Code that works today might not work tomorrow, when different computers join and leave the network.
-
-The design of the Internet has influenced the way in which we architect modern systems (e.g. reasoning about goals, constraints, and trade-offs in the design). Network architecture is more about thinking about designs, and less about proving theorems or writing code. It's more about considering tradeoffs, and less about meeting specific benchmarks. It's more about designing systems that are practical, and less about finding the optimal design. The Internet is not optimal, but has successfully balanced a wide range of goals.
+Інтернет і Всесвітня павутина (World Wide Web) — це не одне й те саме. Веб можна уявляти як застосунки, побудовані поверх Інтернету (наприклад, Facebook, Twitter), до яких ви отримуєте доступ через веббраузер (наприклад, Firefox, Chrome). Інфраструктуру Інтернету можуть використовувати й інші застосунки, крім вебу. Прикладами невебових застосунків є Zoom чи онлайн-ігри, або навіть пристрої інтернету речей (Internet-of-things, IoT), як-от датчик у вашому холодильнику чи автомобілі.
 
 
-## The Internet is Federated
+## Чому Інтернет цікавий?
 
-The Internet is a federated system, and requires interoperability between operators. In other words, each operator (ISP) acts independently, but every operator has to cooperate in order to connect the entire world. In other words, all the ISPs in the world need to agree on some common protocol(s) in order to achieve global connectivity.
+Інтернет — це не новий тип мережевої технології (наприклад, електричні дроти вже існували), а радше розв'язання зовсім нової задачі: поєднання різних уже наявних мереж. Розв'язання цієї задачі потребувало нової парадигми проєктування, яка вплинула й на інші галузі комп'ютерних наук.
 
-Federation introduces several challenges. Competing entities (e.g. rival companies) are forced to cooperate, even though competitors might not want to share confidential information with each other. When designing protocols, we have to consider real-life business incentives in addition to technical considerations.
+Комп'ютерні мережі — відносно нова частина комп'ютерних наук. Інтернет поставив багато нових викликів, які відрізняються від багатьох традиційних галузей комп'ютерних наук. Наприклад, на відміну від теоретичних галузей, у нас немає формальної моделі Інтернету. На відміну від апаратних галузей, у нас немає вимірюваного еталону продуктивності.
 
-Federation also complicates innovation. In other fields, companies can innovate by developing a new feature that no one else has. But on the Internet, if you have a feature that nobody else has, you can't use it. Everybody has to speak a common language (protocol), so any upgrades to the Internet have to be made with interoperability in mind.
+На відміну від попередніх курсів, які ви, можливо, проходили, уже недостатньо писати код, який просто працює. Ваш код має масштабуватися на мільярди користувачів. Ваш код також має узгоджуватися з бізнес-відносинами різних операторів (інакше вони можуть не погодитися запускати ваш код).
 
+Код, який працює для легкого застосунку (наприклад, на вашому домашньому комп'ютері), може не працювати на потужному сервері. Код, який працює сьогодні, може не працювати завтра, коли до мережі приєднаються або від'єднаються інші комп'ютери.
 
-## The Internet is Scalable
-
-Federation enables the tremendous scale of the Internet. Instead of a single operator managing billions of users and trillions of services, we only need to focus on interconnecting all the different operators. Federation also allows us to build the Internet out of a huge diversity of technologies (e.g. wireless, optical), with a huge range of capabilities (e.g. home links with tiny capacity, or undersea cables with huge capacity). These technologies are also constantly evolving, which means we can't aim for a fixed target (e.g. capacity and demand is constantly increasing by orders of magnitude).
-
-The massive scale of the Internet also means that any system we design has to support the massive range of users and applications on the Internet (e.g. some need more capacity than others, some may be malicious).
-
-The worldwide scale of the Internet means that our systems and protocols need to operate asynchronously. Data can't move faster than the speed of light (and often moves much slower than that). Suppose you send a message to a server on the other side of the world. By the time your message arrives, your CPU might have executed millions of additional instructions, and the message you sent might already be outdated.
-
-The scale of the Internet means that even sending a single message can require interacting with many components (e.g. software, switches, links). Any of the components could fail, and we might not even know if they fail. If something does fail, it could take a long time to hear the bad news. The Internet was the first system that had to be designed for failure at scale. Many of these ideas have since been adopted in other fields.
+Проєктування Інтернету вплинуло на те, як ми будуємо архітектуру сучасних систем (наприклад, як міркуємо про цілі, обмеження та компроміси в проєкті). Мережева архітектура — це більше про обмірковування проєктних рішень і менше про доведення теорем чи написання коду. Це більше про зважування компромісів і менше про досягнення конкретних показників. Це більше про проєктування практичних систем і менше про пошук оптимального рішення. Інтернет не оптимальний, але він успішно збалансував широкий спектр цілей.
 
 
-## Protocols
+## Інтернет федеративний
 
-In this class, much of our focus will be on **protocols** that specify how entities exchange in communication. What is the format of the messages they exchange, and how do they respond to those messages?
+Інтернет — це федеративна (federated) система, яка потребує взаємодії (interoperability) між операторами. Іншими словами, кожен оператор (інтернет-провайдер, ISP) діє незалежно, але всі оператори мусять співпрацювати, щоб з'єднати весь світ. Тобто всі інтернет-провайдери світу мають домовитися про якийсь спільний протокол (чи протоколи), щоб досягти глобальної зв'язності.
 
-For example, imagine you're writing an application that needs to send and receive data over the Internet. The code at the sender machine and the code at the recipient machine need to both agree on how the data is formatted, and what they should do in response to different messages.
+Федеративність створює низку викликів. Конкурентні суб'єкти (наприклад, компанії-суперниці) змушені співпрацювати, хоча конкуренти можуть не хотіти ділитися один з одним конфіденційною інформацією. Проєктуючи протоколи, ми маємо враховувати не лише технічні міркування, а й реальні бізнес-стимули.
 
-Here's an example of a protocol. Alice and Bob both say hello, then Alice requests a file, and Bob replies with the file. To define this protocol, we need to define syntax (e.g. how to write "give me this file" in 1s and 0s), and semantics (e.g. Alice must receive a hello from Bob before requesting a file).
+Федеративність також ускладнює інновації. В інших галузях компанії можуть впроваджувати інновації, розробляючи нову функцію, якої більше ні в кого немає. Але в Інтернеті, якщо у вас є функція, якої немає ні в кого іншого, ви не можете нею скористатися. Усі мають говорити спільною мовою (протоколом), тож будь-які вдосконалення Інтернету доводиться робити з огляду на сумісність.
 
-Different protocols are designed for different needs. For example, if Alice needs to get the file as quickly as possible, we might design a protocol without the initial hello messages. Designing a good protocol can be harder than it seems! We might also need to account for edge cases, bugs, and malicious behavior. For example, what if Alice requests a file, and Bob replies with hello? How should Alice respond?
 
-Throughout this class, we'll see many protocols that have been standardized across the Internet. You'll sometimes see the acronym RFC (Request For Comments) when we mention a protocol. Many standards are published as RFC documents that are eventually widely accepted, though not all RFCs end up adopted. RFC documents are numbered, and sometimes protocols are referred to by their RFC number. For example, "RFC 1918 addresses" refers to addresses defined by that particular document.
+## Інтернет масштабований
 
-There are different standards bodies responsible for standardizing protocols. The IEEE focuses on the lower-layer electrical engineering side. The IETF focuses on the Internet and is responsible for RFCs.
+Федеративність уможливлює величезний масштаб Інтернету. Замість того щоб один оператор керував мільярдами користувачів і трильйонами сервісів, нам достатньо зосередитися на з'єднанні всіх різних операторів між собою. Федеративність також дає змогу будувати Інтернет із величезного розмаїття технологій (наприклад, бездротових, оптичних) з величезним діапазоном можливостей (наприклад, домашні канали з мізерною пропускною здатністю або підводні кабелі з величезною). Ці технології також постійно розвиваються, а отже, ми не можемо орієнтуватися на фіксовану ціль (наприклад, пропускна здатність і попит постійно зростають на порядки).
+
+Величезний масштаб Інтернету також означає, що будь-яка система, яку ми проєктуємо, має підтримувати величезне розмаїття користувачів і застосунків в Інтернеті (наприклад, одним потрібно більше пропускної здатності, ніж іншим, а деякі можуть бути зловмисними).
+
+Світовий масштаб Інтернету означає, що наші системи та протоколи мають працювати асинхронно. Дані не можуть рухатися швидше за світло (а часто рухаються значно повільніше). Припустімо, ви надсилаєте повідомлення серверу на іншому кінці світу. Поки ваше повідомлення дійде, ваш процесор може виконати мільйони додаткових інструкцій, і надіслане повідомлення може вже застаріти.
+
+Масштаб Інтернету означає, що навіть надсилання одного повідомлення може потребувати взаємодії з багатьма компонентами (наприклад, програмним забезпеченням, комутаторами, каналами). Будь-який із компонентів може відмовити, і ми можемо навіть не дізнатися про це. Якщо щось таки відмовить, звістка про це може надходити дуже довго. Інтернет став першою системою, яку довелося проєктувати з розрахунку на відмови у великому масштабі. Відтоді багато з цих ідей перейняли й інші галузі.
+
+
+## Протоколи
+
+У цьому курсі ми здебільшого зосередимося на **протоколах** (protocols), які визначають, як сутності обмінюються інформацією під час взаємодії. Який формат повідомлень, якими вони обмінюються, і як вони реагують на ці повідомлення?
+
+Наприклад, уявіть, що ви пишете застосунок, який має надсилати й отримувати дані через Інтернет. Код на машині-відправнику і код на машині-отримувачі мають однаково розуміти, як відформатовано дані і що робити у відповідь на різні повідомлення.
+
+Ось приклад протоколу. Аліса і Боб обоє вітаються, потім Аліса запитує файл, а Боб відповідає, надсилаючи файл. Щоб визначити цей протокол, нам потрібно визначити синтаксис (наприклад, як записати «дай мені цей файл» одиницями й нулями) і семантику (наприклад, Аліса мусить отримати привітання від Боба, перш ніж запитувати файл).
+
+Різні протоколи проєктують для різних потреб. Наприклад, якщо Алісі потрібно отримати файл якомога швидше, ми можемо спроєктувати протокол без початкових привітань. Спроєктувати добрий протокол може бути складніше, ніж здається! Нам також може знадобитися врахувати граничні випадки, помилки та зловмисну поведінку. Наприклад, що як Аліса запитує файл, а Боб відповідає привітанням? Як має відреагувати Аліса?
+
+Протягом курсу ми побачимо багато протоколів, стандартизованих для всього Інтернету. Іноді, згадуючи протокол, ви бачитимете абревіатуру RFC (Request For Comments, «запит на коментарі»). Багато стандартів публікуються як документи RFC, які згодом набувають широкого визнання, хоча не всі RFC зрештою впроваджуються. Документи RFC пронумеровано, і іноді протоколи називають за номером їхнього RFC. Наприклад, «адреси RFC 1918» — це адреси, визначені саме цим документом.
+
+За стандартизацію протоколів відповідають різні органи стандартизації. IEEE зосереджується на нижчих рівнях, пов'язаних з електротехнікою. IETF зосереджується на Інтернеті та відповідає за RFC.

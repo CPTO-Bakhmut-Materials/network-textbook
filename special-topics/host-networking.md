@@ -1,9 +1,9 @@
 ---
-title: Host Networking
+title: Мережева підсистема хоста
 nav_exclude: true
 layout: page
 ---
 
-# Host Networking
+# Мережева підсистема хоста
 
-[This page has been moved.](/datacenter/host-networking)
+[Цю сторінку переміщено.](/datacenter/host-networking)

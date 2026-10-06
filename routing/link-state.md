@@ -1,156 +1,156 @@
 ---
-title: Link-State Protocols
-parent: Routing
+title: Протоколи стану каналів
+parent: Маршрутизація
 nav_order: 5
 layout: page-with-toc
 ---
 
-# Link-State Protocols
+# Протоколи стану каналів
 
-## Introduction to Link-State Protocols
+## Вступ до протоколів стану каналів
 
-Recall that there are different classes of routing protocols, depending on their underlying algorithm. In the previous section, we saw the distance-vector class of protocols. In this section, we'll discuss **link-state**, another major class of protocols.
+Пригадайте, що існують різні класи протоколів маршрутизації залежно від алгоритму, на якому вони ґрунтуються. У попередньому розділі ми розглянули клас дистанційно-векторних протоколів. У цьому розділі ми обговоримо **протоколи стану каналів** (link-state) — ще один важливий клас протоколів.
 
-Recall that protocols can also be classified as exterior gateway protocols (operating between networks) and interior gateway protocols (operating within networks). Like distance-vector, link-state protocols are usually interior gateway protocols.
+Пригадайте, що протоколи також можна класифікувати як протоколи зовнішнього шлюзу (що працюють між мережами) і протоколи внутрішнього шлюзу (що працюють у межах мереж). Як і дистанційно-векторні, протоколи стану каналів зазвичай є протоколами внутрішнього шлюзу.
 
-IS-IS (Intermediate System to Intermediate System) and OSPF (Open Shortest Path First) are two major examples of link-state protocols. Both are widely deployed today.
-
-
-## Link-State Overview
-
-Distance-vector performed a distributed, cooperative computation. Each node computes its own piece of the solution, based on results computed by its neighbors. The computation across all nodes collectively forms the full solution. Each node only needs local information from its neighbors in the computation (nodes don't know the full network graph).
-
-By contrast, link-state protocols perform a local computation. Each node computes the full solution independently and from scratch, without using any computation results from neighbors. However, to do this, each node needs global information from all parts of the network.
-
-Link-state protocols in one sentence: Every router learns the full network graph, and then runs shortest-paths on the graph to populate the forwarding table.
-
-There are two major steps that we have to implement. First, the router needs to somehow learn the full network graph, including the state of every link (up or down), the cost of every link, and the location of every destination.
-
-Then, the router needs to run some algorithm on that graph to learn how to forward packets to every destination.
-
-We'll think about the second step first (shortest paths), then think about the first step (learning the graph).
+IS-IS (Intermediate System to Intermediate System) та OSPF (Open Shortest Path First) — два основні приклади протоколів стану каналів. Обидва нині широко розгорнуті.
 
 
-## Computing Paths
+## Огляд протоколів стану каналів
 
-Once the router has a global view of the network, it can easily compute paths through the network using some shortest-path algorithm.
+Дистанційно-векторний підхід виконував розподілене кооперативне обчислення. Кожна вершина обчислює власну частину розв'язку на основі результатів, обчислених її сусідами. Обчислення на всіх вершинах разом утворює повний розв'язок. Кожній вершині для обчислення потрібна лише локальна інформація від сусідів (вершини не знають повного графа мережі).
 
-In particular, the router should compute the shortest path to every destination. Then, for each destination, the router records the next hop along the shortest path, just like in distance-vector protocols. The rest of the path is not needed during forwarding.
+Натомість протоколи стану каналів виконують локальне обчислення. Кожна вершина обчислює повний розв'язок незалежно й з нуля, не використовуючи жодних результатів обчислень сусідів. Однак для цього кожній вершині потрібна глобальна інформація з усіх частин мережі.
 
-Many single-source shortest-path algorithms can be used in this step. For example, the Bellman-Ford algorithm (serial version, with none of the distance-vector changes) and Dijkstra's algorithm both efficiently compute the shortest path from a single source to all destinations. We could also consider alternate solutions like breadth-first search, or algorithms that can run in parallel.
+Протоколи стану каналів одним реченням: кожен маршрутизатор дізнається повний граф мережі, а потім запускає на графі алгоритм найкоротших шляхів, щоб заповнити таблицю пересилання.
 
-One thing we have to be careful about is inconsistencies between routers.
+Нам треба реалізувати два основні кроки. По-перше, маршрутизатор має якось дізнатися повний граф мережі, включно зі станом кожного каналу (працює чи ні), вартістю кожного каналу та розташуванням кожного пункту призначення.
+
+Потім маршрутизатор має запустити на цьому графі певний алгоритм, щоб дізнатися, як пересилати пакети до кожного пункту призначення.
+
+Спершу ми розглянемо другий крок (найкоротші шляхи), а потім — перший (вивчення графа).
+
+
+## Обчислення шляхів
+
+Щойно маршрутизатор має глобальний погляд на мережу, він може легко обчислювати шляхи в мережі за допомогою певного алгоритму найкоротших шляхів.
+
+Зокрема, маршрутизатор має обчислити найкоротший шлях до кожного пункту призначення. Потім для кожного пункту призначення маршрутизатор записує наступний перехід уздовж найкоротшого шляху, так само як у дистанційно-векторних протоколах. Решта шляху під час пересилання не потрібна.
+
+На цьому кроці можна використати багато алгоритмів найкоротших шляхів з одного джерела. Наприклад, алгоритм Беллмана–Форда (послідовна версія, без жодних дистанційно-векторних змін) і алгоритм Дейкстри обидва ефективно обчислюють найкоротший шлях від одного джерела до всіх пунктів призначення. Можна також розглянути альтернативні розв'язки, як-от пошук у ширину, або алгоритми, що можуть виконуватися паралельно.
+
+Одне, щодо чого треба бути обережним, — неузгодженості між маршрутизаторами.
 
 <img width="900px" src="/assets/routing/2-090-link-state-loop.png">
 
-Remember, every router is computing the shortest paths independently, and deciding on a next hop accordingly. Each router only controls its own next hop, and cannot influence what the next hop will do. 
+Пам'ятайте: кожен маршрутизатор обчислює найкоротші шляхи незалежно й відповідно обирає наступний перехід. Кожен маршрутизатор контролює лише власний наступний перехід і не може впливати на те, що робитиме наступний перехід.
 
-For example, suppose R3 computes this shortest path to A, and decides to forward packets to R2. Then, R2 computes this shortest path to A, and decides to forward packets to R3. Both routers computed valid shortest paths, but their decisions resulted in a routing loop.
+Наприклад, припустімо, що R3 обчислює цей найкоротший шлях до A і вирішує пересилати пакети до R2. Потім R2 обчислює цей найкоротший шлях до A і вирішує пересилати пакети до R3. Обидва маршрутизатори обчислили коректні найкоротші шляхи, але їхні рішення призвели до петлі маршрутизації.
 
-To avoid this problem, we have to make sure that all routers are producing forwarding decisions that are compatible with each other. What are the requirements for all routers to produce compatible decisions?
+Щоб уникнути цієї проблеми, треба переконатися, що всі маршрутизатори ухвалюють рішення про пересилання, сумісні між собою. Які вимоги потрібні, щоб усі маршрутизатори ухвалювали сумісні рішення?
 
-1. All routers have to agree on the network topology. Suppose a link failed, but only one router knows about it. Then different routers are computing paths on totally different graphs, and might produce inconsistent results.
+1. Усі маршрутизатори мають однаково бачити топологію мережі. Припустімо, канал відмовив, але про це знає лише один маршрутизатор. Тоді різні маршрутизатори обчислюють шляхи на зовсім різних графах і можуть отримати неузгоджені результати.
 
-2. All routers are finding least-cost paths through the path. If one router preferred more expensive paths for some reason, we would get inconsistent results.
+2. Усі маршрутизатори шукають шляхи з найменшою вартістю. Якби один маршрутизатор із якоїсь причини віддавав перевагу дорожчим шляхам, ми отримали б неузгоджені результати.
 
-3. All costs are positive. Negative costs could produce negative-weight cycles.
+3. Усі вартості додатні. Від'ємні вартості можуть утворювати цикли від'ємної ваги.
 
-4. All routers use the same tiebreaking rules. If we assumed shortest paths are unique, then the previous two conditions are sufficient to ensure everybody picks the same path. This condition additionally ensures that if there are multiple paths tied as the shortest, everyone chooses the same one.
+4. Усі маршрутизатори використовують однакові правила розв'язання нічиїх. Якби ми вважали найкоротші шляхи унікальними, двох попередніх умов було б достатньо, щоб усі обирали той самий шлях. Ця умова додатково гарантує, що коли є кілька однаково найкоротших шляхів, усі обирають той самий.
 
-With these four conditions, routers could use different shortest-path algorithms, and they would still all compute the same paths and produce compatible decisions. In practice, though, routers usually all use the same algorithm for simplicity.
+За цих чотирьох умов маршрутизатори можуть використовувати різні алгоритми найкоротших шляхів і однаково обчислювати ті самі шляхи та ухвалювати сумісні рішення. Утім, на практиці для простоти маршрутизатори зазвичай усі використовують той самий алгоритм.
 
 
-## Learning About Graph Topology
+## Вивчення топології графа
 
-How do routers learn about the full network graph? First, we need to learn who our neighbors are (both routers and destinations). Then, we need to distribute that information through the whole network. We also need routers to glue together all the information it receives into a graph topology.
+Як маршрутизатори дізнаються повний граф мережі? Спершу нам треба дізнатися, хто наші сусіди (і маршрутизатори, і пункти призначення). Потім цю інформацію треба поширити всією мережею. Нам також потрібно, щоб маршрутизатори зводили всю отриману інформацію в топологію графа.
 
-To discover neighbors, every router sends a hello message to all of its neighbors.
+Щоб виявити сусідів, кожен маршрутизатор надсилає вітальне повідомлення (hello) всім своїм сусідам.
 
 <img width="600px" src="/assets/routing/2-091-hellos.png">
 
-For example, in this network, R2 sends to both of its neighbors: "Hello, I'm R2." Now, R1 knows that it's connected to R2, and R3 also knows that it's connected to R2. Similarly, R1 says hello to R2, so now R2 knows about R1. Likewise, R3 says hello to R2, so R2 also knows about R3.
+Наприклад, у цій мережі R2 надсилає обом своїм сусідам: «Привіт, я — R2». Тепер R1 знає, що з'єднаний із R2, і R3 теж знає, що з'єднаний із R2. Аналогічно R1 вітається з R2, тож тепер R2 знає про R1. Так само R3 вітається з R2, тож R2 знає й про R3.
 
-As a result, everybody now knows who their immediate neighbors are. Note that R1 does not know about R3, because R1 and R3 are not neighbors.
+У результаті кожен тепер знає, хто його безпосередні сусіди. Зауважте, що R1 не знає про R3, бо R1 і R3 не є сусідами.
 
 <img width="900px" src="/assets/routing/2-092-after-hellos.png">
 
-We also want to know if links go down. To support this, we'll periodically re-send the hello message. If a neighbor stops saying hello (e.g. misses some number of hellos), we assume they disappeared.
+Ми також хочемо знати, чи виходять канали з ладу. Щоб це підтримати, ми періодично повторно надсилатимемо вітальне повідомлення. Якщо сусід перестає вітатися (наприклад, пропускає певну кількість вітань), ми вважаємо, що він зник.
 
-Now that we know about our neighbors, we should announce that fact to everybody. To make a global announcement, we send the announcement to all of our neighbors. Also, if we ever receive an announcement, we should send it to all of our neighbors as well. This ensures that every message gets propagated throughout the network. This is known as **flooding** information across the network. If any information changes (e.g. a neighbor disappears), we should flood that information as well.
+Тепер, коли ми знаємо про своїх сусідів, слід оголосити про це всім. Щоб зробити глобальне оголошення, ми надсилаємо його всім своїм сусідам. Крім того, якщо ми отримуємо оголошення, нам теж слід надіслати його всім своїм сусідам. Це гарантує, що кожне повідомлення поширюється всією мережею. Це називається **лавинним розсиланням** (flooding) інформації мережею. Якщо будь-яка інформація змінюється (наприклад, зникає сусід), цю інформацію теж слід розіслати лавинно.
 
 <img width="800px" src="/assets/routing/2-093-flooding.png">
 
-We also need to make sure that messages don't get dropped. Otherwise, other routers might miss an update and compute paths on the wrong graph. To fix this problem, we use the same trick as we used in distance-vector, and periodically re-send the message. As long as the link is functioning, our message should get sent after enough tries.
+Нам також треба переконатися, що повідомлення не відкидаються. Інакше інші маршрутизатори можуть пропустити оновлення й обчислювати шляхи на неправильному графі. Щоб виправити цю проблему, використаємо той самий прийом, що й у дистанційно-векторному підході, і періодично повторно надсилатимемо повідомлення. Якщо канал працює, наше повідомлення після достатньої кількості спроб має бути надіслане.
 
 
-## Avoiding Infinite Flooding
+## Уникнення нескінченного лавинного розсилання
 
-We have to be careful about how we flood announcements through the network.
+Треба бути обережним із тим, як ми лавинно розсилаємо оголошення мережею.
 
 <img width="400px" src="/assets/routing/2-094-flood-problem1.png">
 
-R2 learns some information and announces it to its neighbor R3. When R3 receives this information, it makes an announcement to its neighbor R2. When R2 receives this information, it makes an announcement to its neighbor R3. These two routers are stuck making announcements to each other, wasting bandwidth, even though there's no new information.
+R2 дізнається певну інформацію й оголошує її своєму сусідові R3. Коли R3 отримує цю інформацію, він робить оголошення своєму сусідові R2. Коли R2 отримує цю інформацію, він робить оголошення своєму сусідові R3. Ці два маршрутизатори застрягли, роблячи оголошення один одному й марнуючи пропускну здатність, хоча нової інформації немає.
 
-Note that this is not the same as periodically re-sending messages for reliability. For reliability, we might re-send a message once every 5 seconds. In this infinite loop, the routers are receiving and re-sending duplicate announcements at maximum rate (e.g. millions of times per second).
+Зауважте, що це не те саме, що періодичне повторне надсилання повідомлень для надійності. Для надійності ми можемо повторно надсилати повідомлення раз на 5 секунд. У цьому нескінченному циклі маршрутизатори отримують і повторно надсилають дублікати оголошень із максимальною швидкістю (наприклад, мільйони разів на секунду).
 
-The problem is even worse if our network contains a loop:
+Проблема ще гірша, якщо наша мережа містить петлю:
 
 <img width="300px" src="/assets/routing/2-095-flood-problem2.png">
 
-Time step 1: R1 broadcasts to R2 and R3.
+Крок часу 1: R1 розсилає R2 і R3.
 
-Time step 2: R2 broadcasts to R1 and R3. R3 broadcasts to R1 and R2.
+Крок часу 2: R2 розсилає R1 і R3. R3 розсилає R1 і R2.
 
-Time step 3: R1, R1, R2, and R3 all make broadcasts to (R2, R3), (R2, R3), (R1, R3), and (R1, R2) respectively. Note that R1 received two messages at time step 2, so it makes two broadcasts.
+Крок часу 3: R1, R1, R2 і R3 розсилають відповідно до (R2, R3), (R2, R3), (R1, R3) і (R1, R2). Зауважте, що R1 на кроці 2 отримав два повідомлення, тож робить дві розсилки.
 
-Time step 4: R1, R1, R2, R2, R2, R3, R3, R3 all make broadcasts to (R2, R3), (R2, R3), (R1, R3), (R1, R3), (R1, R3), (R1, R2), (R1, R2), (R1, R2), respectively.
+Крок часу 4: R1, R1, R2, R2, R2, R3, R3, R3 розсилають відповідно до (R2, R3), (R2, R3), (R1, R3), (R1, R3), (R1, R3), (R1, R2), (R1, R2), (R1, R2).
 
-Time step 5: R1 makes 6 broadcasts, R2 makes 5 broadcasts, R3 makes 5 broadcasts.
+Крок часу 5: R1 робить 6 розсилок, R2 — 5 розсилок, R3 — 5 розсилок.
 
 <img width="900px" src="/assets/routing/2-096-flood-problem3.png">
 
-All the new information was learned at time step 1. But, everybody keeps re-sending the same information, and duplicate announcements multiply exponentially and eventually overwhelm the network.
+Усю нову інформацію було отримано на кроці 1. Але всі й далі повторно надсилають ту саму інформацію, і дублікати оголошень експоненційно множаться й зрештою перевантажують мережу.
 
-To fix this problem, we need to make sure that routers don't send the same information twice.
+Щоб виправити цю проблему, треба забезпечити, щоб маршрутизатори не надсилали ту саму інформацію двічі.
 
-When we see a message for the first time, send that message to all neighbors, and write down that we've seen that message. (We have to write down this message anyway, since we're trying to use this information to build up the network graph.) Then, if we ever see that same message again, don't send it a second time.
+Коли ми вперше бачимо повідомлення, надсилаємо його всім сусідам і записуємо, що вже бачили це повідомлення. (Нам однаково доводиться записувати це повідомлення, бо ми намагаємося використати цю інформацію для побудови графа мережі.) Потім, якщо ми знову побачимо те саме повідомлення, вдруге його не надсилаємо.
 
-To uniquely identify a message, we can introduce a timestamp (or some other counter that's unique to every message).
+Щоб однозначно ідентифікувати повідомлення, можна запровадити позначку часу (або інший лічильник, унікальний для кожного повідомлення).
 
-Now, if we go back to the example from earlier:
+Тепер, якщо повернутися до попереднього прикладу:
 
 <img width="500px" src="/assets/routing/2-097-flood-solution.png">
 
-Time step 1: R1 broadcasts to R2 and R3.
+Крок часу 1: R1 розсилає R2 і R3.
 
-Time step 2: R2 broadcasts to R1 and R3. R3 broadcasts to R1 and R2.
+Крок часу 2: R2 розсилає R1 і R3. R3 розсилає R1 і R2.
 
-Time step 3: At this point, R1, R2, and R3 have all seen the message before, so they don't send it again. No further duplicate messages are sent.
+Крок часу 3: на цьому етапі R1, R2 і R3 уже бачили це повідомлення, тож не надсилають його знову. Більше жодних дублікатів не надсилається.
 
-Note that duplicate messages are still sometimes sent with this modification, but we've avoided duplicate messages being sent infinitely.
+Зауважте, що з цією модифікацією дублікати повідомлень іноді однаково надсилаються, але ми уникли нескінченного надсилання дублікатів.
 
 
-## Convergence
+## Збіжність
 
-Link-state converges on a valid least-cost routing state after every router learns the full network topology and computes its forwarding table accordingly. Convergence relies on every node using the same graph. After convergence, the routing state remains valid as long as the network topology doesn't change.
+Протокол стану каналів збігається до коректного стану маршрутизації з найменшою вартістю, коли кожен маршрутизатор дізнався повну топологію мережі й відповідно обчислив свою таблицю пересилання. Збіжність ґрунтується на тому, що кожна вершина використовує той самий граф. Після збіжності стан маршрутизації залишається коректним, доки топологія мережі не змінюється.
 
-As soon as the network topology changes, it can take some time for the network to converge again. We have to wait for the change to be detected (e.g. a link failure). Then, we have to wait for the new information to be propagated through the network, and for routers to re-compute forwarding table entries. While the network is converging, we might be in an invalid routing state, because some routers are using the old graph, while others are using the updated graph. The routing state could have dead-ends, loops, or paths that are not least-cost.
+Щойно топологія мережі змінюється, мережі може знадобитися певний час, щоб знову збігтися. Нам доводиться чекати, поки зміну буде виявлено (наприклад, відмову каналу). Потім треба чекати, поки нова інформація пошириться мережею, а маршрутизатори переобчислять записи таблиць пересилання. Поки мережа збігається, ми можемо перебувати в некоректному стані маршрутизації, бо одні маршрутизатори використовують старий граф, а інші — оновлений. Стан маршрутизації може містити глухі кути, петлі або шляхи, вартість яких не найменша.
 
 <img width="800px" src="/assets/routing/2-098-link-state-converge.png">
 
-For example, suppose the R3-A link has failed. R3 knows about this, but the other routers do not. R3 will forward packets to R1. However, R1 will still forward packets to R3.
+Наприклад, припустімо, що канал R3–A відмовив. R3 знає про це, а інші маршрутизатори — ні. R3 пересилатиме пакети до R1. Однак R1 і далі пересилатиме пакети до R3.
 
-Much of the complexity in link-state protocols is in the small details. To ensure faster convergence and avoid invalid routing as much as possible, we can make minor optimizations and adjustments in the protocol.
+Значна частина складності протоколів стану каналів полягає в дрібних деталях. Щоб забезпечити швидшу збіжність і якомога більше уникати некоректної маршрутизації, можна вносити в протокол дрібні оптимізації та корективи.
 
 
-## Link-State vs. Distance-Vector
+## Стан каналів проти дистанційно-векторного підходу
 
-What are some pros and cons of link-state protocols compared to distance-vector protocols?
+Які переваги й недоліки мають протоколи стану каналів порівняно з дистанційно-векторними протоколами?
 
-In distance-vector, when we receive an announcement, we don't necessarily know all the details about the path we're accepting. We have to trust whatever our neighbor claims in the announcement. By contrast, in link-state, we know the full topology of the graph, so we know more about the paths that packets are taking.
+У дистанційно-векторному підході, отримуючи оголошення, ми не обов'язково знаємо всі подробиці про шлях, який приймаємо. Нам доводиться довіряти всьому, що сусід стверджує в оголошенні. Натомість у протоколах стану каналів ми знаємо повну топологію графа, тож знаємо більше про шляхи, якими йдуть пакети.
 
-Depending on implementation, distance-vector could be slower to converge. If the network changes, we have to wait for our neighbor to recompute and readvertise a path, before we can update our forwarding table. Then, all of our neighbors have to wait for us, and so on. By contrast, in link-state, everybody can quickly flood the new information and recompute at the same time.
+Залежно від реалізації дистанційно-векторний підхід може збігатися повільніше. Якщо мережа змінюється, нам доводиться чекати, поки сусід переобчислить і повторно оголосить шлях, перш ніж ми зможемо оновити свою таблицю пересилання. Потім усі наші сусіди мають чекати на нас, і так далі. Натомість у протоколах стану каналів усі можуть швидко лавинно розіслати нову інформацію й переобчислити одночасно.
 
-Link-state protocols are good for small local networks, but don't scale well to the global Internet. In particular, link-state requires every router to know about the entire network. On the global Internet, operators might not want to reveal their network topology (e.g. where their routers are located, the bandwidth of their links) to competitors.
+Протоколи стану каналів добре підходять для невеликих локальних мереж, але погано масштабуються на глобальний Інтернет. Зокрема, протоколи стану каналів вимагають, щоб кожен маршрутизатор знав про всю мережу. У глобальному Інтернеті оператори можуть не хотіти розкривати конкурентам топологію своєї мережі (наприклад, де розташовані їхні маршрутизатори, яка пропускна здатність їхніх каналів).
 
-In practice, most networks deploy a combination of distance-vector and link-state protocols.
+На практиці більшість мереж розгортають поєднання дистанційно-векторних протоколів і протоколів стану каналів.

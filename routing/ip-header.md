@@ -1,134 +1,134 @@
 ---
-title: IP Header
-parent: Routing
+title: Заголовок IP
+parent: Маршрутизація
 nav_order: 11
 layout: page-with-toc
 ---
 
-# IP Header
+# Заголовок IP
 
-## IP Header Design Goals
+## Цілі проєктування заголовка IP
 
-Recall that a protocol like IP consists of syntax and semantics. The syntax determines what fields are in the IP header, and the semantics determine how those fields are processed.
+Пригадайте, що протокол на кшталт IP складається із синтаксису й семантики. Синтаксис визначає, які поля є в заголовку IP, а семантика — як ці поля обробляються.
 
-Also, recall that the IP packet consists of a header and payload. The header contains relevant metadata that the IP protocol can process. The payload contains any data that will be passed up to higher-layer protocols, and is not parsed by the IP protocol.
+Також пригадайте, що IP-пакет складається із заголовка й корисного навантаження. Заголовок містить відповідні метадані, які може обробити протокол IP. Корисне навантаження містить будь-які дані, що передаватимуться нагору протоколам вищих рівнів, і протокол IP його не розбирає.
 
-Finally, recall that headers are added as we move down the stack, and stripped away as we pass packets up the stack. IP headers are processed at both end hosts, and at every intermediate router.
+Нарешті, пригадайте, що заголовки додаються, коли ми рухаємося стеком донизу, і знімаються, коли ми передаємо пакети стеком нагору. Заголовки IP обробляються і на обох кінцевих хостах, і на кожному проміжному маршрутизаторі.
 
-The IP header should be as small as possible. Every packet sent across the Internet need the IP header attached, so increasing the IP header size, even by one byte, would significantly increase the total amount of bandwidth across the Internet.
+Заголовок IP має бути якомога меншим. До кожного пакета, що надсилається через Інтернет, потрібно додати заголовок IP, тож збільшення розміру заголовка IP навіть на один байт суттєво збільшило б загальний обсяг пропускної здатності в Інтернеті.
 
-The IP header should be as simple as possible. Every router and end host has to process IP packets as they're sent and received, so a header that's complicated to process would slow the entire Internet down. Ideally, we'd like the header to be processed purely in hardware, so we can't assume we have access to general-purpose CPU operations when processing this header.
+Заголовок IP має бути якомога простішим. Кожен маршрутизатор і кінцевий хост мусить обробляти IP-пакети під час їх надсилання й отримання, тож заголовок, складний в обробці, сповільнив би весь Інтернет. В ідеалі ми хотіли б, щоб заголовок оброблявся суто апаратно, тож не можна вважати, що під час обробки цього заголовка нам доступні операції процесора загального призначення.
 
 
-## IP Header Fields
+## Поля заголовка IP
 
-An IP protocol needs to do four things:
+Протокол IP має робити чотири речі:
 
-Everybody (end hosts, routers) need to be able to **parse** the packet and understand what the bits mean. To support this, the header will include the **IP version** (4-bit value), the **header length** (4-bit value, measured in 4-byte words, required because the IP header length is not fixed), and the **packet length** (16-bit value, measured in bytes).
+Усі (кінцеві хости, маршрутизатори) мають уміти **розібрати** пакет і зрозуміти, що означають біти. Для цього заголовок міститиме **версію IP** (4-бітове значення), **довжину заголовка** (4-бітове значення, вимірюється в 4-байтових словах; потрібне, бо довжина заголовка IP не фіксована) і **довжину пакета** (16-бітове значення, вимірюється в байтах).
 
-Routers (not end hosts) need to **forward** the packet to the next router. To support this, the header will include the **destination IP address** (32-bit value).
+Маршрутизатори (не кінцеві хости) мають **пересилати** пакет наступному маршрутизатору. Для цього заголовок міститиме **IP-адресу призначення** (32-бітове значення).
 
-End hosts (not routers) need to **pass the packet up** to higher layers. To support this, the header will include a **protocol number** (8-bit value), which tells us which Layer 4 protocol (TCP or UDP) should be used to process the payload. For example, a protocol number of 6 says to use the TCP protocol to read the remaining payload (reading the first bits of the payload as the TCP header, and so on). A protocol number of 17 corresponds to the UDP protocol.
+Кінцеві хости (не маршрутизатори) мають **передавати пакет нагору** вищим рівням. Для цього заголовок міститиме **номер протоколу** (8-бітове значення), який вказує, який протокол рівня 4 (TCP чи UDP) слід використати для обробки корисного навантаження. Наприклад, номер протоколу 6 означає, що для читання решти корисного навантаження слід використати протокол TCP (читаючи перші біти корисного навантаження як заголовок TCP тощо). Номер протоколу 17 відповідає протоколу UDP.
 
 <img width="800px" src="/assets/routing/2-197-demultiplex.png">
 
-End hosts and routers need to be able to **send replies** back to the source. To support this, the header will include the **source IP address** (32-bit value).
+Кінцеві хости й маршрутизатори мають уміти **надсилати відповіді** назад джерелу. Для цього заголовок міститиме **IP-адресу джерела** (32-бітове значення).
 
 
-## IP Error Handling
+## Обробка помилок в IP
 
-End hosts and routers also need to be able to **specify problems or special cases** in case a packet needs additional handling.
+Кінцеві хости й маршрутизатори також мають уміти **позначати проблеми чи особливі випадки**, якщо пакет потребує додаткової обробки.
 
-IP packets can be stuck in loops (e.g. if the routing protocol hasn't converged yet). One possible option is to let the packet loop indefinitely until routes converge, but packet forwarding happens on nanosecond scale, and routing convergence happens on the millisecond or second scale. Letting the packet loop until routes converge can take a long time and waste a lot of bandwidth. To prevent indefinite looping, the IP header has a **time to live (TTL)** (8-bit value), which is decremented at each hop. If the TTL reaches 0, the packet is discarded, and an error message is sent back to the source. (The error message is required by the IP specification, though is not always sent in practice.)
+IP-пакети можуть застрягати в петлях (наприклад, якщо протокол маршрутизації ще не збігся). Один можливий варіант — дозволити пакету нескінченно ходити петлею, доки маршрути не збіжаться, але пересилання пакетів відбувається в масштабі наносекунд, а збіжність маршрутизації — у масштабі мілісекунд чи секунд. Якщо дозволити пакету ходити петлею до збіжності маршрутів, це може тривати довго й марнувати багато пропускної здатності. Щоб запобігти нескінченним петлям, заголовок IP має поле **часу життя** (time to live, TTL; 8-бітове значення), яке зменшується на кожному переході. Якщо TTL досягає 0, пакет відкидається, а джерелу надсилається повідомлення про помилку. (Повідомлення про помилку вимагає специфікація IP, хоча на практиці його надсилають не завжди.)
 
-IP packets can be corrupted (e.g. bits on the wire can be corrupted from electrical processes). To detect corruption, the IP header contains a **checksum** (16-bit value), and discards packets if the checksum is incorrect.
+IP-пакети можуть пошкоджуватися (наприклад, біти в дроті можуть пошкоджуватися внаслідок електричних процесів). Щоб виявляти пошкодження, заголовок IP містить **контрольну суму** (checksum; 16-бітове значення), і пакети з неправильною контрольною сумою відкидаються.
 
-Note that the IP checksum is only computed over the IP header. The checksum can only detect errors in the IP header, not errors in the IP payload. This reflects the end-to-end principle, where we enforce that the payload is checked by the end host, not the intermediate routers.
+Зауважте, що контрольна сума IP обчислюється лише за заголовком IP. Контрольна сума може виявляти лише помилки в заголовку IP, а не помилки в корисному навантаженні IP. Це відображає наскрізний принцип: ми вимагаємо, щоб корисне навантаження перевіряв кінцевий хост, а не проміжні маршрутизатори.
 
-The IP checksum is updated at every router, because the TTL changes, and the checksum has to be re-computed. One possible alternative design is to exclude the TTL in the checksum, to save routers the extra work.
+Контрольна сума IP оновлюється на кожному маршрутизаторі, бо змінюється TTL, і контрольну суму доводиться переобчислювати. Один можливий альтернативний дизайн — не включати TTL у контрольну суму, щоб позбавити маршрутизатори зайвої роботи.
 
-IP packets could be too large for a specific link. Each link has a **maximum transmission unit (MTU)**, indicating the largest packet size (in bytes) that link can carry as one unit. For example, the link might have limited memory for remembering a packet while it sends the bits along the wire.
+IP-пакети можуть бути завеликими для конкретного каналу. Кожен канал має **максимальний розмір блоку передачі** (maximum transmission unit, MTU), що вказує найбільший розмір пакета (у байтах), який канал може перенести як одне ціле. Наприклад, канал може мати обмежену пам'ять для запам'ятовування пакета, поки він передає біти дротом.
 
-The end host doesn't know which links will be carrying the packet, so the end host might sent a packet that's too large for one of the links. To solve this, a router can perform **fragmentation**, splitting the packet into multiple fragments, which the router on the other end of the link must reassemble to recover the original packet. The identification (16-bit), flags (3-bit), and offset (13-bit) fields in the header are used to implement fragmentation.
+Кінцевий хост не знає, які канали переноситимуть пакет, тож кінцевий хост може надіслати пакет, завеликий для одного з каналів. Щоб розв'язати це, маршрутизатор може виконати **фрагментацію** (fragmentation), розбивши пакет на кілька фрагментів, які маршрутизатор на іншому кінці каналу має зібрати назад, щоб відновити початковий пакет. Для реалізації фрагментації використовуються поля заголовка «ідентифікація» (identification, 16 бітів), «прапорці» (flags, 3 біти) і «зсув» (offset, 13 бітів).
 
 <img width="900px" src="/assets/routing/2-198-fragment.png">
 
-Fragmentation is achievable in hardware (e.g. a router can quickly fragment packets without punting the packet for special handling), but it introduces extra overhead. The modern Internet avoids fragmentation whenever possible. For example, we try to standardize the MTU as much as possible (a modern standard is 1500 bytes).
+Фрагментацію можна реалізувати апаратно (наприклад, маршрутизатор може швидко фрагментувати пакети, не передаючи їх на спеціальну обробку), але вона створює додаткові накладні витрати. Сучасний Інтернет за можливості уникає фрагментації. Наприклад, ми намагаємося максимально стандартизувати MTU (сучасний стандарт — 1500 байтів).
 
-The early designers of IP did not fully embrace best-effort design, and thought it might be useful to allow applications to send packets of different types based on the application's needs. To implement this, the IP header has **Type of Service (ToS)** bits (8-bit value), which can be used to request different forms of packet delivery. For example, some packets can be marked as delay-sensitive or high-priority. Over the years, these bits have been redefined to represent different protocols, and ToS no longer exists in its original form. Instead, these bits now represent some notion of priority. Examples of protocols using these bits are Differentiated Services Code Point (DSCP), which defines certain classes of traffic, and Explicit Congestion Notification (ECN), which will help with traffic congestion (discussed later).
+Ранні розробники IP не повністю прийняли дизайн без гарантій і вважали, що може бути корисно дозволити застосункам надсилати пакети різних типів залежно від потреб застосунку. Щоб це реалізувати, заголовок IP має біти **типу обслуговування** (Type of Service, ToS; 8-бітове значення), за допомогою яких можна запитувати різні форми доставки пакетів. Наприклад, деякі пакети можна позначати як чутливі до затримки чи високопріоритетні. З роками ці біти перевизначали для різних протоколів, і ToS у первісному вигляді більше не існує. Натомість ці біти тепер позначають певне поняття пріоритету. Прикладами протоколів, що використовують ці біти, є Differentiated Services Code Point (DSCP), що визначає певні класи трафіку, і Explicit Congestion Notification (ECN, явне сповіщення про перевантаження), яке допомагає з перевантаженням трафіку (обговоримо пізніше).
 
-In the original IP design, additional **option bits** can be added to the IP header to request more advanced processing on the packet. For example, the sender can request routers to record the route that the packet is taking (e.g. for diagnostics). The sender could include a source route in the packet header and force the packet to travel a certain route. The packet header could also include a timestamp. In modern implementations, these options are almost always disabled, because they lead to unnecessarily complicated implementations that increase the packet processing overhead. For example, these options force the IP header to be variable-length, which is harder to process than a fixed-length header.
+В оригінальному дизайні IP до заголовка IP можна було додавати додаткові **біти параметрів** (option bits), щоб запитувати складнішу обробку пакета. Наприклад, відправник може попросити маршрутизатори записувати маршрут, яким іде пакет (наприклад, для діагностики). Відправник може включити в заголовок пакета маршрут від джерела (source route) і змусити пакет пройти певним маршрутом. Заголовок пакета також може містити позначку часу. У сучасних реалізаціях ці параметри майже завжди вимкнено, бо вони призводять до невиправдано складних реалізацій, що збільшують накладні витрати на обробку пакетів. Наприклад, ці параметри змушують заголовок IP мати змінну довжину, а такий заголовок складніше обробляти, ніж заголовок фіксованої довжини.
 
 <img width="900px" src="/assets/routing/2-199-ip-header.png">
 
 
-## IPv6 Header Changes
+## Зміни в заголовку IPv6
 
-IPv6 was motivated by the concern that we would eventually run out of 32-bit IPv4 addresses. IPv6 **expanded addresses** so that addresses are 128 bits long. The number of possible IPv6 addresses is astronomically large (think: number of atoms in the universe), so we will almost certainly never run out of IPv6 addresses.
+Мотивацією для IPv6 було побоювання, що 32-бітові адреси IPv4 зрештою закінчаться. IPv6 **розширив адреси**, і тепер вони мають довжину 128 бітів. Кількість можливих адрес IPv6 астрономічно велика (уявіть кількість атомів у Всесвіті), тож адреси IPv6 майже напевно ніколи не закінчаться.
 
-The designers of IPv6 took the opportunity to clean up and modernize the IP header, removing and updating fields that are outdated. Originally, IPv6 was intended to be a more ambitious protocol with many new addressing features, but most of these features were never realized. In practice, besides this "spring cleaning" removal of outdated features, there weren't many significant changes to the protocol from IPv4, so the result is a more elegant IP protocol, without many ambitious changes.
+Розробники IPv6 скористалися нагодою, щоб упорядкувати й модернізувати заголовок IP, видаливши й оновивши застарілі поля. Спочатку IPv6 задумувався як амбітніший протокол із багатьма новими можливостями адресації, але більшість цих можливостей так і не було реалізовано. На практиці, окрім цього «весняного прибирання» застарілих можливостей, суттєвих змін у протоколі порівняно з IPv4 було небагато, тож результатом став елегантніший протокол IP без особливо амбітних змін.
 
-Note: In case you're curious, IPv5 was published in 1990 (before IPv6 in 1998). It was an experimental protocol that was never widely implemented.
+Примітка: якщо вам цікаво, IPv5 було опубліковано в 1990 році (раніше за IPv6 у 1998 році). Це був експериментальний протокол, який так і не набув широкого впровадження.
 
-IPv6 **eliminates checksums** in the IP packet header. The argument in favor of including a checksum is: if a packet is corrupted and is not detected, the corrupt packet continues being sent, wasting bandwidth. Including the checksum ensures that the packet is dropped and bandwidth is not wasted on a corrupt packet. In modern times, bandwidth is less of a bottleneck, so the checksum is no longer necessary, and it's not a huge performance impact if some corrupt packets are sent all the way through the network.
+IPv6 **прибирає контрольні суми** із заголовка IP-пакета. Аргумент на користь контрольної суми такий: якщо пакет пошкоджено й це не виявлено, пошкоджений пакет і далі пересилається, марнуючи пропускну здатність. Наявність контрольної суми гарантує, що пакет буде відкинуто й пропускна здатність не марнуватиметься на пошкоджений пакет. Нині пропускна здатність менше обмежує, тож контрольна сума більше не потрібна, і якщо деякі пошкоджені пакети пройдуть усю мережу, це не дуже вплине на продуктивність.
 
-IPv6 **eliminates fragmentation**. If an IPv6 packet is too large for a specific link, the router will drop the packet and send an error message back to the source with the maximum allowable packet size (MTU). The original sender is responsible for splitting up the data into smaller packets and re-sending those smaller packets. End hosts (e.g. your personal computer) process fewer packets than routers (e.g. in data centers), so transferring the workload of fragmentation from routers to end hosts improves the overall scalability of the Internet.
+IPv6 **прибирає фрагментацію**. Якщо пакет IPv6 завеликий для конкретного каналу, маршрутизатор відкине пакет і надішле джерелу повідомлення про помилку з максимально допустимим розміром пакета (MTU). Початковий відправник відповідає за розбиття даних на менші пакети й повторне надсилання цих менших пакетів. Кінцеві хости (наприклад, ваш персональний комп'ютер) обробляють менше пакетів, ніж маршрутизатори (наприклад, у дата-центрах), тож перенесення навантаження фрагментації з маршрутизаторів на кінцеві хости покращує загальну масштабованість Інтернету.
 
-IPv6 replaces the variable-length options section with a modified implementation of the protocol field. In IPv4, options were problematic because they created variable-length headers, which are harder to parse. In IPv6, the header is fixed in length. This also means that the **header length** field can be eliminated.
+IPv6 замінює розділ параметрів змінної довжини зміненою реалізацією поля протоколу. В IPv4 параметри були проблемними, бо створювали заголовки змінної довжини, які складніше розбирати. В IPv6 заголовок має фіксовану довжину. Це також означає, що поле **довжини заголовка** можна прибрати.
 
-In order to continue supporting options, IPv6 generalizes the protocol field to allow the IP packet to be passed up for special processing before reaching Layer 4. (Recall, the protocol header in IPv4 is set to either 6 or 17, to indicate which Layer 4 protocol processes the packet next.) The field is renamed from protocol to **next header** in IPv6.
+Щоб і далі підтримувати параметри, IPv6 узагальнює поле протоколу, дозволяючи передавати IP-пакет нагору на спеціальну обробку до того, як він дістанеться рівня 4. (Пригадайте, що поле протоколу в IPv4 має значення 6 або 17, щоб вказати, який протокол рівня 4 обробляє пакет далі.) В IPv6 поле перейменовано з «протоколу» на **наступний заголовок** (next header).
 
 <img width="800px" src="/assets/routing/2-200-next-header.png">
 
-If you want an additional protocol to process the IP packet, you can put that protocol's corresponding number in the next header field. The designers and users of these extra protocols need to agree on which numbers correspond to which protocols, and a standards body organization needs to manage these numbers. Then, the payload can be passed to the additional protocol, which can read an additional header (after the Layer 3 IPv6 header, but before the Layer 4 header) and perform additional processing, before passing the remaining payload to Layer 4.
+Якщо ви хочете, щоб IP-пакет обробив додатковий протокол, можна записати відповідний номер цього протоколу в поле наступного заголовка. Розробники й користувачі цих додаткових протоколів мають домовитися, які номери відповідають яким протоколам, а цими номерами має керувати організація зі стандартизації. Потім корисне навантаження можна передати додатковому протоколу, який може прочитати додатковий заголовок (після заголовка IPv6 рівня 3, але перед заголовком рівня 4) і виконати додаткову обробку, перш ніж передати решту корисного навантаження рівню 4.
 
-If the packet has no additional options, then the next header field is the same as the old protocol field, allowing the IP packet to be directly passed up to a Layer 4 protocol with no further processing.
+Якщо пакет не має додаткових параметрів, то поле наступного заголовка таке саме, як старе поле протоколу, що дає змогу передати IP-пакет безпосередньо нагору протоколу рівня 4 без подальшої обробки.
 
-The idea of next headers can be generalized to allow multiple protocols to process the packet after IPv6, but before Layer 4. For example, IPv6 could have a next header for special processing. Then, the special processing protocol's header can also contain a next header field, which either specifies a Layer 4 protocol, or yet another special processing protocol. This approach is future-proof, because it supports future protocols that haven't been invented yet. Those future protocols can be added in this next-header approach, without breaking IPv6 or requiring an update to IPv6.
+Ідею наступних заголовків можна узагальнити, дозволивши кільком протоколам обробляти пакет після IPv6, але перед рівнем 4. Наприклад, IPv6 може мати наступний заголовок для спеціальної обробки. Потім заголовок протоколу спеціальної обробки теж може містити поле наступного заголовка, яке вказує або протокол рівня 4, або ще один протокол спеціальної обробки. Такий підхід перспективний, бо підтримує майбутні протоколи, яких ще не винайдено. Ці майбутні протоколи можна додавати в цьому підході з наступними заголовками, не ламаючи IPv6 і не вимагаючи оновлення IPv6.
 
-IPv6 adds a **flow label** field to the header. At layer 3, packets are sent independently (how one packet is sent doesn't affect other packets), but in practice, it's common for many packets to be related in some way. For example, in a video stream between two hosts, there can be many packets being sent between the same two applications. Layer 3 is supposed to treat these packets separately, but in practice, routers have added more advanced systems called **middleboxes** (e.g. firewalls, intrusion detection systems) that might care about the fact that these packets are part of the same flow, or connection. For example, a firewall might need to read multiple packets from a connection to decide whether that connection should be allowed or blocked. When all packets are sent independently, these middleboxes have to guess whether two packets are related or not (e.g. it notices packets with the same source/destination IP address). IPv6 adds an explicit way to denote that multiple packets are related.
+IPv6 додає до заголовка поле **мітки потоку** (flow label). На рівні 3 пакети надсилаються незалежно (те, як надсилається один пакет, не впливає на інші пакети), але на практиці багато пакетів часто певним чином пов'язані. Наприклад, у відеопотоці між двома хостами між тими самими двома застосунками може надсилатися багато пакетів. Рівень 3 має обробляти ці пакети окремо, але на практиці до маршрутизаторів додали складніші системи, що називаються **проміжними пристроями** (middleboxes; наприклад, брандмауери, системи виявлення вторгнень), яким може бути важливо, що ці пакети належать до того самого потоку, або з'єднання. Наприклад, брандмауерові може знадобитися прочитати кілька пакетів з'єднання, щоб вирішити, дозволити чи заблокувати це з'єднання. Коли всі пакети надсилаються незалежно, ці проміжні пристрої мусять здогадуватися, пов'язані два пакети чи ні (наприклад, помічаючи пакети з тими самими IP-адресами джерела/призначення). IPv6 додає явний спосіб позначити, що кілька пакетів пов'язані.
 
 <img width="900px" src="/assets/routing/2-201-ipv6-header.png">
 
-The version number is unchanged between IPv4 and IPv6. The packet length is unchanged (though renamed from Total Length to Payload Length). TTL is renamed to Hop Limit, though the functionality is unchanged.
+Номер версії між IPv4 та IPv6 не змінився. Довжина пакета не змінилася (хоча її перейменовано з Total Length на Payload Length). TTL перейменовано на Hop Limit, хоча функціональність не змінилася.
 
-The Type of Service bits are renamed to Traffic Class, and can still be used to implement some notion of packet priority.
+Біти типу обслуговування перейменовано на Traffic Class, і їх і далі можна використовувати для реалізації певного поняття пріоритету пакетів.
 
-In general, IPv6 embraces the end-to-end principle and asks the end host to do the work (fragmentation, verifying checksum and re-sending corrupt packets) when possible. Some fields, like the hop limit or TTL, are fundamentally an IP-level problem, and can't be implemented by end hosts. (How would the end host help with a packet looping through the network?)
+Загалом IPv6 приймає наскрізний принцип і за можливості перекладає роботу на кінцевий хост (фрагментація, перевірка контрольної суми й повторне надсилання пошкоджених пакетів). Деякі поля, як-от ліміт переходів чи TTL, принципово є проблемою рівня IP, і кінцеві хости не можуть їх реалізувати. (Як кінцевий хост допоміг би з пакетом, що ходить петлею мережею?)
 
-IPv6 also tries to simplify the header (removing variable-length options), while still allowing extensibility for future improvements (next-header approach, flow label).
+IPv6 також намагається спростити заголовок (прибираючи параметри змінної довжини), водночас зберігаючи розширюваність для майбутніх удосконалень (підхід із наступними заголовками, мітка потоку).
 
 
-## IP Header Security
+## Безпека заголовка IP
 
-IP does not have any built-in security against attackers. An attacker could send a packet with an incorrect source IP address, allowing the attacker to impersonate somebody else. This might cause the impersonated host to be wrongly blamed for a packet. Or, if the attacker sends a spoofed packet, the reply may be sent to the impersonated host. Lying about the source address is known as **IP spoofing**.
+IP не має жодного вбудованого захисту від зловмисників. Зловмисник може надіслати пакет із неправильною IP-адресою джерела, видаючи себе за когось іншого. Через це хоста, за якого видають себе, можуть безпідставно звинуватити в пакеті. Або, якщо зловмисник надсилає підроблений пакет, відповідь може бути надіслана хосту, за якого він себе видає. Підробка адреси джерела називається **IP-спуфінгом** (IP spoofing).
 
-IP spoofing can be used for denial-of-service (DoS) attacks. A DoS attack can be used to overwhelm a server and cause it to crash by flooding the server with packets. If all the packets came from the same sender, the server could stop the attack by ignoring packets from the attacker's IP address. However, if the attacker lies about the source IP address, the server has a harder time distinguishing attacker traffic from legitimate traffic.
+IP-спуфінг можна використовувати для атак типу «відмова в обслуговуванні» (denial-of-service, DoS). DoS-атаку можна використати, щоб перевантажити сервер і спричинити його збій, засипавши сервер пакетами. Якби всі пакети надходили від одного відправника, сервер міг би зупинити атаку, ігноруючи пакети з IP-адреси зловмисника. Однак якщо зловмисник підробляє IP-адресу джерела, серверу важче відрізнити трафік зловмисника від легітимного трафіку.
 
-More sophisticated attacks involving spoofing exist, though we won't cover them in detail in this class (see the UC Berkeley CS 161 notes for more details).
+Існують і складніші атаки зі спуфінгом, хоча в цьому курсі ми не розглядатимемо їх детально (докладніше див. матеріали курсу CS 161 в UC Berkeley).
 
-The ToS field in the IP header allows the sender to set a priority on their packets. If we allow everybody to set their own priority, malicious users can set higher priorities and trick the network into prioritizing attacker traffic.
+Поле ToS у заголовку IP дає відправникові змогу встановлювати пріоритет своїх пакетів. Якщо дозволити всім встановлювати власний пріоритет, зловмисники можуть встановлювати вищі пріоритети й обманом змусити мережу пріоритезувати трафік зловмисника.
 
-If the network charges an extra fee for high-priority traffic, the attacker could send a spoofed high-priority packet, and the impersonated host would have to pay for the attacker's traffic.
+Якщо мережа стягує додаткову плату за високопріоритетний трафік, зловмисник може надіслати підроблений високопріоритетний пакет, і хосту, за якого він себе видав, довелося б платити за трафік зловмисника.
 
-The original Internet design did not stop these attacks, though modern ISPs (Internet service providers) have implemented additional security measures to mitigate IP layer attacks. In the modern Internet, ISPs don't allow end hosts to set the ToS field, and many ISPs have tools to detect and block spoofed packets.
+Оригінальний дизайн Інтернету не зупиняв цих атак, хоча сучасні інтернет-провайдери (ISP) впровадили додаткові заходи безпеки для пом'якшення атак на рівні IP. У сучасному Інтернеті провайдери не дозволяють кінцевим хостам встановлювати поле ToS, і багато провайдерів мають інструменти для виявлення й блокування підроблених пакетів.
 
-In IPv4, attackers could intentionally send large packets, forcing routers to perform extra work fragmenting those packets. Or, attackers could intentionally add extra options, forcing routers to process those extra options. This could be used to perform DoS attacks and overwhelm a router's processing capacity.
+В IPv4 зловмисники могли навмисно надсилати великі пакети, змушуючи маршрутизатори виконувати додаткову роботу з фрагментації цих пакетів. Або зловмисники могли навмисно додавати зайві параметри, змушуючи маршрутизатори обробляти їх. Це можна використовувати для DoS-атак і перевантаження обчислювальної потужності маршрутизатора.
 
-The TTL field can be exploited to learn about the network topology. You could send a packet with TTL 1. The packet will expire at the first hop, and the first router will send you an error message, allowing you to learn the identity of the first router.
+Поле TTL можна використати, щоб дізнатися про топологію мережі. Можна надіслати пакет із TTL 1. Термін дії пакета спливе на першому переході, і перший маршрутизатор надішле вам повідомлення про помилку, що дасть змогу дізнатися ідентичність першого маршрутизатора.
 
 <img width="600px" src="/assets/routing/2-202-traceroute1.png">
 
-Then, you can send a packet with TTL 2, which will expire at the second hop. The second router will send you an error message, allowing you to also discover the second router.
+Потім можна надіслати пакет із TTL 2, термін дії якого спливе на другому переході. Другий маршрутизатор надішле вам повідомлення про помилку, що дасть змогу виявити й другий маршрутизатор.
 
 <img width="600px" src="/assets/routing/2-203-traceroute2.png">
 
-By repeating this with TTL 3, TTL 4, and so on, you can discover all the routers on your path. This attack is known as **traceroute**, though others argue that it's not an attack and is useful for diagnostics.
+Повторюючи це з TTL 3, TTL 4 і так далі, можна виявити всі маршрутизатори на вашому шляху. Ця атака відома як **traceroute**, хоча інші стверджують, що це не атака, а корисний засіб діагностики.
 
 <img width="600px" src="/assets/routing/2-204-traceroute3.png">
 
-Repeating this attack on different sources and destinations allows you to learn more of the network topology. Some routers do not send an error message when the TTL is exceeded, which might limit this exploit.
+Повторення цієї атаки для різних джерел і пунктів призначення дає змогу дізнатися більше про топологію мережі. Деякі маршрутизатори не надсилають повідомлення про помилку, коли перевищено TTL, що може обмежити цей прийом.
 
-An attacker could theoretically tamper with the protocol or checksum field, but this would likely cause the packet to be dropped because of an invalid protocol or checksum, so practical attacks with these two fields don't really exist.
+Теоретично зловмисник може змінити поле протоколу чи контрольної суми, але це, найімовірніше, призведе до відкидання пакета через неправильний протокол чи контрольну суму, тож практичних атак із цими двома полями фактично не існує.
 
 <img width="800px" src="/assets/routing/2-205-attacks.png">

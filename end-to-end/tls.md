@@ -1,47 +1,47 @@
 ---
-title: "TLS: Secure Bytestreams"
-parent: End-to-End
+title: "TLS: захищені потоки байтів"
+parent: "Наскрізне з'єднання"
 nav_order: 6
 layout: page-with-toc
 ---
 
-# TLS: Secure Bytestreams
+# TLS: захищені потоки байтів
 
-## Secure Bytestreams
+## Захищені потоки байтів
 
-TCP by itself is insecure against network attackers. Someone on the network (e.g. a malicious router, an attacker sniffing packets on a wire) could read or even modify your TCP packets while they're in transit.
+Сам по собі TCP незахищений від мережевих зловмисників. Хтось у мережі (наприклад, зловмисний маршрутизатор, зловмисник, що перехоплює пакети на дроті) може читати чи навіть змінювати ваші пакети TCP, поки вони в дорозі.
 
-Also, with TCP, you might connect to an attacker instead of the real server. Suppose you want to connect to a bank website, and you do a DNS lookup for `www.bank.com`. The attacker (e.g. someone who hacked into the resolver or a router) changes the DNS response so that it maps `www.bank.com` to the attacker's IP address, 6.6.6.6. Now, when you form a TCP connection to the bank website, you're talking to the attacker. You might end up sending your bank password to the attacker!
+Крім того, з TCP ви можете під'єднатися до зловмисника замість справжнього сервера. Припустімо, ви хочете під'єднатися до вебсайту банку й виконуєте пошук DNS для `www.bank.com`. Зловмисник (наприклад, хтось, хто зламав резолвер чи маршрутизатор) змінює відповідь DNS так, що вона відображає `www.bank.com` на IP-адресу зловмисника 6.6.6.6. Тепер, коли ви встановлюєте з'єднання TCP з вебсайтом банку, ви спілкуєтеся зі зловмисником. Ви можете зрештою надіслати свій банківський пароль зловмисникові!
 
-To address these security issues, we add a new protocol, **Transport Layer Security (TLS)**, on top of TCP.
+Щоб розв'язати ці проблеми безпеки, ми додаємо поверх TCP новий протокол — **безпеку транспортного рівня** (Transport Layer Security, TLS).
 
-TLS can be thought of as a Layer 4.5 protocol, sitting in between TCP and application protocols like HTTP. (We use a weird number like 4.5 because the obsolete Layers 5 and 6 have nothing to do with security.) TLS relies on the bytestream abstraction of TCP, so it doesn't think about individual packets or packet loss/reordering. TLS provides the exact same bytestream abstraction to applications as TCP does, but the bytestream is now secure against network attackers. This is why HTTP and HTTPS are semantically identical protocols. The only difference is that HTTPS runs over the secure bytestream of TLS-over-TCP, while HTTP runs over raw TCP with no TLS.
+TLS можна вважати протоколом рівня 4.5, розташованим між TCP і прикладними протоколами на кшталт HTTP. (Ми використовуємо дивне число на кшталт 4.5, бо застарілі рівні 5 і 6 не мають нічого спільного з безпекою.) TLS спирається на абстракцію потоку байтів TCP, тож не думає про окремі пакети чи втрату/переупорядкування пакетів. TLS надає застосункам точнісінько ту саму абстракцію потоку байтів, що й TCP, але потік байтів тепер захищений від мережевих зловмисників. Саме тому HTTP і HTTPS — семантично ідентичні протоколи. Єдина відмінність у тому, що HTTPS працює поверх захищеного потоку байтів TLS-поверх-TCP, а HTTP — поверх сирого TCP без TLS.
 
 <img width="400px" src="/assets/end-to-end/5-072-layer45.png">
 
-To distinguish between HTTPS and HTTP, we use Port 80 for HTTP connections, and Port 443 for HTTPS connections. Servers can force users to use HTTPS by replying to all Port 80 requests with a redirect to use Port 443 instead.
+Щоб розрізняти HTTPS і HTTP, ми використовуємо порт 80 для з'єднань HTTP і порт 443 для з'єднань HTTPS. Сервери можуть змушувати користувачів використовувати HTTPS, відповідаючи на всі запити на порт 80 перенаправленням на порт 443.
 
 
-## TLS Handshake
+## Рукостискання TLS
 
-At a high level, TLS uses cryptography to encrypt messages sent over the bytestream. TLS also uses other cryptographic protocols (message authentication codes) to prevent attackers from changing messages as they're sent over the network.
+На високому рівні TLS використовує криптографію, щоб шифрувати повідомлення, що надсилаються потоком байтів. TLS також використовує інші криптографічні протоколи (коди автентифікації повідомлень, message authentication codes), щоб не дати зловмисникам змінювати повідомлення під час їх надсилання мережею.
 
-In order to encrypt traffic, TLS must start with an additional handshake to exchange keys and verify the identity of the server (e.g. real bank, not someone impersonating the bank).
+Щоб шифрувати трафік, TLS має почати з додаткового рукостискання для обміну ключами й перевірки особи сервера (наприклад, справжній банк, а не хтось, хто видає себе за банк).
 
-Because TLS is built on top of TCP, the TCP three-way handshake first proceeds as normal. This creates an (insecure) bytestream, allowing all future messages, including the TLS handshake, to proceed without thinking about individual packets.
+Оскільки TLS побудовано поверх TCP, спершу як звичайно відбувається тристороннє рукостискання TCP. Це створює (незахищений) потік байтів, що дає змогу всім майбутнім повідомленням, включно з рукостисканням TLS, проходити, не думаючи про окремі пакети.
 
-The TLS handshake can now proceed:
+Тепер може відбутися рукостискання TLS:
 
 <img width="400px" src="/assets/end-to-end/5-073-tls-handshake.png">
 
-1. The client and server exchange hellos. The hellos contain random numbers, which ensures that every handshake results in different secret keys. (It would be bad if we used the same key every time, and attackers hacked us and learned that key.) The hellos also allow the client and server to agree on specific cryptographic protocols to use. The client's hello lists all cryptographic schemes the client supports, and the server's hello picks one to use.
+1. Клієнт і сервер обмінюються вітаннями (hellos). Вітання містять випадкові числа, що гарантує, що кожне рукостискання дає різні секретні ключі. (Було б погано, якби ми щоразу використовували той самий ключ, а зловмисники зламали нас і дізналися цей ключ.) Вітання також дають клієнтові й серверу змогу погодити конкретні криптографічні протоколи для використання. Вітання клієнта перелічує всі криптографічні схеми, які підтримує клієнт, а вітання сервера обирає одну з них.
 
-2. The server sends a certificate of authenticity. This will allow the client to verify that it's talking to the real server, and not an impersonator. There's a bit of complexity in how the client actually verifies this certificate, which we won't discuss here.
+2. Сервер надсилає сертифікат автентичності. Це дасть клієнтові змогу перевірити, що він спілкується зі справжнім сервером, а не з тим, хто видає себе за нього. Те, як клієнт насправді перевіряє цей сертифікат, дещо складне, і ми тут не обговорюватимемо цього.
 
-3. The client and server derive a secret that only the two of them know. Since the bytestream is still insecure at this point, they'll need a cryptographic protocol that enables sharing a secret over an insecure channel. We won't discuss the details here, but if you're familiar with RSA public-key encryption (e.g. from CS 70 at UC Berkeley), that's one possible cryptographic scheme to use here. The client encrypts a secret with the server's public key and sends it to the server. Only the server knows the corresponding private key and is able to decrypt the message and learn the secret.
+3. Клієнт і сервер виводять секрет, який знають лише вони двоє. Оскільки потік байтів на цьому етапі досі незахищений, їм знадобиться криптографічний протокол, що дає змогу поділитися секретом через незахищений канал. Ми не обговорюватимемо тут подробиць, але якщо ви знайомі з шифруванням із відкритим ключем RSA (наприклад, з курсу CS 70 в UC Berkeley), це одна з можливих криптографічних схем для використання тут. Клієнт шифрує секрет відкритим ключем сервера й надсилає його серверу. Лише сервер знає відповідний закритий ключ і може розшифрувати повідомлення й дізнатися секрет.
 
-4. The client and server derive secret keys based on the shared secret and the random values from the hellos. Using the secret ensures that attackers can't learn the secret keys. Using the random values ensures that we derive a different key every time. This derivation is done locally and independently by both the client and server. The secret keys are never actually sent across the network, so the attacker has no chance to learn them.
+4. Клієнт і сервер виводять секретні ключі на основі спільного секрету й випадкових значень із вітань. Використання секрету гарантує, що зловмисники не можуть дізнатися секретні ключі. Використання випадкових значень гарантує, що щоразу ми виводимо інший ключ. Це виведення клієнт і сервер виконують локально й незалежно. Секретні ключі насправді ніколи не надсилаються мережею, тож зловмисник не має шансу їх дізнатися.
 
-5. The client and server exchange some acknowledgements to confirm that they derived the same secrets, and nobody tampered with the messages sent over the network so far (since the bytestream is still insecure).
+5. Клієнт і сервер обмінюються певними підтвердженнями, щоб переконатися, що вони вивели однакові секрети і ніхто не підробив повідомлень, надісланих мережею досі (бо потік байтів досі незахищений).
 
-At this point, the handshake is complete, and all future messages are encrypted with the secret key (message authentication codes are also used to prevent tampering). We have now established a secure bytestream on top of the TCP connection, and applications can exchange data on top of our secure bytestream.
+На цьому етапі рукостискання завершено, і всі майбутні повідомлення шифруються секретним ключем (для запобігання підробці також використовуються коди автентифікації повідомлень). Тепер ми встановили захищений потік байтів поверх з'єднання TCP, і застосунки можуть обмінюватися даними поверх нашого захищеного потоку байтів.

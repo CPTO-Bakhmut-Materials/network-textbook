@@ -1,56 +1,56 @@
 ---
-title: Overlay Multicast
-parent: Beyond Client-Server
+title: Накладена багатоадресна розсилка
+parent: За межами клієнт-сервер
 nav_order: 6
 layout: page-with-toc
 ---
 
-# Overlay Multicast
+# Накладена багатоадресна розсилка
 
-## Brief History of Overlay Multicast
+## Коротка історія накладеної багатоадресної розсилки
 
-Recall that IP multicast was developed in the 1990s and 2000s. In the early 2000s, deployment of IP multicast was slow, in part because of the problems we discussed earlier. As a result, many startups emerged, including FastForward Networks (Berkeley), ProxyNet (Berkeley), Sightpath (MIT), and Akamai (MIT). Their work was largely independent, but their solutions all used the same fundamental idea of overlay-based multicast.
+Пригадайте, що багатоадресну розсилку IP розробили в 1990-х і 2000-х роках. На початку 2000-х розгортання багатоадресної розсилки IP відбувалося повільно, зокрема через проблеми, які ми обговорили раніше. Як наслідок, з'явилося багато стартапів, зокрема FastForward Networks (Берклі), ProxyNet (Берклі), Sightpath (MIT) і Akamai (MIT). Їхня робота була здебільшого незалежною, але всі їхні рішення використовували ту саму фундаментальну ідею накладеної багатоадресної розсилки.
 
 
-## Overlay Multicast: Definition
+## Накладена багатоадресна розсилка: визначення
 
-Recall one of our major problems with IP multicast: It's difficult to implement multicast across different networks. In this diagram, if all the hosts are members of the same group, it's difficult for routers across different networks to coordinate and send packets to the entire group.
+Пригадайте одну з наших головних проблем багатоадресної розсилки IP: складно реалізувати багатоадресну розсилку між різними мережами. На цій діаграмі, якщо всі хости — члени тієї самої групи, маршрутизаторам у різних мережах складно координуватися й надсилати пакети всій групі.
 
 <img width="900px" src="/assets/beyond-client-server/7-051-overlay-before.png">
 
-Our solution here is to build a *virtual network topology* that directly connects the hosts to each other:
+Наше рішення тут — побудувати *віртуальну мережеву топологію*, що безпосередньо з'єднує хости між собою:
 
 <img width="900px" src="/assets/beyond-client-server/7-052-overlay-after.png">
 
-The virtual links we've drawn here are a fiction, and they don't actually correspond to physical links in real life. For example, if A wanted to send a packet to D along that virtual link, the packet would still have to travel across several real routers and links.
+Віртуальні канали, які ми тут намалювали, — вигадка, і вони насправді не відповідають фізичним каналам у реальному житті. Наприклад, якби A захотів надіслати пакет до D цим віртуальним каналом, пакету однаково довелося б пройти кількома реальними маршрутизаторами й каналами.
 
-However, by drawing these virtual links, we can now pretend that all the hosts are connected to each other in a small local network. These hosts can then run multicast routing algorithms to forward packets between each other.
+Однак, намалювавши ці віртуальні канали, ми тепер можемо вдавати, що всі хости з'єднані між собою в невеликій локальній мережі. Потім ці хости можуть виконувати алгоритми маршрутизації багатоадресної розсилки, щоб пересилати пакети між собою.
 
 <img width="900px" src="/assets/beyond-client-server/7-053-overlay-tables-1.png">
 
-For example, we could build a core-based tree rooted at D, using the virtual links. Then, everyone can multicast packets by broadcasting packets along the virtual links of the tree.
+Наприклад, ми можемо побудувати дерево з ядром із коренем у D, використовуючи віртуальні канали. Тоді кожен може розсилати пакети багатоадресно, широкомовно розсилаючи їх віртуальними каналами дерева.
 
-Remember that when a packet is sent along a virtual link, it still has to travel across several real routers and links. For example, if A wants to forward a packet to both D and B, it must send two unicast packets: "From A, To D," and "From A, To B." Both of these unicast packets will travel along several real routers and links to reach their destination.
+Пам'ятайте, що коли пакет надсилається віртуальним каналом, він однаково має пройти кількома реальними маршрутизаторами й каналами. Наприклад, якщо A хоче переслати пакет і D, і B, він має надіслати два одноадресні пакети: «Від A, до D» і «Від A, до B». Обидва ці одноадресні пакети проходитимуть кількома реальними маршрутизаторами й каналами, щоб дістатися своїх пунктів призначення.
 
-In the example below, A is sending a unicast packet to G. The packet travels along several real routers and links to reach G. Along the way, intermediate hosts C and D receive and forward the packet.
+У прикладі нижче A надсилає одноадресний пакет до G. Пакет проходить кількома реальними маршрутизаторами й каналами, щоб дістатися G. Дорогою проміжні хости C і D отримують і пересилають пакет.
 
 <img width="900px" src="/assets/beyond-client-server/7-055-overlay-forward-1.png">
 
-Intuitively, the virtual network gives us the illusion that all the hosts are connected in a small local network, even though they are scattered all around the world in real life.
+Інтуїтивно віртуальна мережа створює для нас ілюзію, що всі хости з'єднані в невеликій локальній мережі, хоча в реальному житті вони розкидані по всьому світу.
 
-From a network architecture standpoint, the end hosts (at Layer 7) are now responsible for running multicast protocols. The end hosts are now acting as **virtual routers**. This means that the end hosts have to build multicast forwarding tables, know about their outgoing virtual links (e.g. in static table entries), and forward packets along virtual links. Routers don't need to think about multicasting at all (they can just run standard unicast protocols).
+З погляду мережевої архітектури кінцеві хости (на рівні 7) тепер відповідають за виконання протоколів багатоадресної розсилки. Кінцеві хости тепер діють як **віртуальні маршрутизатори** (virtual routers). Це означає, що кінцеві хости мають будувати таблиці пересилання багатоадресної розсилки, знати про свої вихідні віртуальні канали (наприклад, у статичних записах таблиці) і пересилати пакети віртуальними каналами. Маршрутизаторам узагалі не треба думати про багатоадресну розсилку (вони можуть просто виконувати стандартні одноадресні протоколи).
 
-This is different from IP multicasting, where the routers were responsible for running multicast protocols, and the end hosts didn't need to think about the protocols (they could just send packets to a group address).
+Це відрізняється від багатоадресної розсилки IP, де за виконання протоколів багатоадресної розсилки відповідали маршрутизатори, а кінцевим хостам не треба було думати про протоколи (вони могли просто надсилати пакети на адресу групи).
 
-The virtual links we've drawn form the **overlay network**. The end hosts (virtual routers) in the overlay network talk to each other to run a multicast routing algorithm. The overlay routing tables are based on the virtual links (e.g. B's table might say, if I receive packets from A, forward them to C and D).
+Намальовані нами віртуальні канали утворюють **накладену мережу** (overlay network). Кінцеві хости (віртуальні маршрутизатори) у накладеній мережі спілкуються між собою, щоб виконувати алгоритм маршрутизації багатоадресної розсилки. Таблиці маршрутизації накладеної мережі ґрунтуються на віртуальних каналах (наприклад, таблиця B може казати: якщо я отримую пакети від A, пересилати їх до C і D).
 
-The real links and routers responsible for sending packets along virtual links form the **underlay network**. The underlay network routers talk to each other to run the standard unicast routing algorithms (e.g. distance-vector, BGP). The underlay routing tables are based on the physical links (e.g. R1's table might say, the next-hop to G is R2).
+Реальні канали й маршрутизатори, що відповідають за надсилання пакетів віртуальними каналами, утворюють **базову мережу** (underlay network). Маршрутизатори базової мережі спілкуються між собою, щоб виконувати стандартні алгоритми одноадресної маршрутизації (наприклад, дистанційно-векторний, BGP). Таблиці маршрутизації базової мережі ґрунтуються на фізичних каналах (наприклад, таблиця R1 може казати: наступний перехід до G — R2).
 
 <img width="900px" src="/assets/beyond-client-server/7-054-overlay-tables-2.png">
 
-To implement the overlay and underlay networks, we'll use encapsulation. Suppose we want to multicast a packet to the group address. Then the inner header (overlay) would say "From A, To G1," and the hosts would read this overlay packet to decide how to forward packets.
+Щоб реалізувати накладену й базову мережі, ми використаємо інкапсуляцію. Припустімо, ми хочемо розіслати пакет багатоадресно на адресу групи. Тоді внутрішній заголовок (накладена мережа) казатиме «Від A, до G1», і хости читатимуть цей пакет накладеної мережі, щоб вирішити, як пересилати пакети.
 
-Suppose Host A decides that this packet needs to be forwarded along the virtual link C. Then Host A will encapsulate this packet with an outer header "From A, To C" and unicast this packet to C. The underlay is responsible for forwarding the unicast packet from A to C, using only the outer header.
+Припустімо, хост A вирішує, що цей пакет треба переслати віртуальним каналом до C. Тоді хост A інкапсулює цей пакет у зовнішній заголовок «Від A, до C» і одноадресно надішле цей пакет до C. Базова мережа відповідає за пересилання одноадресного пакета від A до C, використовуючи лише зовнішній заголовок.
 
 <img width="900px" src="/assets/beyond-client-server/7-056-overlay-forward-2.png">
 
@@ -59,75 +59,75 @@ Suppose Host A decides that this packet needs to be forwarded along the virtual 
 <img width="900px" src="/assets/beyond-client-server/7-058-overlay-forward-4.png">
 
 
-## Implementing Overlay Networks
+## Реалізація накладених мереж
 
-In the most basic model, the nodes in the overlay network are the end hosts (e.g. your personal laptop). This means that the end hosts need to understand the multicast routing protocol, build their own forwarding tables, and forward packets.
+У найбазовішій моделі вершини накладеної мережі — це кінцеві хости (наприклад, ваш особистий ноутбук). Це означає, що кінцеві хости мають розуміти протокол маршрутизації багатоадресної розсилки, будувати власні таблиці пересилання й пересилати пакети.
 
-The end hosts could also be proxy servers installed by some company (similar to CDN servers). These machines are still end hosts running multicast routing protocols, but instead of being actual user machines (e.g. your personal laptop), they are deployed solely to help support multicast routing. Note that these proxy servers are still end hosts running multicast routing in the overlay. These servers still need to encapsulate packets and unicast them through the underlay network, so these servers are not Layer 3 routers.
+Кінцевими хостами також можуть бути проксі-сервери, встановлені якоюсь компанією (подібно до серверів CDN). Ці машини однаково є кінцевими хостами, що виконують протоколи маршрутизації багатоадресної розсилки, але замість бути справжніми машинами користувачів (наприклад, вашим особистим ноутбуком) їх розгорнуто виключно для підтримки маршрутизації багатоадресної розсилки. Зауважте, що ці проксі-сервери однаково є кінцевими хостами, що виконують маршрутизацію багатоадресної розсилки в накладеній мережі. Ці сервери однаково мають інкапсулювати пакети й надсилати їх одноадресно через базову мережу, тож ці сервери не є маршрутизаторами рівня 3.
 
-The general idea of overlay networks can be also used for other purposes besides multicast. For example, packets could be unicast across the overlay network as well. You could build a peer-to-peer file sharing service using an overlay topology. (A peer-to-peer service is one where any user in the group can share a file with any other user, without relying on a central server storing all the files.)
+Загальну ідею накладених мереж можна використовувати й для інших цілей, окрім багатоадресної розсилки. Наприклад, накладеною мережею можна надсилати й одноадресні пакети. Можна побудувати однорангову (peer-to-peer) службу обміну файлами з накладеною топологією. (Однорангова служба — це служба, де будь-який користувач групи може поділитися файлом з будь-яким іншим користувачем, не покладаючись на центральний сервер, що зберігає всі файли.)
 
-Many overlay networks can co-exist at the same time, over the same underlay network. From the end host's perspective, the end host would be running two separate applications. Each application has its own separate forwarding table, list of neighboring links, and so on. Each application could be offering a different service.
-
-
-## Benefits of Overlay Multicast
-
-What's good about the overlay multicast approach?
-
-The biggest benefit is ease of deployment. From the perspective of the underlay routers, the overlay network is just another application sending and receiving unicast packets. The underlay routers and protocols don't need any modifications.
-
-IP multicast required most or all of the routers to understand multicast protocols. By contrast, in overlay multicast, only certain participating nodes (e.g. the users in the group) need to understand the protocol. All of the other end hosts don't need any modifications.
-
-Each overlay multicast application can use its own implementation or protocol, so there's no need for standardization between different applications (e.g. different groups). Contrast this with IP multicast, where all routers need to speak the same protocol so that they can coordinate with each other.
-
-Because each overlay multicast application can make its own implementation decisions, this approach also gives applications the freedom to define their own goals.
-
-Each application can decide how to draw their virtual topology, how to set their link costs, and how to compute paths through the network. Some groups might care more about latency, while other groups might care more about throughput.
-
-Access control is also easier in overlay multicast (compared to IP multicast). The routing protocol implementation can be customized to only allow authorized users to participate in the protocol. Each application can make their own decision about what it means to authorize a user.
-
-Each application can also decide its own business model. The routing protocol implementation can be customized to track usage and charge users accordingly, and each application can make their own decision about what it means to track usage. For example, an overlay network of CDN servers might be used to stream a sports game to millions of users. The application itself can track which users are watching the sports game, and charge them accordingly.
-
-More unusual business models also exist. For example, a peer-to-peer file sharing system might be used to illegally stream copyrighted material. This system might want to avoid tracking users to avoid getting users in trouble.
+Над тією самою базовою мережею може одночасно співіснувати багато накладених мереж. З погляду кінцевого хоста він виконував би два окремі застосунки. Кожен застосунок має власну окрему таблицю пересилання, список сусідніх каналів тощо. Кожен застосунок може пропонувати інший сервіс.
 
 
-## Overlay Multicast Performance
+## Переваги накладеної багатоадресної розсилки
 
-The performance of an overlay network is highly dependent on the virtual topology that you draw between end hosts. In particular, the links and costs in the virtual topology should accurately reflect the corresponding underlay topology.
+Що доброго в підході накладеної багатоадресної розсилки?
 
-For example, this overlay network topology closely matches the corresponding underlay topology.
+Найбільша перевага — простота розгортання. З погляду маршрутизаторів базової мережі накладена мережа — просто ще один застосунок, що надсилає й отримує одноадресні пакети. Маршрутизатори й протоколи базової мережі не потребують жодних змін.
+
+Багатоадресна розсилка IP вимагала, щоб більшість чи всі маршрутизатори розуміли протоколи багатоадресної розсилки. Натомість у накладеній багатоадресній розсилці розуміти протокол треба лише певним вершинам-учасникам (наприклад, користувачам у групі). Усі інші кінцеві хости не потребують жодних змін.
+
+Кожен застосунок накладеної багатоадресної розсилки може використовувати власну реалізацію чи протокол, тож немає потреби в стандартизації між різними застосунками (наприклад, різними групами). Порівняйте з багатоадресною розсилкою IP, де всі маршрутизатори мають говорити тим самим протоколом, щоб координуватися між собою.
+
+Оскільки кожен застосунок накладеної багатоадресної розсилки може ухвалювати власні рішення щодо реалізації, цей підхід також дає застосункам свободу визначати власні цілі.
+
+Кожен застосунок може вирішувати, як малювати свою віртуальну топологію, як встановлювати вартості каналів і як обчислювати шляхи через мережу. Для одних груп важливіша латентність, а для інших — пропускна спроможність.
+
+Контроль доступу в накладеній багатоадресній розсилці також простіший (порівняно з багатоадресною розсилкою IP). Реалізацію протоколу маршрутизації можна налаштувати так, щоб лише авторизовані користувачі могли брати участь у протоколі. Кожен застосунок може сам вирішувати, що означає авторизувати користувача.
+
+Кожен застосунок також може вирішувати власну бізнес-модель. Реалізацію протоколу маршрутизації можна налаштувати так, щоб відстежувати використання й відповідно тарифікувати користувачів, і кожен застосунок може сам вирішувати, що означає відстежувати використання. Наприклад, накладену мережу серверів CDN можна використати для трансляції спортивного матчу мільйонам користувачів. Сам застосунок може відстежувати, які користувачі дивляться спортивний матч, і відповідно тарифікувати їх.
+
+Існують і незвичніші бізнес-моделі. Наприклад, однорангову систему обміну файлами можуть використовувати для незаконної трансляції матеріалів, захищених авторським правом. Така система може хотіти уникати відстеження користувачів, щоб не наражати їх на неприємності.
+
+
+## Продуктивність накладеної багатоадресної розсилки
+
+Продуктивність накладеної мережі дуже залежить від віртуальної топології, яку ви малюєте між кінцевими хостами. Зокрема, канали й вартості у віртуальній топології мають точно відображати відповідну базову топологію.
+
+Наприклад, ця топологія накладеної мережі близько відповідає відповідній базовій топології.
 
 <img width="900px" src="/assets/beyond-client-server/7-059-underlay-1.png">
 
-The virtual link from A to C could be assigned a low cost because in reality, A and C are close to each other (the underlay path passes through 3 routers). The virtual link from D to G could be assigned a high cost because in reality, D and G are further away (the underlay path passes through 5 routers). If we compute shortest paths in the overlay topology, the resulting paths should be pretty similar to the shortest paths in the underlay topology. Having short paths through the underlay is desirable, since the packets are ultimately being forwarded through the underlay network.
+Віртуальному каналу від A до C можна призначити низьку вартість, бо насправді A і C близько один до одного (шлях базової мережі проходить через 3 маршрутизатори). Віртуальному каналу від D до G можна призначити високу вартість, бо насправді D і G далі один від одного (шлях базової мережі проходить через 5 маршрутизаторів). Якщо обчислювати найкоротші шляхи в накладеній топології, отримані шляхи мають бути доволі схожими на найкоротші шляхи в базовій топології. Короткі шляхи в базовій мережі бажані, бо зрештою пакети пересилаються саме базовою мережею.
 
-In this particular overlay topology, packets from A to G end up getting forwarded along a path that is pretty close to the shortest path.
+У цій конкретній накладеній топології пакети від A до G зрештою пересилаються шляхом, доволі близьким до найкоротшого.
 
-Here is an example of an overlay network that poorly models the corresponding underlay topology.
+Ось приклад накладеної мережі, що погано моделює відповідну базову топологію.
 
 <img width="900px" src="/assets/beyond-client-server/7-060-underlay-2.png">
 
-Notice that we didn't change anything about the underlay topology. We only changed the placements of the virtual links.
+Зверніть увагу, що ми нічого не змінили в базовій топології. Ми змінили лише розташування віртуальних каналів.
 
-In this particular overlay topology, if we tried to compute the shortest path from A to G, we would get the path from A to C to B to E to F to G. If we then sent packets along this path, packets from A to G end up getting forwarded along a much worse path in the underlay network.
+У цій конкретній накладеній топології, якби ми спробували обчислити найкоротший шлях від A до G, ми отримали б шлях від A до C до B до E до F до G. Якби ми потім надсилали пакети цим шляхом, пакети від A до G зрештою пересилалися б набагато гіршим шляхом у базовій мережі.
 
-To measure the performance of an overlay network, we can define the **stretch factor**. This is the ratio of the underlay path cost to the overlay path cost.
+Щоб виміряти продуктивність накладеної мережі, можна визначити **коефіцієнт розтягу** (stretch factor). Це відношення вартості шляху в базовій мережі до вартості шляху в накладеній.
 
 <img width="700px" src="/assets/beyond-client-server/7-061-stretch.png">
 
-In the example above, the underlay cost is 4, and the overlay cost is 1, which gives us a stretch factor of 4. To better model the underlay network, it might make more sense to assign the virtual link a cost of 4.
+У прикладі вище вартість у базовій мережі дорівнює 4, а в накладеній — 1, що дає коефіцієнт розтягу 4. Щоб краще моделювати базову мережу, мабуть, було б доцільніше призначити віртуальному каналу вартість 4.
 
-High stretch values are bad, because it means that the underlay path is many times longer than the corresponding overlay path. Ideally, we'd like to have stretch values that are lower (closer to 1), which means that our underlay path cost is roughly the same as the overlay path cost.
+Високі значення розтягу погані, бо це означає, що шлях у базовій мережі в багато разів довший за відповідний шлях у накладеній. В ідеалі ми хотіли б мати менші значення розтягу (ближчі до 1), що означає, що вартість шляху в базовій мережі приблизно така сама, як вартість шляху в накладеній.
 
-How do we build low-stretch overlay topologies? Sometimes, operators manually design the topologies.
+Як будувати накладені топології з малим розтягом? Іноді оператори проєктують топології вручну.
 
-Self-organizing protocols also exist for automatically discovering a good overlay topology. At a high level, a self-organizing protocol might work like this: Initially, your neighbors are selected at random (i.e. draw virtual links from you to random neighbors). Periodically, you search for new candidate neighbors, and measure your distance to those new candidate neighbors (e.g. send a packet and measure the round-trip time). If the best candidate neighbor outperforms your worst current neighbor, then abandon your worst current neighbor (delete the virtual link) and add the best candidate neighbor (add a new virtual link).
+Існують також самоорганізаційні протоколи для автоматичного виявлення доброї накладеної топології. На високому рівні самоорганізаційний протокол може працювати так: спочатку ваші сусіди обираються випадково (тобто малюються віртуальні канали від вас до випадкових сусідів). Періодично ви шукаєте нових кандидатів у сусіди й вимірюєте свою відстань до них (наприклад, надсилаєте пакет і вимірюєте час кругового обертання). Якщо найкращий кандидат перевершує вашого найгіршого поточного сусіда, ви відмовляєтеся від найгіршого поточного сусіда (видаляєте віртуальний канал) і додаєте найкращого кандидата (додаєте новий віртуальний канал).
 
 
-## Drawbacks of Overlay Multicast
+## Недоліки накладеної багатоадресної розсилки
 
-Overlay multicast introduces additional overhead, which affects performance. For example, extra time and processing power is needed to encapsulate and decapsulate packets.
+Накладена багатоадресна розсилка створює додаткові накладні витрати, що впливає на продуктивність. Наприклад, на інкапсуляцію й декапсуляцію пакетів потрібні додатковий час і обчислювальна потужність.
 
-Overlay multicast is not built into the Internet, which means that application developers must implement overlay multicast themselves. Contrast this with IP multicast, where the application developer can just send packets to group addresses, without having to build their own forwarding tables and so on.
+Накладена багатоадресна розсилка не вбудована в Інтернет, тобто розробники застосунків мають реалізовувати накладену багатоадресну розсилку самі. Порівняйте з багатоадресною розсилкою IP, де розробник застосунку може просто надсилати пакети на адреси груп, не будуючи власних таблиць пересилання тощо.
 
-Despite these drawbacks, overlay multicast has good enough performance that it is commonly deployed in the Internet today.
+Попри ці недоліки, накладена багатоадресна розсилка має досить добру продуктивність, тож нині її поширено розгортають в Інтернеті.

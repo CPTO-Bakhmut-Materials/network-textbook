@@ -1,164 +1,164 @@
 ---
 title: Ethernet
-parent: End-to-End
+parent: "Наскрізне з'єднання"
 nav_order: 1
 layout: page-with-toc
 ---
 
 # Ethernet
 
-## Local Networks
+## Локальні мережі
 
-In this section, we'll focus on what happens inside a local area network, such as the network in your home with your computer and your home router. This is in contrast with the wide-area networks we've been seeing so far, which span longer distances.
+У цьому розділі ми зосередимося на тому, що відбувається всередині локальної мережі, як-от мережі у вашому домі з вашим комп'ютером і домашнім маршрутизатором. Це на противагу глобальним мережам (wide-area networks), які ми досі розглядали і які охоплюють більші відстані.
 
-In particular, we'll look at forwarding and addressing at Layer 2. We'll have to define how packets are forwarded from a local host to a router. We'll also see how hosts in the same local network can exchange messages at Layer 2, without a need to contact routers at all. The predominant protocol at Layer 2 is Ethernet. 
+Зокрема, ми розглянемо пересилання й адресацію на рівні 2. Нам доведеться визначити, як пакети пересилаються від локального хоста до маршрутизатора. Ми також побачимо, як хости в тій самій локальній мережі можуть обмінюватися повідомленнями на рівні 2 взагалі без потреби звертатися до маршрутизаторів. Переважний протокол рівня 2 — Ethernet.
 
 <img width="400px" src="/assets/end-to-end/5-001-layer2.png">
 
 
-## Connecting Local Hosts
+## З'єднання локальних хостів
 
-So far, we've drawn links connecting exactly two machines. In the local network, we drew a line connecting each host to the router.
+Досі ми малювали канали, що з'єднують рівно дві машини. У локальній мережі ми малювали лінію, що з'єднує кожен хост із маршрутизатором.
 
-In reality, a single wire might be used to connect multiple machines. In the local network, the hosts and the router can all be on the same wire. We can abstract even further and note that at Layer 2, the router is really just a machine like any other (that happens to run routing protocols at higher layers). Ultimately, the wire doesn't really care what the connected machines are doing with the data they exchange.
+Насправді один дріт може використовуватися для з'єднання кількох машин. У локальній мережі хости й маршрутизатор можуть усі бути на тому самому дроті. Можна абстрагуватися ще далі й зауважити, що на рівні 2 маршрутизатор насправді просто така сама машина, як будь-яка інша (яка до того ж виконує протоколи маршрутизації на вищих рівнях). Зрештою дротові байдуже, що під'єднані машини роблять із даними, якими обмінюються.
 
 <img width="700px" src="/assets/end-to-end/5-002-linking-machines.png">
 
-What is the best way to wire up computers in a local network? Earlier, when we first introduced routing, we thought about using a mesh topology to connect all pairs of computers in the world. We also considered using a single wire to connect up all the computers. Ultimately, we decided that for a global network, neither approach was practical, and we needed to introduce routers.
+Який найкращий спосіб з'єднати комп'ютери в локальній мережі? Раніше, коли ми вперше запровадили маршрутизацію, ми розглядали використання повнозв'язної топології, щоб з'єднати всі пари комп'ютерів у світі. Ми також розглядали використання одного дроту для з'єднання всіх комп'ютерів. Зрештою ми вирішили, що для глобальної мережі жоден підхід не практичний і нам потрібно запровадити маршрутизатори.
 
 <img width="800px" src="/assets/end-to-end/5-003-mesh-bus.png">
 
-We can consider these topologies again in the local network. A mesh topology is still pretty impractical. If a new host joins, we'd have to add a wire connecting it to every other host. However, a **bus** topology, where we connect all the computers along a single wire, is pretty common and practical in a local network.
+Ці топології можна знову розглянути в локальній мережі. Повнозв'язна топологія однаково доволі непрактична. Якщо приєднується новий хост, нам довелося б додати дріт, що з'єднує його з кожним іншим хостом. Однак топологія **шини** (bus), де ми з'єднуємо всі комп'ютери вздовж одного дроту, доволі поширена й практична в локальній мережі.
 
-The single-wire bus topology introduces the notion of a **shared media**. When we drew links connecting two machines, only those two computers used that link to communicate. Now, a packet from A to C, and a packet from B to D, might be on the wire at the same time, and the electrical signal on that wire cannot hold both packets simultaneously.
+Топологія шини з одним дротом запроваджує поняття **спільного середовища** (shared media). Коли ми малювали канали, що з'єднують дві машини, лише ці два комп'ютери використовували цей канал для спілкування. Тепер пакет від A до C і пакет від B до D можуть одночасно опинитися в дроті, а електричний сигнал у цьому дроті не може вмістити обидва пакети одночасно.
 
 <img width="600px" src="/assets/end-to-end/5-004-collision.png">
 
-As an analogy, consider multiple people on a group call, sharing a single phone line: Any two people can talk to each other, but you can't have two simultaneous conversations, or else nobody understands what's being said.
+Як аналогію розгляньте групову телефонну розмову кількох людей на одній телефонній лінії: будь-які двоє можуть розмовляти між собою, але не можна вести дві розмови одночасно, бо інакше ніхто не зрозуміє, що кажуть.
 
-We've drawn links as wires with electrical signals on them for simplicity, but in reality, the link technology could use other shared media. For example, in a wireless link technology, all hosts connected by the link share the same part of the electromagnetic spectrum.
+Для простоти ми зображали канали як дроти з електричними сигналами, але насправді технологія каналу може використовувати інші спільні середовища. Наприклад, у бездротовій технології каналу всі хости, з'єднані каналом, ділять ту саму частину електромагнітного спектра.
 
 
-## Communicating over Shared Media: Coordinated Approaches
+## Спілкування через спільне середовище: координовані підходи
 
-In a network with a shared medium, there's a risk that transmissions from different nodes may interfere or collide with each other. If two computers try to transmit data simultaneously, their signals will overlap and interfere. The recipients may be unable to decode the signal, and they can't tell who sent the signal. To solve this problem, we need a **multiple access protocol** that ensures that multiple computers can share the link and transmit over it.
+У мережі зі спільним середовищем існує ризик, що передавання від різних вузлів заважатимуть одне одному чи зіткнуться. Якщо два комп'ютери намагаються передавати дані одночасно, їхні сигнали накладуться й заважатимуть одне одному. Отримувачі можуть не змогти декодувати сигнал і не зможуть визначити, хто його надіслав. Щоб розв'язати цю проблему, нам потрібен **протокол множинного доступу** (multiple access protocol), що гарантує, що кілька комп'ютерів можуть ділити канал і передавати ним.
 
 <img width="700px" src="/assets/end-to-end/5-005-multiple-access-taxonomy.png">
 
-One possible category of approaches is to allocate a fixed portion of resources to each node on the link. There are two ways we could consider dividing up the resources. In **frequency-division multiplexing**, we allocate a different slice of frequencies to each computer. (Consider AM/FM radio or broadcast TV, which divide up frequencies into channels.) In **time-division multiplexing**, we divide time into fixed slots and allocate a slot to every connected node.
+Одна можлива категорія підходів — виділити кожному вузлу на каналі фіксовану частку ресурсів. Є два способи, як можна розглядати поділ ресурсів. У **частотному мультиплексуванні** (frequency-division multiplexing) ми виділяємо кожному комп'ютерові окремий діапазон частот. (Згадайте радіо AM/FM чи ефірне телебачення, які поділяють частоти на канали.) У **часовому мультиплексуванні** (time-division multiplexing) ми поділяємо час на фіксовані слоти й виділяємо слот кожному під'єднаному вузлу.
 
-Fixed allocation of resources has some downsides. There's only a limited amount of frequency/time to distribute. Also, not everyone has something to say all the time, so the frequency/time we allocate might go unused most of the time. This approach is wasteful, because it confines computers to their specific allocated slice, even while other slices might be unused.
+Фіксований розподіл ресурсів має певні недоліки. Частот/часу для розподілу обмежена кількість. Крім того, не кожному постійно є що сказати, тож виділені частоти/час можуть більшість часу не використовуватися. Цей підхід марнотратний, бо обмежує комп'ютери їхнім конкретним виділеним діапазоном, навіть коли інші діапазони можуть не використовуватися.
 
-Instead of fixed allocation, another category of approaches are based on the nodes taking turns, without any fixed allocations. In this category, we're dynamically partitioning by time, so that nodes use only the time they need during their turn, with no wasted time. There are two ways we could consider having nodes take turns.
+Замість фіксованого розподілу інша категорія підходів ґрунтується на тому, що вузли діють по черзі, без жодних фіксованих розподілів. У цій категорії ми динамічно поділяємо час, тож вузли використовують лише той час, який їм потрібен у свою чергу, без марнування часу. Є два способи, як можна організувати чергування вузлів.
 
-In a **polling protocol**, a centralized coordinator decides when each connected node gets to speak. The coordinator goes to each node one by one and asks if the node has something to say. If the node says yes, the coordinator lets the node speak for some time. If the node says no, the coordinator immediately moves on to the next node, and the node doesn't waste any resources. Bluetooth is a real-world protocol using this idea.
+У **протоколі опитування** (polling protocol) централізований координатор вирішує, коли кожному під'єднаному вузлу говорити. Координатор по черзі звертається до кожного вузла й питає, чи вузлу є що сказати. Якщо вузол каже «так», координатор дає вузлу говорити певний час. Якщо вузол каже «ні», координатор одразу переходить до наступного вузла, і вузол не марнує жодних ресурсів. Bluetooth — реальний протокол, що використовує цю ідею.
 
 <img width="900px" src="/assets/end-to-end/5-006-polling.png">
 
-The other way to let nodes take turns is **token passing**. Instead of having a centralized coordinator, we have a virtual token that can be passed between nodes, and only the node with the token is allowed to speak. If a node has something to say, it holds onto the token while transmitting, then passes it to the next node. If a node doesn't have anything to say at the moment, it immediately passes the token to the next node. IBM Token Ring and FDDI are real-world examples of protocols that use this idea.
+Інший спосіб дати вузлам діяти по черзі — **передавання маркера** (token passing). Замість централізованого координатора в нас є віртуальний маркер, який можна передавати між вузлами, і говорити дозволено лише вузлу з маркером. Якщо вузлу є що сказати, він утримує маркер під час передавання, а потім передає його наступному вузлу. Якщо вузлу зараз нічого сказати, він одразу передає маркер наступному вузлу. IBM Token Ring і FDDI — реальні приклади протоколів, що використовують цю ідею.
 
 <img width="900px" src="/assets/end-to-end/5-007-token.png">
 
-One downside to these turn-based approaches is complexity. We have to implement some form of inter-node communication, which could get complicated. In token passing, we might need some dedicated frequency channel for nodes to reliably pass the token between each other. We might also have to deal with complications like two nodes both thinking they have the token and causing a collision. In a polling protocol, we need to designate a central coordinator to communicate with nodes, and implement a way for the coordinator to talk to the nodes. In Bluetooth, your smartphone can be the central coordinator talking to auxiliary devices, but in other networks, it might not be obvious who the coordinator is.
+Один недолік цих підходів із чергуванням — складність. Нам доводиться реалізовувати певну форму взаємодії між вузлами, що може стати складним. У передаванні маркера нам може знадобитися виділений частотний канал, щоб вузли надійно передавали маркер між собою. Нам також може доведеться мати справу з ускладненнями на кшталт того, що два вузли обидва вважають, що мають маркер, і спричиняють колізію. У протоколі опитування нам треба призначити центрального координатора для взаємодії з вузлами й реалізувати спосіб, у який координатор розмовлятиме з вузлами. У Bluetooth ваш смартфон може бути центральним координатором, що розмовляє з допоміжними пристроями, але в інших мережах може бути неочевидно, хто координатор.
 
 
-## Communicating over Shared Media: Random Access Approaches
+## Спілкування через спільне середовище: підходи з випадковим доступом
 
-A third category of approaches, besides fixed allocation or taking turns, is **random access**. In this approach, we just allow nodes to talk whenever they have something to say, and deal with collisions when they occur. The nodes don't coordinate between each other, and just send data whenever they have something to send.
+Третя категорія підходів, окрім фіксованого розподілу чи чергування, — **випадковий доступ** (random access). За цього підходу ми просто дозволяємо вузлам говорити, коли їм є що сказати, і розбираємося з колізіями, коли вони трапляються. Вузли не координуються між собою, а просто надсилають дані, коли мають що надіслати.
 
-One major benefit of random access protocols is simplicity. Unlike the turn-based approaches, we don't need to implement inter-node communication.
+Одна з головних переваг протоколів випадкового доступу — простота. На відміну від підходів із чергуванням, нам не потрібно реалізовувати взаємодію між вузлами.
 
-When the recipient gets a packet, it replies with an ack. If two nodes send data simultaneously, the collision causes their packets to be corrupted, so no ack is sent. If the sender doesn't see an ack, it waits some random amount of time and re-sends. Waiting some random amount of time, instead of re-sending immediately, helps us avoid collisions when the packets are resent.
+Коли отримувач отримує пакет, він відповідає підтвердженням. Якщо два вузли надсилають дані одночасно, колізія пошкоджує їхні пакети, тож підтвердження не надсилається. Якщо відправник не бачить підтвердження, він чекає випадковий проміжок часу й повторно надсилає. Очікування випадкового проміжку часу замість негайного повторного надсилання допомагає уникнути колізій під час повторного надсилання пакетів.
 
-The naive random access protocol is "rude" because nodes start talking whenever they want, and deal with collisions afterwards. A more "polite" variant of this protocol is called **Carrier Sense Multiple Access (CSMA)**. Nodes listen to the shared medium first to see if anybody is speaking, and only start talking when it is quiet. Here, "listen" refers to sensing a signal on the wire.
+Наївний протокол випадкового доступу «нечемний», бо вузли починають говорити, коли заманеться, і розбираються з колізіями потім. «Чемніший» варіант цього протоколу називається **множинним доступом із контролем несучої** (Carrier Sense Multiple Access, CSMA). Вузли спершу слухають спільне середовище, щоб перевірити, чи хтось говорить, і починають говорити лише тоді, коли тихо. Тут «слухати» означає відчувати сигнал у дроті.
 
-Note that CSMA does not help us avoid all collisions. If signals instantaneously propagated along the entire length of the wire, there would be no collisions in CSMA. However, propagation delay can introduce issues. Suppose node A on one end of the wire hears silence and starts transmitting. The signal might not have propagated to node B yet, on the other end of the wire. Node B hears silence and also starts transmitting, causing a collision.
+Зауважте, що CSMA не допомагає уникнути всіх колізій. Якби сигнали миттєво поширювалися по всій довжині дроту, у CSMA не було б колізій. Однак затримка поширення може створювати проблеми. Припустімо, вузол A на одному кінці дроту чує тишу й починає передавати. Сигнал міг ще не поширитися до вузла B на іншому кінці дроту. Вузол B чує тишу й теж починає передавати, спричиняючи колізію.
 
 <img width="500px" src="/assets/end-to-end/5-008-propagation.png">
 
-This 2D diagram demonstrates how propagation delay can cause conflicts. A horizontal cross-section shows the wire at an instant in time, and lets us see how far the signal has propagated across the wire at that instant. A vertical cross-section shows a single location on the wire across time, and lets us see when that location sees the first and last bits of the transmission. Both H2 and H4 hear silence before they start transmitting, but their signals still collide.
+Ця двовимірна діаграма показує, як затримка поширення може спричиняти конфлікти. Горизонтальний переріз показує дріт у певну мить і дає змогу побачити, як далеко сигнал поширився дротом у цю мить. Вертикальний переріз показує одне місце на дроті в часі й дає змогу побачити, коли це місце бачить перший і останній біти передавання. І H2, і H4 чують тишу, перш ніж почати передавати, але їхні сигнали однаково стикаються.
 
-To mitigate this problem, we can use **CSMA/CD** (Carrier Sense Multiple Access with **Collision Detection**), which extends the idea of CSMA. In addition to listening before speaking, we also listen while we speak. If you start hearing something while you're transmitting, you stop immediately. Note that CSMA/CD still doesn't fix the problem of collisions, but it allows us to detect collisions sooner.
+Щоб пом'якшити цю проблему, можна використати **CSMA/CD** (множинний доступ із контролем несучої та **виявленням колізій**, Collision Detection), що розвиває ідею CSMA. Окрім слухання перед тим, як говорити, ми також слухаємо, поки говоримо. Якщо ви починаєте щось чути, поки передаєте, ви негайно зупиняєтеся. Зауважте, що CSMA/CD однаково не усуває проблеми колізій, але дає змогу виявляти колізії раніше.
 
-If there's only one speaker, there won't be any collisions, and all of our random access schemes should work fine. If there are only a few speakers, there might be occasional collisions, but all of our schemes can deal with them. However, if many senders want to talk simultaneously, we may have problems with repeated collisions, and waiting a random amount of time to re-send won't help.
+Якщо мовець лише один, колізій не буде, і всі наші схеми випадкового доступу мають працювати добре. Якщо мовців лише кілька, можуть траплятися поодинокі колізії, але всі наші схеми можуть з ними впоратися. Однак якщо багато відправників хочуть говорити одночасно, у нас можуть бути проблеми з повторюваними колізіями, і очікування випадкового проміжку часу перед повторним надсиланням не допоможе.
 
-To deal with repeated collisions, CSMA/CD uses **binary exponential backoff**. Each time we detect a collision on a retransmission attempt, we wait up to twice as long before the next retransmission. Note that we still randomly choose the retransimssion time, but each time we detect a collision, we choose the random number from a range with a limit that's twice as high. For example, if we chose a random time in the range [0, 4] and detected a collision, the next random time we choose is in the range [0, 8].
+Щоб упоратися з повторюваними колізіями, CSMA/CD використовує **двійкову експоненційну затримку** (binary exponential backoff). Щоразу, виявляючи колізію під час спроби повторної передачі, ми чекаємо до вдвічі довше перед наступною повторною передачею. Зауважте, що ми однаково обираємо час повторної передачі випадково, але щоразу, виявляючи колізію, обираємо випадкове число з діапазону з удвічі вищою межею. Наприклад, якщо ми обрали випадковий час у діапазоні [0, 4] і виявили колізію, наступний випадковий час ми обираємо в діапазоні [0, 8].
 
-Binary exponential backoff works well in both scenarios. When there are a few nodes speaking, repeated collisions are uncommon, so we can retransmit after a short wait time. When there are many nodes speaking, there are many repeated collisions, so the delay increases exponentially until there are no collisions (e.g. enough nodes have been delayed far into the future, and there are fewer nodes competing right now). This approach ensures we only slow down when many nodes want to speak, and maintains fast transmission when few nodes want to speak.
+Двійкова експоненційна затримка добре працює в обох сценаріях. Коли говорить кілька вузлів, повторювані колізії рідкісні, тож можна повторно передавати після короткого очікування. Коли говорить багато вузлів, повторюваних колізій багато, тож затримка експоненційно зростає, доки колізії не зникнуть (наприклад, достатньо вузлів відкладено далеко в майбутнє, і зараз конкурує менше вузлів). Такий підхід гарантує, що ми сповільнюємося лише тоді, коли говорити хочуть багато вузлів, і зберігаємо швидке передавання, коли говорити хочуть небагато вузлів.
 
 
-## Brief History of Layer 2: ALOHANet
+## Коротка історія рівня 2: ALOHANet
 
-In 1968, Norman Abramson had a problem at the University of Hawaii. There was a central computer at the University of Hawaii, and he needed a way for computers on other islands to access this central computer. The resulting design was very influential to modern Layer 2 protocol designs.
+У 1968 році в Гавайському університеті перед Норманом Абрамсоном (Norman Abramson) постала проблема. У Гавайському університеті був центральний комп'ютер, і йому потрібен був спосіб, щоб комп'ютери на інших островах мали доступ до цього центрального комп'ютера. Отриманий дизайн мав великий вплив на сучасні проєкти протоколів рівня 2.
 
-The resulting protocol was called ALOHANet (Additive Links On-line Hawaii Area), which allowed wireless communication from other islands to the central computer. ALOHANet was wireless and used a shared medium, where everybody is sending data over the same link.
+Отриманий протокол назвали ALOHANet (Additive Links On-line Hawaii Area), і він дозволяв бездротовий зв'язок з інших островів із центральним комп'ютером. ALOHANet був бездротовим і використовував спільне середовище, де всі надсилають дані тим самим каналом.
 
-ALOHANet used a combination of fixed allocation and random access, because of its asymmetric setup. The central computer (hub) used its own dedicated frequency to transmit outgoing messages, and all remote nodes listened on this frequency to receive messages. With only one sender on a dedicated frequency, there's no risk of collisions.
+ALOHANet використовував поєднання фіксованого розподілу й випадкового доступу через свою асиметричну конфігурацію. Центральний комп'ютер (хаб) використовував власну виділену частоту для передавання вихідних повідомлень, і всі віддалені вузли слухали цю частоту, щоб отримувати повідомлення. Коли на виділеній частоті лише один відправник, ризику колізій немає.
 
-By contrast, all the remote nodes transmit on a separate shared frequency, and the hub listened to this frequency. The hub won't collide with the remote nodes, because they use different frequencies, but the remote nodes could collide with each other.
+Натомість усі віддалені вузли передають на окремій спільній частоті, і хаб слухав цю частоту. Хаб не стикатиметься з віддаленими вузлами, бо вони використовують різні частоти, але віддалені вузли можуть стикатися між собою.
 
-This asymmetric design worked well for ALOHANet because the hub probably has more to send than the remote nodes.
+Цей асиметричний дизайн добре працював для ALOHANet, бо хабу, найімовірніше, є що надсилати більше, ніж віддаленим вузлам.
 
 <img width="200px" src="/assets/end-to-end/5-009-alohanet.png">
 
-ALOHANet was one of the first systems to use a random access protocol to handle collisions, and this approach would later be used in Ethernet. ALOHANet used the naive rude approach to random access. Later protocols like Ethernet used the more polite approach of CSMA/CD, where we listen for collisions before and during transimssion, and we back off exponentially when there are collisions.
+ALOHANet був однією з перших систем, що використовували протокол випадкового доступу для обробки колізій, і цей підхід згодом використали в Ethernet. ALOHANet використовував наївний «нечемний» підхід до випадкового доступу. Пізніші протоколи, як-от Ethernet, використовували «чемніший» підхід CSMA/CD, де ми слухаємо колізії до й під час передавання та експоненційно відступаємо, коли трапляються колізії.
 
 
-## LAN Communication: MAC Addresses
+## Зв'язок у LAN: MAC-адреси
 
-Because multiple computers can be connected along the same Ethernet link, we can actually use Layer 2 protocols to send messages between local computers on the same link, without using any Layer 3 protocols at all (e.g. no routers forwarding packets). In the postal system analogy, two people in the same room can pass letters between each other, without sending the letter to the post office.
+Оскільки вздовж того самого каналу Ethernet може бути під'єднано кілька комп'ютерів, ми насправді можемо використовувати протоколи рівня 2 для надсилання повідомлень між локальними комп'ютерами на тому самому каналі, взагалі не використовуючи протоколів рівня 3 (наприклад, без маршрутизаторів, що пересилають пакети). В аналогії з поштовою системою двоє людей у тій самій кімнаті можуть передавати один одному листи, не надсилаючи їх на пошту.
 
-One problem with sending messages over a shared media is: When we transmit the message, everybody on the link gets the message, not just the intended recipient. To send a message to just one person, we need an addressing system at Layer 2 so that we can identify which machine the message is intended for. In the postal system analogy, if I speak in a room, everyone gets the message. To talk to one specific person, I need to refer to them using their name.
+Одна проблема надсилання повідомлень через спільне середовище така: коли ми передаємо повідомлення, його отримують усі на каналі, а не лише задуманий отримувач. Щоб надіслати повідомлення лише одній людині, нам потрібна система адресації на рівні 2, щоб можна було визначити, якій машині призначено повідомлення. В аналогії з поштовою системою: якщо я говорю в кімнаті, повідомлення отримують усі. Щоб звернутися до однієї конкретної людини, мені треба назвати її на ім'я.
 
-At Layer 2, every computer has a **MAC address** (Media Access Control). MAC addresses are 48 bits long, and are usually written in hexadecimal with colons separating every 2 hex digits (8 bits), e.g. `f8:ff:c2:2b:36:16`. MAC addresses are sometimes called ether addresses or link addresses.
+На рівні 2 кожен комп'ютер має **MAC-адресу** (Media Access Control). MAC-адреси мають довжину 48 бітів і зазвичай записуються в шістнадцятковій системі з двокрапками після кожних 2 шістнадцяткових цифр (8 бітів), наприклад `f8:ff:c2:2b:36:16`. MAC-адреси іноді називають ether-адресами чи адресами каналу.
 
-MAC addresses are usually permanently hard-coded ("burned in") on a device (e.g. the NIC in your computer). Most OSes will let you override the MAC address in software, but every device already comes with a MAC address installed. MAC addresses are allocated according to the manufacturer that creates the hardware. The first two bits are flags, then the next 22 bits identify the manufacturer, then the last 24 bits identify the specific machine within that manufacturer's address space.
+MAC-адреси зазвичай назавжди жорстко записані («впалені», burned in) у пристрій (наприклад, у мережеву карту вашого комп'ютера). Більшість ОС дозволяють програмно перевизначити MAC-адресу, але кожен пристрій уже постачається зі встановленою MAC-адресою. MAC-адреси виділяються відповідно до виробника, що створює обладнання. Перші два біти — прапорці, наступні 22 біти ідентифікують виробника, а останні 24 біти ідентифікують конкретну машину в адресному просторі цього виробника.
 
-Why not just use IP addressing? Hosts on a link might want to exchange messages, without ever being connected to the Internet (i.e. they don't have an IP address at all).
+Чому б просто не використовувати IP-адресацію? Хости на каналі можуть хотіти обмінюватися повідомленнями, взагалі не під'єднуючись до Інтернету (тобто не маючи IP-адреси).
 
-This permanent addressing scheme is different from IP, where you receive an address when you first join a network, and the address depends on your geographic location. MAC addresses are usually supposed to be globally unique, because you might plug your computer into any local network, and it'd be bad if two computers on a link had the same MAC address.
-
-
-## LAN Communication Types, Ethernet Packet Structure
-
-There are different possible destinations in a Layer 2 packet. In **unicast**, the packet is intended to a single recipient. In **broadcast**, the packet is intended for all machines on the local network. In **multicast**, the packet is intended for all machines in the local network that belong to a particular group. Machines can choose to join certain groups to receive packets meant for that group. Ethernet supports unicast, multicast, and broadcast.
-
-Note that broadcast is sometimes thought of as a special case of multicast, where everybody is automatically part of the broadcast group.
-
-This unicast/broadcast/multicast model extends to other layers too. For example, we saw anycast at Layer 3, where the goal was to send to any one member of a group (any of the servers with the same IP address).
+Ця постійна схема адресації відрізняється від IP, де ви отримуєте адресу, коли вперше приєднуєтеся до мережі, і адреса залежить від вашого географічного розташування. MAC-адреси зазвичай мають бути глобально унікальними, бо ви можете під'єднати свій комп'ютер до будь-якої локальної мережі, і було б погано, якби два комп'ютери на каналі мали ту саму MAC-адресу.
 
 
-## Ethernet Packet Structure
+## Типи зв'язку в LAN, структура пакета Ethernet
 
-A data packet in Ethernet is called a **frame**. Many fields look similar to the IP header fields, though there are some differences.
+У пакеті рівня 2 можливі різні адресати. За **одноадресної передачі** (unicast) пакет призначено одному отримувачеві. За **широкомовної розсилки** (broadcast) пакет призначено всім машинам у локальній мережі. За **багатоадресної розсилки** (multicast) пакет призначено всім машинам у локальній мережі, що належать до певної групи. Машини можуть вирішувати приєднатися до певних груп, щоб отримувати пакети, призначені цій групі. Ethernet підтримує одноадресну передачу, багатоадресну й широкомовну розсилки.
+
+Зауважте, що широкомовну розсилку іноді вважають окремим випадком багатоадресної, де всі автоматично входять до широкомовної групи.
+
+Ця модель одноадресної/широкомовної/багатоадресної передачі поширюється й на інші рівні. Наприклад, ми бачили anycast на рівні 3, де мета полягала в надсиланні будь-якому одному членові групи (будь-якому із серверів з тією самою IP-адресою).
+
+
+## Структура пакета Ethernet
+
+Пакет даних в Ethernet називається **кадром** (frame). Багато полів схожі на поля заголовка IP, хоча є й певні відмінності.
 
 <img width="900px" src="/assets/end-to-end/5-010-ethernet-packet.png">
 
-The Ethernet packet starts with a 7-byte preamble, which indicates the start of a packet. This helps separate packets as they're signalled across the wire.
+Пакет Ethernet починається з 7-байтової преамбули, що позначає початок пакета. Це допомагає розділяти пакети, коли вони передаються сигналом дротом.
 
-Then, we have the destination and source MAC addresses, similar to the destination and source fields in the IP header. We have a 2-byte type field, which allows us to demultiplex between IPv4 or IPv6, and pass the packet payload to the correct next protocol. This is similar to the protocol field in the IP header, or the port field in the TCP/UDP headers. We also have a checksum, though unlike IP, the checksum is over the entire packet, so that we don't have to rely on higher layers (e.g. the packet might not be TCP/IP at all).
+Потім ідуть MAC-адреси призначення й джерела, подібно до полів призначення й джерела в заголовку IP. У нас є 2-байтове поле типу, що дає змогу демультиплексувати між IPv4 та IPv6 і передати корисне навантаження пакета правильному наступному протоколу. Це схоже на поле протоколу в заголовку IP чи поле порту в заголовках TCP/UDP. У нас також є контрольна сума, хоча, на відміну від IP, контрольна сума обчислюється по всьому пакету, щоб не доводилося покладатися на вищі рівні (наприклад, пакет може взагалі не бути TCP/IP).
 
-To unicast a message, we set the destination MAC address to a specific machine's MAC address. Everybody on the shared medium receives the packet, so everybody needs to check the destination MAC to see if the packet is meant for them. If the destination MAC address doesn't match your address, you should ignore the packet.
+Щоб надіслати повідомлення одноадресно, ми встановлюємо MAC-адресу призначення рівною MAC-адресі конкретної машини. Пакет отримують усі в спільному середовищі, тож усі мають перевірити MAC-адресу призначення, щоб з'ясувати, чи пакет призначено їм. Якщо MAC-адреса призначення не збігається з вашою адресою, ви маєте ігнорувати пакет.
 
-To broadcast a message, we set the destination MAC to the special address `FF:FF:FF:FF:FF:FF` (all ones). Just like in unicast, everybody on the shared medium receives the packet, but this time, because the destination MAC address is the broadcast address, everybody knows to reads the packet. Note that this all-ones broadcast address is the same in every Ethernet network.
+Щоб розіслати повідомлення широкомовно, ми встановлюємо MAC-адресу призначення рівною спеціальній адресі `FF:FF:FF:FF:FF:FF` (усі одиниці). Як і за одноадресної передачі, пакет отримують усі в спільному середовищі, але цього разу, оскільки MAC-адреса призначення — широкомовна адреса, усі знають, що мають прочитати пакет. Зауважте, що ця широкомовна адреса з усіх одиниць однакова в кожній мережі Ethernet.
 
-To multicast a message, we set the destination MAC to the address of that group. Recall that the first two bits of the MAC addresses are flags. Normal addresses allocated to machines always set the first bit to 0, and addresses for groups always set the first bit to 1. Just like in unicast and broadcast, everybody still gets the message. Anybody who's part of a group needs to make sure they're listening on that group's address in order to receive packets multicast to that group. Additional protocols are necessary to control who belongs to which groups, and we won't discuss them further.
+Щоб розіслати повідомлення багатоадресно, ми встановлюємо MAC-адресу призначення рівною адресі цієї групи. Пригадайте, що перші два біти MAC-адрес — прапорці. Звичайні адреси, виділені машинам, завжди мають перший біт 0, а адреси груп завжди мають перший біт 1. Як і за одноадресної та широкомовної передачі, повідомлення однаково отримують усі. Кожен, хто входить до групи, має переконатися, що слухає адресу цієї групи, щоб отримувати пакети, розіслані цій групі. Для керування тим, хто до яких груп належить, потрібні додаткові протоколи, і ми не обговорюватимемо їх далі.
 
 
-## Layer 2 Networks with Ethernet
+## Мережі рівня 2 з Ethernet
 
-So far, we've shown Layer 2 protocols as operating on a single link with multiple computers attached to it, but we could introduce multiple links and build a network entirely using Layer 2. Packets could be forwarded, and machines could even run routing protocols, all exclusively using Layer 2 MAC addresses.
+Досі ми показували, що протоколи рівня 2 працюють на одному каналі з кількома під'єднаними комп'ютерами, але можна запровадити кілька каналів і побудувати мережу повністю на рівні 2. Пакети можна пересилати, а машини можуть навіть виконувати протоколи маршрутизації — і все це виключно з MAC-адресами рівня 2.
 
-The routing protocols we ran at the IP layer could also work at Layer 2, though one downside is that we can't aggregate MAC addresses. IP addresses are allocated based on geography, but MAC addresses are allocated based on manufacturer, so there's no clear way to aggregate them. This downside is why we can't build the global Internet out of only Layer 2.
+Протоколи маршрутизації, які ми виконували на рівні IP, могли б працювати й на рівні 2, хоча один недолік у тому, що MAC-адреси неможливо агрегувати. IP-адреси виділяються на основі географії, а MAC-адреси — на основі виробника, тож немає очевидного способу їх агрегувати. Через цей недолік ми не можемо побудувати глобальний Інтернет лише з рівня 2.
 
-If there are multiple links in a single local network, we'd have to ensure that if someone broadcasts a message, any switches at Layer 2 forward the packet out of all outgoing ports.
+Якщо в одній локальній мережі кілька каналів, нам доведеться гарантувати, що коли хтось розсилає повідомлення широкомовно, усі комутатори на рівні 2 пересилають пакет через усі вихідні порти.
 
-Multicast gets more complicated in a Layer 2 network with multiple links. Additional protocols are needed, though we won't discuss further.
+Багатоадресна розсилка ускладнюється в мережі рівня 2 з кількома каналами. Потрібні додаткові протоколи, але ми не обговорюватимемо їх далі.
 
-One example of multicast being useful on a LAN is Bonjour/mDNS, a protocol developed by Apple. In this protocol, all Apple devices (e.g. iPhone, iPad, Apple TV) are hard-coded to join a special group on the local network. If your iPhone wants to find nearby devices to play music (e.g. Apple TV, Apple speaker or HomePod or whatever they call it), the iPhone can multicast a message to the group, asking if anybody can play music. Devices in the group can also multicast responses, saying "I am an Apple TV and I can play music." Interestingly, this protocol actually also uses DNS in the multicast group to send SRV records, which maps each machine to its capabilities.
+Один приклад корисності багатоадресної розсилки в LAN — Bonjour/mDNS, протокол, розроблений Apple. У цьому протоколі всі пристрої Apple (наприклад, iPhone, iPad, Apple TV) жорстко налаштовані приєднуватися до спеціальної групи в локальній мережі. Якщо ваш iPhone хоче знайти розташовані поруч пристрої для відтворення музики (наприклад, Apple TV, колонку Apple, HomePod чи як там вони її називають), iPhone може розіслати групі повідомлення з питанням, чи хтось може відтворювати музику. Пристрої в групі також можуть розсилати відповіді: «Я Apple TV і можу відтворювати музику». Цікаво, що цей протокол насправді також використовує DNS у групі багатоадресної розсилки для надсилання записів SRV, що відображають кожну машину на її можливості.
 
-Historical note: In the modern Internet, we've said that the terms "router" and "switch" are interchangeable. Now that we have the notion of a Layer 2 network, we could say that a switch only operates at Layers 1 and 2, while a router operates at Layers 1, 2, and 3.
+Історична примітка: у сучасному Інтернеті, як ми казали, терміни «маршрутизатор» і «комутатор» взаємозамінні. Тепер, коли в нас є поняття мережі рівня 2, можна сказати, що комутатор працює лише на рівнях 1 і 2, а маршрутизатор — на рівнях 1, 2 і 3.
 
-If you go back to our picture of wrapping and unwrapping headers, we've assumed that every router parses the packet up to Layer 3, and forwards the packet to the next router over IP. However, if we had a Layer 2 network with multiple links, a switch only needs to pass the packet up to Layer 2 and forward the packet to the next switch over Ethernet.
+Якщо повернутися до нашої картинки загортання й розгортання заголовків, ми вважали, що кожен маршрутизатор розбирає пакет до рівня 3 і пересилає пакет наступному маршрутизатору через IP. Однак якби в нас була мережа рівня 2 з кількома каналами, комутаторові достатньо передати пакет нагору лише до рівня 2 і переслати його наступному комутатору через Ethernet.
 
-Today, pretty much all switches also implement Layer 3, which is why we use the terms interchangeably. Historically, Ethernet predates the Internet, which is why there was a distinction between switches and routers.
+Сьогодні практично всі комутатори реалізують і рівень 3, тому ми вживаємо ці терміни як взаємозамінні. Історично Ethernet передує Інтернету, тому й існувала відмінність між комутаторами й маршрутизаторами.

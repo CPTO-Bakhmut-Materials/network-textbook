@@ -1,61 +1,61 @@
 ---
-title: TCP Throughput Model
-parent: Transport
+title: Модель пропускної спроможності TCP
+parent: Транспортний рівень
 nav_order: 7
 layout: page-with-toc
 ---
 
-# TCP Throughput Model
+# Модель пропускної спроможності TCP
 
-## Modeling Assumptions
+## Припущення моделі
 
-In the previous sections, we developed an algorithm for congestion control. This algorithm told us how to adjust rate in response to congestion, but it didn't actually tell us what that rate is.
+У попередніх розділах ми розробили алгоритм керування перевантаженням. Цей алгоритм підказував, як коригувати швидкість у відповідь на перевантаження, але не казав, якою ж є ця швидкість.
 
-In this section, we'll develop a model for estimating the throughput of a TCP connection along a specific path. Specifically, we want a simple equation that gives us throughput as a function of a path's RTT and loss rate. This equation can allow operators and customers to estimate the rate of a TCP connection.
+У цьому розділі ми розробимо модель для оцінювання пропускної спроможності (throughput) з'єднання TCP на конкретному шляху. Конкретно, ми хочемо просту формулу, що дає пропускну спроможність як функцію RTT шляху та частки втрат. Ця формула може дати операторам і клієнтам змогу оцінювати швидкість з'єднання TCP.
 
-To simplify our model, we'll make a few assumptions: There is a single TCP connection. We'll ignore the slow-start phase. We'll assume the RTT is some fixed number.
+Щоб спростити модель, ми зробимо кілька припущень: є одне з'єднання TCP. Ми ігноруємо фазу повільного старту. Ми вважаємо RTT певним фіксованим числом.
 
-When the window size reaches the maximum bottleneck bandwidth $$W_\text{max}$$ (some constant), we'll assume we get exactly one packet loss. Since we only lose one packet, our loss will be detected by duplicate acks (no timeouts).
+Коли розмір вікна досягає максимальної пропускної здатності вузького місця $$W_\text{max}$$ (певної сталої), ми вважатимемо, що втрачається рівно один пакет. Оскільки ми втрачаємо лише один пакет, втрату буде виявлено за дублікатами підтверджень (без тайм-аутів).
 
 
-## Throughput in Terms of Window Size
+## Пропускна спроможність через розмір вікна
 
-In this simplified model, we detect loss when the window size reaches $$W_\text{max}$$, and our window size changes to $$\frac{1}{2} W_\text{max}$$ as a result.
+У цій спрощеній моделі ми виявляємо втрату, коли розмір вікна досягає $$W_\text{max}$$, і внаслідок цього розмір вікна змінюється на $$\frac{1}{2} W_\text{max}$$.
 
-Then, for each subsequent RTT, our window size will increase by 1: $$\frac{1}{2} W_\text{max} + 1$$, then $$\frac{1}{2} W_\text{max} + 2$$, then $$\frac{1}{2} W_\text{max} + 3$$, etc. Eventually, the window size will reach $$W_\text{max}$$ again and be halved, and this process will repeat.
+Потім за кожен наступний RTT розмір вікна збільшуватиметься на 1: $$\frac{1}{2} W_\text{max} + 1$$, потім $$\frac{1}{2} W_\text{max} + 2$$, потім $$\frac{1}{2} W_\text{max} + 3$$ тощо. Зрештою розмір вікна знову досягне $$W_\text{max}$$ і буде зменшений удвічі, і цей процес повторюватиметься.
 
-Starting at $$\frac{1}{2} W_\text{max}$$ and reaching $$W_\text{max}$$ takes $$\frac{1}{2} W_\text{max}$$ RTTs (adding 1 per iteration, and each iteration is one RTT). This also tells us that there are $$\frac{1}{2} W_\text{max}$$ RTTs between each loss.
+Щоб від $$\frac{1}{2} W_\text{max}$$ дійти до $$W_\text{max}$$, потрібно $$\frac{1}{2} W_\text{max}$$ RTT (додаємо 1 за ітерацію, і кожна ітерація — один RTT). Звідси також видно, що між втратами минає $$\frac{1}{2} W_\text{max}$$ RTT.
 
 <img width="900px" src="/assets/transport/3-088-equation1.png">
 
-Within each RTT, the average window size is $$\frac{3}{4} W_\text{max}$$ (right in between $$\frac{1}{2} W_\text{max}$$ and $$W_\text{max}$$).
+У межах кожного RTT середній розмір вікна становить $$\frac{3}{4} W_\text{max}$$ (рівно посередині між $$\frac{1}{2} W_\text{max}$$ і $$W_\text{max}$$).
 
-This window size is measured in packets (since we were adding 1 packet per iteration). Each packet can contain $$\text{MSS}$$ bytes (maximum segment size), so the average window size in bytes is $$\frac{3}{4} W_\text{max} \times \text{MSS}$$.
+Цей розмір вікна вимірюється в пакетах (бо ми додавали по 1 пакету за ітерацію). Кожен пакет може містити $$\text{MSS}$$ байтів (максимальний розмір сегмента), тож середній розмір вікна в байтах — $$\frac{3}{4} W_\text{max} \times \text{MSS}$$.
 
-The window size tells us how much data we can send in each RTT. Thus, to compute the rate, we divide window size (data) by RTT (time) to get an average rate of $$\frac{3}{4} W_\text{max} \times \frac{\text{MSS}}{\text{RTT}}$$.
+Розмір вікна показує, скільки даних ми можемо надіслати за кожен RTT. Отже, щоб обчислити швидкість, ділимо розмір вікна (дані) на RTT (час) і отримуємо середню швидкість $$\frac{3}{4} W_\text{max} \times \frac{\text{MSS}}{\text{RTT}}$$.
 
 
-## Throughput in Terms of Loss Rate
+## Пропускна спроможність через частку втрат
 
-Our equation for throughput so far is: $$\frac{3}{4} W_\text{max} \times \frac{\text{MSS}}{\text{RTT}}$$.
+Наша формула пропускної спроможності на цей момент: $$\frac{3}{4} W_\text{max} \times \frac{\text{MSS}}{\text{RTT}}$$.
 
-But our goal is to express throughput in terms of RTT and loss rate (denoted $$p$$). So, we now need to express $$W_\text{max}$$ in terms of the loss rate $$p$$.
+Але наша мета — виразити пропускну спроможність через RTT і частку втрат (позначену $$p$$). Тож тепер нам треба виразити $$W_\text{max}$$ через частку втрат $$p$$.
 
-From earlier, we deduced that a packet is lost once every $$\frac{1}{2} W_\text{max}$$ RTTs. This was the time it took after a drop to climb back up to $$W_\text{max}$$ and encounter another drop.
+Раніше ми з'ясували, що пакет втрачається раз на $$\frac{1}{2} W_\text{max}$$ RTT. Саме стільки часу знадобилося після відкидання, щоб знову піднятися до $$W_\text{max}$$ і зіткнутися з наступним відкиданням.
 
-So, to determine the loss rate, we just need to figure out how many packets are sent in $$\frac{1}{2} W_\text{max}$$ RTTs.
+Тож щоб визначити частку втрат, нам достатньо з'ясувати, скільки пакетів надсилається за $$\frac{1}{2} W_\text{max}$$ RTT.
 
 <img width="900px" src="/assets/transport/3-089-equation2.png">
 
-Graphically, the number of packets sent is the area of this shape (rate times time), or equivalently, the area under the curve (the curve shows rate, and we want integral of rate).
+Графічно кількість надісланих пакетів — це площа цієї фігури (швидкість помножити на час), або, рівнозначно, площа під кривою (крива показує швидкість, а нам потрібен інтеграл швидкості).
 
-We know from earlier that the average window size is $$\frac{3}{4} W_\text{max}$$, so this is the number of packets sent per RTT. Therefore, across $$\frac{1}{2} W_\text{max}$$ RTTs, we expect to send $$(\frac{1}{2} W_\text{max}) \times \frac{3}{4} W_\text{max} = \frac{3}{8} W_\text{max}^2$$ packets.
+Ми вже знаємо, що середній розмір вікна становить $$\frac{3}{4} W_\text{max}$$, тож саме стільки пакетів надсилається за RTT. Отже, за $$\frac{1}{2} W_\text{max}$$ RTT ми очікуємо надіслати $$(\frac{1}{2} W_\text{max}) \times \frac{3}{4} W_\text{max} = \frac{3}{8} W_\text{max}^2$$ пакетів.
 
-Now that we know the number of packets sent between losses, we know that the loss rate is one lost packet, divided by the number of packets sent between losses. (For example, if we send 100 packets between losses, the loss rate is roughly 1/100).
+Тепер, коли ми знаємо кількість пакетів, надісланих між втратами, ми знаємо, що частка втрат — це один втрачений пакет, поділений на кількість пакетів, надісланих між втратами. (Наприклад, якщо між втратами ми надсилаємо 100 пакетів, частка втрат становить приблизно 1/100.)
 
-Therefore, our loss rate is $$p = 1 / (\frac{3}{8} W_\text{max}^2) = \frac{8}{3W_\text{max}^2}$$.
+Отже, наша частка втрат дорівнює $$p = 1 / (\frac{3}{8} W_\text{max}^2) = \frac{8}{3W_\text{max}^2}$$.
 
-Now, we have a relation between $$W_\text{max}$$ and $$p$$, so we just need to do algebra to isolate $$W_\text{max}$$ in terms of $$p$$.
+Тепер у нас є співвідношення між $$W_\text{max}$$ і $$p$$, тож нам достатньо виконати алгебраїчні перетворення, щоб виразити $$W_\text{max}$$ через $$p$$.
 
 $$\begin{align*}
     p &= \frac{8}{3W_\text{max}^2} \\
@@ -64,7 +64,7 @@ $$\begin{align*}
     W_\text{max} &= \frac{2\sqrt{2}}{\sqrt{3p}}
 \end{align*}$$
 
-Now, we can do some more algebra to take our throughput equation from earlier and replace $$W_\text{max}$$ with $$p$$:
+Тепер можна виконати ще трохи алгебри, щоб узяти нашу попередню формулу пропускної спроможності (throughput) і замінити $$W_\text{max}$$ на $$p$$:
 
 $$\begin{align*}
     \text{throughput} &= \frac{3}{4} W_\text{max} \times \frac{\text{MSS}}{\text{RTT}} \\
@@ -73,27 +73,27 @@ $$\begin{align*}
 \end{align*}$$
 
 
-## Implications of Equation
+## Наслідки формули
 
-We now have an equation for throughput, expressed in terms of RTT and loss rate. What does it tell us?
+Тепер у нас є формула пропускної спроможності, виражена через RTT і частку втрат. Що вона нам каже?
 
-Throughput is inversely proportional to the square root of the loss rate. Intuitively, if the loss rate is higher, then the throughput is lower. This makes sense, because losing more packets means that the window size gets halved more often.
+Пропускна спроможність обернено пропорційна квадратному кореню з частки втрат. Інтуїтивно: якщо частка втрат вища, пропускна спроможність нижча. Це має сенс, бо втрата більшої кількості пакетів означає, що розмір вікна частіше зменшується вдвічі.
 
-Throughput is inversely proportional to RTT. Intuitively, if the RTT is lower, then the throughput is higher. This makes sense, because the window size increases every time we receive an ack, and a lower RTT means we get more acks more often.
+Пропускна спроможність обернено пропорційна RTT. Інтуїтивно: якщо RTT нижчий, пропускна спроможність вища. Це має сенс, бо розмір вікна збільшується щоразу, коли ми отримуємо підтвердження, а нижчий RTT означає, що ми частіше отримуємо більше підтверджень.
 
-This relationship between RTT and throughput can be a problem if we have multiple connections with different RTTs.
+Цей зв'язок між RTT і пропускною спроможністю може стати проблемою, якщо в нас кілька з'єднань із різними RTT.
 
 <img width="600px" src="/assets/transport/3-090-multi-flow.png">
 
-The connection with the lower RTT is going to be receiving acks more quickly, which means this connection also increases its window size and sends packets faster. In this case, it turns out the lower-RTT connection gets twice as much bandwidth as the higher-RTT connection.
+З'єднання з нижчим RTT отримуватиме підтвердження швидше, а отже, теж збільшуватиме розмір вікна й надсилатиме пакети швидше. У цьому випадку виявляється, що з'єднання з нижчим RTT отримує вдвічі більше пропускної здатності, ніж з'єднання з вищим RTT.
 
-Fundamentally, TCP is unfair when RTTs are heterogeneous (not the same). A shorter RTT improves propagation time, but it also helps TCP ramp up its rate faster. We accept this as a feature of TCP, and there's nothing we do about this in practice.
+По суті, TCP несправедливий, коли RTT неоднорідні (неоднакові). Коротший RTT покращує час поширення, але також допомагає TCP швидше нарощувати швидкість. Ми приймаємо це як особливість TCP, і на практиці нічого з цим не робимо.
 
 
-## Rate-Based Congestion Control
+## Керування перевантаженням на основі швидкості
 
-Our congestion control protocol results in choppy throughput. As seen in the graph, the rate repeatedly swings between W/2 and W. Some applications don't like the constantly-changing rate, and would prefer to send data at a steady rate (e.g. streaming applications).
+Наш протокол керування перевантаженням дає нерівномірну пропускну спроможність. Як видно на графіку, швидкість раз у раз коливається між W/2 і W. Деяким застосункам не подобається швидкість, що постійно змінюється, і вони воліли б надсилати дані з усталеною швидкістю (наприклад, застосунки потокового мовлення).
 
-One possible solution for these applications is **equation-based** or **rate-based congestion control**, which abandons the rules for dynamically adjusting the rate, and instead simply follows the equation. To send data at a smooth rate, you can measure RTT and loss rate, plug them into the throughput equation, and constantly send at the calculated rate. This solution also maintains fairness (doesn't hog bandwidth), because the equation ensures that we consume no more bandwidth than TCP would in a similar setting. (See RFC 5348 for more details.)
+Одне з можливих рішень для таких застосунків — **керування перевантаженням на основі формули** (equation-based) або **на основі швидкості** (rate-based congestion control), яке відмовляється від правил динамічного коригування швидкості й натомість просто дотримується формули. Щоб надсилати дані з рівномірною швидкістю, можна виміряти RTT і частку втрат, підставити їх у формулу пропускної спроможності й постійно надсилати з обчисленою швидкістю. Це рішення також зберігає справедливість (не захоплює пропускну здатність), бо формула гарантує, що ми споживаємо не більше пропускної здатності, ніж споживав би TCP за подібних умов. (Докладніше див. RFC 5348.)
 
-Formally, alternative implementations (including rate-based congestion control, and others) are considered **TCP-friendly** if they co-exist well with TCP by reducing their rate when necessary. TCP-friendly alternative algorithms lead to fair bandwidth sharing, even when some hosts run TCP and others run alternative algorithms.
+Формально альтернативні реалізації (включно з керуванням перевантаженням на основі швидкості та іншими) вважаються **TCP-дружніми** (TCP-friendly), якщо вони добре співіснують із TCP, знижуючи швидкість за потреби. TCP-дружні альтернативні алгоритми ведуть до справедливого розподілу пропускної здатності, навіть коли одні хости запускають TCP, а інші — альтернативні алгоритми.

@@ -1,242 +1,242 @@
 ---
-title: Addressing
-parent: Routing
+title: Адресація
+parent: Маршрутизація
 nav_order: 6
 layout: page-with-toc
 ---
 
-# Addressing
+# Адресація
 
-## Scaling Routing
+## Масштабування маршрутизації
 
-So far, our forwarding table has one entry per destination. This won't scale to the entire Internet.
+Досі наша таблиця пересилання мала по одному запису на пункт призначення. Це не масштабуватиметься на весь Інтернет.
 
-If we ran distance-vector on the entire Internet, we'd have to send an announcement for every host on the Internet. If we ran link-state on the entire Internet, every router would have to know the full Internet network graph. In both cases, if any host joins or leaves the Internet, we'd have to re-do computations to converge on a new routing state.
+Якби ми запускали дистанційно-векторний протокол на всьому Інтернеті, нам довелося б надсилати оголошення для кожного хоста в Інтернеті. Якби ми запускали протокол стану каналів на всьому Інтернеті, кожен маршрутизатор мав би знати повний граф мережі Інтернету. В обох випадках, якщо будь-який хост приєднується до Інтернету чи покидає його, нам довелося б переробляти обчислення, щоб збігтися до нового стану маршрутизації.
 
-The trick to scale routing is how we address hosts. So far, we've called every host and router by some name (e.g. R1, R2, A, B), but in practice, we'll use a smarter addressing scheme.
+Секрет масштабування маршрутизації — у тому, як ми адресуємо хости. Досі ми називали кожен хост і маршрутизатор якимось іменем (наприклад, R1, R2, A, B), але на практиці ми використовуватимемо розумнішу схему адресації.
 
 <img width="750px" src="/assets/routing/2-099-scaling-routing.png">
 
 
-## IP Addressing
+## IP-адресація
 
-Recall that in our postal service analogy, we had different addressing schemes for different contexts. The mailman used a street address like 2551 Hearst Ave. The secretary inside the building used a room number like 413 Soda Hall. Addresses are assigned in some structured way. For example, all third-floor room number start with the digit 3, and all fourth-floor rooms number start with the digit 4.
+Пригадайте, що в нашій аналогії з поштою були різні схеми адресації для різних контекстів. Листоноша використовував вуличну адресу на кшталт 2551 Hearst Ave. Секретар усередині будівлі використовував номер кімнати на кшталт 413 Soda Hall. Адреси призначаються певним структурованим чином. Наприклад, номери всіх кімнат третього поверху починаються з цифри 3, а всіх кімнат четвертого поверху — з цифри 4.
 
-Just like the postal system, the Internet uses different addressing schemes at each layer. In this section, we'll focus on IP addresses, which can be used for routing at Layer 3.
+Так само як поштова система, Інтернет використовує різні схеми адресації на кожному рівні. У цьому розділі ми зосередимося на IP-адресах, які можна використовувати для маршрутизації на рівні 3.
 
-Every host on the network (e.g. your computer, Google's server) is assigned an IP address. For this section, you can assume every host has a unique IP address.
+Кожному хосту в мережі (наприклад, вашому комп'ютеру, серверу Google) призначається IP-адреса. У цьому розділі можна вважати, що кожен хост має унікальну IP-адресу.
 
-An **IP address** is a number that uniquely identifies a host. Just like the postal system, the number is chosen to contain some context about where the host is located.
+**IP-адреса** (IP address) — це число, що однозначно ідентифікує хост. Як і в поштовій системі, число обирається так, щоб містити певний контекст про те, де розташований хост.
 
-Note that IP addresses are not necessarily static. In the analogy, if you move to a different house, your address changes. Similarly, if your computer moves to a different location, it may be assigned a different IP address when it joins the network (and your old IP address will eventually expire).
+Зауважте, що IP-адреси не обов'язково статичні. В аналогії: якщо ви переїжджаєте до іншого будинку, ваша адреса змінюється. Аналогічно, якщо ваш комп'ютер переміщується в інше місце, йому може бути призначено іншу IP-адресу, коли він приєднається до мережі (а термін дії вашої старої IP-адреси зрештою спливе).
 
-The length of an IP address depends on the version of IP being used. IPv4 addresses are 32 bits, and IPv6 addresses are 128 bits. The routing concepts are similar for both versions, but we'll use IPv4 when possible, because smaller addresses are easier to read.
+Довжина IP-адреси залежить від версії IP, що використовується. Адреси IPv4 мають 32 біти, а адреси IPv6 — 128 бітів. Концепції маршрутизації схожі для обох версій, але ми за можливості використовуватимемо IPv4, бо коротші адреси легше читати.
 
 
-## Hierarchical Addressing
+## Ієрархічна адресація
 
-Recall that the Internet is a network of networks. There are many local networks, and we add links between local networks to form the wider Internet. This gives us a natural hierarchy that we can use to organize our addressing scheme.
+Пригадайте, що Інтернет — це мережа мереж. Є багато локальних мереж, і ми додаємо канали між локальними мережами, щоб утворити ширший Інтернет. Це дає нам природну ієрархію, яку можна використати для впорядкування схеми адресації.
 
 <img width="900px" src="/assets/routing/2-100-address-intuition1.png">
 
-Here's an intuitive picture of addressing. We could assign a number to every network. Then, within network 3, we could assign host numbers 3.1, 3.2, 3.3, etc., and similar for hosts in the other networks.
+Ось інтуїтивна картина адресації. Ми можемо призначити номер кожній мережі. Потім у межах мережі 3 ми можемо призначити хостам номери 3.1, 3.2, 3.3 тощо, і аналогічно для хостів в інших мережах.
 
 <img width="900px" src="/assets/routing/2-101-address-intuition2.png">
 
-Now, consider the forwarding table in router R9. Before, we would have one entry for every host in network 1, and they would all have the same next hop of R6. With our hierarchical addressing, we could instead have a single entry for the entire local network, saying that all 1.* addresses (where the * represents any number) have a next hop of R6. We could also say that all 2.* addresses have a next hop of R8.
+Тепер розгляньте таблицю пересилання маршрутизатора R9. Раніше в нас був би один запис для кожного хоста в мережі 1, і всі вони мали б той самий наступний перехід R6. З ієрархічною адресацією ми натомість можемо мати один запис для всієї локальної мережі, який каже, що всі адреси 1.* (де * означає будь-яке число) мають наступний перехід R6. Ми також можемо сказати, що всі адреси 2.* мають наступний перехід R8.
 
-This hierarchical model, where we use wildcard matches to summarize routes, makes our forwarding tables smaller.
+Ця ієрархічна модель, де ми використовуємо збіги з шаблоном для узагальнення маршрутів, робить наші таблиці пересилання меншими.
 
-In addition, this model also makes our tables more stable.
+Крім того, ця модель також робить наші таблиці стабільнішими.
 
 <img width="900px" src="/assets/routing/2-102-address-intuition3.png">
 
-If the topology inside network 1 changes, we don't need to update R9's forwarding table (or any other tables in other networks). In practice, changes within a local network (e.g. new host joins the network) happens much more often than changes between networks (e.g. new underground cable installed), so it's a good thing that local changes only affect local tables.
+Якщо топологія всередині мережі 1 змінюється, нам не потрібно оновлювати таблицю пересилання R9 (чи будь-які інші таблиці в інших мережах). На практиці зміни в межах локальної мережі (наприклад, до мережі приєднується новий хост) відбуваються набагато частіше, ніж зміни між мережами (наприклад, прокладено новий підземний кабель), тож добре, що локальні зміни впливають лише на локальні таблиці.
 
-More generally, our addresses have two parts: a network ID,and a host ID. This allows inter-domain routing protocols to focus on the network ID to find routes between networks, and intra-domain routing protocols to focus on the host ID to find routes inside networks. This also makes our routing protocols more stable as the network changes. Inter-domain protocols don't care about changes inside networks, and intra-domain protocols don't care about changes in other networks.
+Загальніше, наші адреси складаються з двох частин: ідентифікатора мережі (network ID) та ідентифікатора хоста (host ID). Це дає змогу протоколам міждоменної маршрутизації зосереджуватися на ідентифікаторі мережі для пошуку маршрутів між мережами, а протоколам внутрішньодоменної маршрутизації — на ідентифікаторі хоста для пошуку маршрутів усередині мереж. Це також робить наші протоколи маршрутизації стабільнішими, коли мережа змінюється. Міждоменним протоколам байдужі зміни всередині мереж, а внутрішньодоменним — зміни в інших мережах.
 
 <img width="900px" src="/assets/routing/2-103-address-intuition4.png">
 
-Note that the forwarding table in R9 still needs entries for each individual host inside its own network (i.e. network 2).
+Зауважте, що таблиця пересилання R9 однаково потребує записів для кожного окремого хоста всередині власної мережі (тобто мережі 2).
 
-Similarly, R4, an internal router with no connections to other networks, needs both entries for individual hosts inside network 3, and aggregated entries for other networks (e.g. 2.* has a next hop of R9). The scale of a forwarding table depends on the number of internal hosts in the same network, plus the number of external networks.
+Аналогічно R4, внутрішній маршрутизатор без з'єднань з іншими мережами, потребує і записів для окремих хостів усередині мережі 3, і агрегованих записів для інших мереж (наприклад, 2.* має наступний перехід R9). Розмір таблиці пересилання залежить від кількості внутрішніх хостів у тій самій мережі плюс кількості зовнішніх мереж.
 
 
-## Default Routes
+## Маршрути за замовчуванням
 
-We now know that our entries can represent entire ranges of addresses, instead of always representing a single address. We can extend this idea even further to improve scale.
+Тепер ми знаємо, що наші записи можуть позначати цілі діапазони адрес, а не завжди одну адресу. Цю ідею можна розвинути ще далі для покращення масштабованості.
 
 <img width="900px" src="/assets/routing/2-104-aggregation1.png">
 
-Consider R4. It has an entry for every external network (1.\*, 3.\*, and 4.\*), all with the same next hop of R9. We could aggregate every external network into a single entry. We'll still have entries for every internal host (2.1, 2.2, etc.), but at the end, we'll say: For all other hosts not in the forwarding table, the next hop is R9.
+Розгляньмо R4. Він має запис для кожної зовнішньої мережі (1.\*, 3.\* і 4.\*), і всі вони мають той самий наступний перехід R9. Ми могли б агрегувати всі зовнішні мережі в один запис. У нас і далі будуть записи для кожного внутрішнього хоста (2.1, 2.2 тощо), але наприкінці ми скажемо: для всіх інших хостів, яких немає в таблиці пересилання, наступний перехід — R9.
 
 <img width="900px" src="/assets/routing/2-105-aggregation2.png">
 
-We can use more aggressive aggregation at R2. Again, all external networks have a next hop of R3. But, 2.1, 2.2, 2.3, 2.6, and 2.7 also have a next hop of R3. Therefore, the forwarding table only needs static entries for 2.4 and 2.5. Then, we can say, for all other hosts not in the forwarding table (including some internal and some external hosts), the next hop is R3.
+На R2 можна застосувати ще агресивнішу агрегацію. Знову ж таки, усі зовнішні мережі мають наступний перехід R3. Але 2.1, 2.2, 2.3, 2.6 і 2.7 теж мають наступний перехід R3. Тож таблиця пересилання потребує статичних записів лише для 2.4 і 2.5. Потім можна сказати: для всіх інших хостів, яких немає в таблиці пересилання (включно з деякими внутрішніми й деякими зовнішніми хостами), наступний перехід — R3.
 
-To represent all hosts not in the table, we can use a wildcard *.* that matches everything. When forwarding toward a given destination, the router first checks specific hosts (e.g. 3.1) or ranges (e.g. 2.*) for matches. If the router can't find any matches, it will eventually match the *.* wildcard. This is called the **default route**.
+Щоб позначити всі хости, яких немає в таблиці, можна використати шаблон *.*, який збігається з усім. Пересилаючи до певного пункту призначення, маршрутизатор спершу перевіряє збіги з конкретними хостами (наприклад, 3.1) чи діапазонами (наприклад, 2.*). Якщо маршрутизатор не знаходить жодних збігів, він зрештою збігається з шаблоном *.*. Це називається **маршрутом за замовчуванням** (default route).
 
-Most hosts only have a single hard-coded default route. For example, host 2.4's forwarding table has a single entry, saying to send everything to R2. In practice, your home computer has a single entry, saying to send everything to your home router. This is why hosts don't need to participate in routing protocols.
+Більшість хостів мають лише один жорстко заданий маршрут за замовчуванням. Наприклад, таблиця пересилання хоста 2.4 має єдиний запис, який каже надсилати все до R2. На практиці ваш домашній комп'ютер має єдиний запис, який каже надсилати все до вашого домашнього маршрутизатора. Саме тому хостам не потрібно брати участь у протоколах маршрутизації.
 
 
-## Assigning Hierarchical IP Addresses: Early Internet
+## Призначення ієрархічних IP-адрес: ранній Інтернет
 
-In order to get more scalable routing, we need to assign addresses in some hierarchical way. The addresses need to contain some information about their location (e.g. nearby hosts need to share some part of their address).
+Щоб отримати масштабованішу маршрутизацію, нам треба призначати адреси певним ієрархічним чином. Адреси мають містити певну інформацію про своє розташування (наприклад, сусідні хости мають мати спільну частину адреси).
 
-In the early Internet, IPv4 addresses had an 8-bit network ID and a 24-bit host ID, just like in our intuitive version.
+У ранньому Інтернеті адреси IPv4 мали 8-бітовий ідентифікатор мережі та 24-бітовий ідентифікатор хоста, як і в нашій інтуїтивній версії.
 
 <img width="800px" src="/assets/routing/2-106-cidr1.png">
 
-For example, AT&T has network ID 12, Apple has network ID 17, and the US Department of Defense has 13 different network IDs.
+Наприклад, AT&T має ідентифікатор мережі 12, Apple — 17, а Міністерство оборони США має 13 різних ідентифікаторів мережі.
 
-The 8-bit network ID means we can only assign 256 different network IDs, but in real life, there are way more than 256 organizations that might operate their own local network. Also, our 24-bit host ID means that every network gets 2\^24 = 16,777,216 addresses. A small network (e.g. a company with 10 employees) probably doesn't need 16 million addresses. As the Internet grew larger, a new approach to addressing was needed.
+8-бітовий ідентифікатор мережі означає, що ми можемо призначити лише 256 різних ідентифікаторів мереж, але в реальному житті організацій, які можуть обслуговувати власну локальну мережу, набагато більше ніж 256. Крім того, наш 24-бітовий ідентифікатор хоста означає, що кожна мережа отримує 2\^24 = 16 777 216 адрес. Невеликій мережі (наприклад, компанії з 10 працівниками), найімовірніше, не потрібно 16 мільйонів адрес. Коли Інтернет розрісся, знадобився новий підхід до адресації.
 
 
-## Assigning Hierarchical IP Addresses: Classful Addressing
+## Призначення ієрархічних IP-адрес: класова адресація
 
-The first attempt to fix this was **classful addressing**, which allocates different network sizes based on need. In this approach, there are 3 classes of addresses, each with a different number of bits allocated to the network ID and host ID. The first 1-3 bits identify which class is being used.
+Першою спробою виправити це стала **класова адресація** (classful addressing), що виділяє мережі різного розміру відповідно до потреб. За цього підходу є 3 класи адрес, кожен з іншою кількістю бітів, відведених під ідентифікатор мережі та ідентифікатор хоста. Перші 1–3 біти визначають, який клас використовується.
 
 <img width="900px" src="/assets/routing/2-107-cidr2.png">
 
-Class A addresses start with leading bit 0. The next 7 bits are the network ID (128 networks), and the next 24 bits are the host ID (16 million hosts).
+Адреси класу A починаються з початкового біта 0. Наступні 7 бітів — ідентифікатор мережі (128 мереж), а наступні 24 біти — ідентифікатор хоста (16 мільйонів хостів).
 
-Class B addresses start with leading bits 10. The next 14 bits are the network ID (16,000 networks), and the next 16 bits are the host ID (65,000 hosts).
+Адреси класу B починаються з початкових бітів 10. Наступні 14 бітів — ідентифікатор мережі (16 000 мереж), а наступні 16 бітів — ідентифікатор хоста (65 000 хостів).
 
-Class C addresses start with leading bits 110. The next 21 bits are the network ID (2 million networks), and the next 8 bits are the host ID (256 hosts).
+Адреси класу C починаються з початкових бітів 110. Наступний 21 біт — ідентифікатор мережі (2 мільйони мереж), а наступні 8 бітів — ідентифікатор хоста (256 хостів).
 
-In this approach, we can now have 2 million + 16,000 + 128 different local networks. Larger organizations with more hosts could receive a Class A network, and smaller organizations could receive a Class B or Class C network. As before, within a single network, the leading class bit(s) and network ID bits are the same, and each host gets a different host ID.
+За цього підходу тепер може бути 2 мільйони + 16 000 + 128 різних локальних мереж. Більші організації з більшою кількістю хостів можуть отримати мережу класу A, а менші — мережу класу B чи класу C. Як і раніше, у межах однієї мережі початкові біти класу й біти ідентифікатора мережі однакові, а кожен хост отримує інший ідентифікатор хоста.
 
-One major problem with classful addressing is the size of each class. Class A (16 million hosts) is way too big for most organizations, and Class C (256 hosts) is way too small for most organizations. As a result, most networks need to be in Class B.
+Одна з головних проблем класової адресації — розмір кожного класу. Клас A (16 мільйонів хостів) завеликий для більшості організацій, а клас C (256 хостів) замалий для більшості організацій. Як наслідок, більшість мереж мусять належати до класу B.
 
-Unfortunately, there are only 16,000 Class B network IDs, and by 1994, we were running out of Class B networks. Again, a new approach to addressing was needed.
+На жаль, ідентифікаторів мереж класу B лише 16 000, і до 1994 року мережі класу B почали закінчуватися. Знову знадобився новий підхід до адресації.
 
-Note: Classful addressing is now obsolete on the modern Internet.
+Примітка: у сучасному Інтернеті класова адресація застаріла.
 
-Note: Technically, the number of hosts per network is off by 2, because the all-zeroes address and all-ones address are reserved for special purposes. For example, in Class C, there are actually 254 hosts per network, not 256.
-
-
-## Assigning Hierarchical IP Addresses: CIDR
-
-Our third approach to hierarchical addressing, and the one still used on the modern Internet, is **CIDR** (Classless Inter-Domain Routing). In CIDR, we still have variable-length network IDs, but instead of only 3 different network ID lengths (Class A, B, C), we make the number of fixed bits arbitrary.
-
-For example, consider the tiny company with 10 employees from earlier. In classful addressing, they would get a Class C network with 256 host addresses. If they only need 10 host addresses, we could allocate fewer addresses by giving them a longer network ID.
-
-If we allocated a 28-bit network ID, the host ID would be 4 bits long (16 possible addresses). If we allocated a 29-bit network ID, the host ID would be 3 bits long (8 possible addresses). We can't allocate exactly 10 addresses, but a 28-bit network ID would be sufficient for this company's purposes. There's a little bit of waste (6 unused addresses), but this is still way better than allocating 256 addresses.
-
-As another example, consider an organization that needs 450 host addresses. In classful addressing, Class C (256 addresses) isn't sufficient, so they would receive a Class B network with 65,000 host addresses, and most of the addresses would go unused. With arbitrary-length network IDs, we can assign a 23-bit network ID, which gives 9 bits for host addressing (512 addresses). This meets the organization's needs and wastes far fewer addresses.
+Примітка: технічно кількість хостів на мережу на 2 менша, бо адреса з усіх нулів і адреса з усіх одиниць зарезервовані для спеціальних цілей. Наприклад, у класі C насправді 254 хости на мережу, а не 256.
 
 
-## Multi-Layered Hierarchical Assignment
+## Призначення ієрархічних IP-адрес: CIDR
 
-In real life, hierarchies can be multi-layered. For example, inside a network, an organization can choose to assign specific ranges of addresses to specific sub-organizations (e.g. departments in a company or university).
+Наш третій підхід до ієрархічної адресації, який досі використовується в сучасному Інтернеті, — це **CIDR** (Classless Inter-Domain Routing, безкласова міждоменна маршрутизація). У CIDR ми й далі маємо ідентифікатори мереж змінної довжини, але замість лише 3 різних довжин ідентифікатора мережі (класи A, B, C) кількість фіксованих бітів стає довільною.
 
-In practice, we exploit real-life multi-layered organizational and geographical hierarchies to assign addresses. ICANN (Internet Corporation for Names and Numbers) is the global organization that owns all the IP addresses.
+Наприклад, розгляньте крихітну компанію з 10 працівниками, про яку ми говорили раніше. За класової адресації вона отримала б мережу класу C з 256 адресами хостів. Якщо їй потрібно лише 10 адрес хостів, ми можемо виділити менше адрес, давши їй довший ідентифікатор мережі.
 
-ICANN gives out blocks of addresses to Regional Internet Registries (RIRs) representing specific countries or continents. For example, RIPE gets all addresses for the European Union, ARIN gets North American addresses, APNIC gets Asia/Pacific addresses, LACNIC gets South American addresses, and AFRINIC gets African addresses. Example: ICANN gives ARIN all addresses starting with 1101.
+Якби ми виділили 28-бітовий ідентифікатор мережі, ідентифікатор хоста мав би довжину 4 біти (16 можливих адрес). Якби ми виділили 29-бітовий ідентифікатор мережі, ідентифікатор хоста мав би довжину 3 біти (8 можливих адрес). Ми не можемо виділити рівно 10 адрес, але 28-бітового ідентифікатора мережі для цілей цієї компанії було б достатньо. Є трохи втрат (6 невикористаних адрес), але це все одно набагато краще, ніж виділяти 256 адрес.
 
-Each RIR then gives out portions of their ranges to large organizations (e.g. companies, universities) or ISPs. These organizations or ISPs are called Local Internet Registries. Example: ARIN controls all addresses starting with 1101, and gives AT&T all addresses starting with 1101 11001.
+Як інший приклад, розгляньте організацію, якій потрібно 450 адрес хостів. За класової адресації класу C (256 адрес) недостатньо, тож вона отримала б мережу класу B з 65 000 адрес хостів, і більшість адрес залишилися б невикористаними. З ідентифікаторами мереж довільної довжини ми можемо призначити 23-бітовий ідентифікатор мережі, що дає 9 бітів для адресації хостів (512 адрес). Це задовольняє потреби організації й марнує набагато менше адрес.
 
-Finally, each local Internet registry assigns individual IPs to specific hosts. For additional hierarchy, local registries can also assign IP ranges to small organizations, and the small organizations can in turn assign individual IPs.
+
+## Багаторівневе ієрархічне призначення
+
+У реальному житті ієрархії можуть бути багаторівневими. Наприклад, усередині мережі організація може вирішити призначити конкретні діапазони адрес конкретним підрозділам (наприклад, відділам компанії чи факультетам університету).
+
+На практиці для призначення адрес ми використовуємо реальні багаторівневі організаційні та географічні ієрархії. ICANN (Internet Corporation for Assigned Names and Numbers) — глобальна організація, якій належать усі IP-адреси.
+
+ICANN видає блоки адрес регіональним інтернет-реєстраторам (Regional Internet Registries, RIR), що представляють конкретні країни чи континенти. Наприклад, RIPE отримує всі адреси для Європейського Союзу, ARIN — північноамериканські адреси, APNIC — адреси Азійсько-Тихоокеанського регіону, LACNIC — південноамериканські адреси, а AFRINIC — африканські адреси. Приклад: ICANN віддає ARIN усі адреси, що починаються з 1101.
+
+Потім кожен RIR видає частини своїх діапазонів великим організаціям (наприклад, компаніям, університетам) або інтернет-провайдерам. Ці організації чи провайдери називаються локальними інтернет-реєстраторами (Local Internet Registries). Приклад: ARIN контролює всі адреси, що починаються з 1101, і віддає AT&T усі адреси, що починаються з 1101 11001.
+
+Нарешті, кожен локальний інтернет-реєстратор призначає окремі IP-адреси конкретним хостам. Для додаткової ієрархії локальні реєстратори можуть також призначати діапазони IP-адрес невеликим організаціям, а ті, своєю чергою, призначати окремі IP-адреси.
 
 <img width="700px" src="/assets/routing/2-108-cidr3.png">
 
-At each level, the number of additional bits fixed is determined by the number of addresses to be allocated. For example, ARIN might want to give AT&T 8 million addresses, and computes that fixing 9 bits results in 8 million host addresses. ARIN had 4 bits fixed already, so it fixes another 5 bits and assigns AT&T all addresses starting with those 9 bits. AT&T might then give the prefix 1101 11001 110100010 to give 16,000 addresses to UC Berkeley. As we allocate addresses to sub-organizations, more bits are fixed, always keeping the fixed bits from parent organizations.
+На кожному рівні кількість додатково фіксованих бітів визначається кількістю адрес, які потрібно виділити. Наприклад, ARIN може захотіти дати AT&T 8 мільйонів адрес і обчислює, що фіксація 9 бітів дає 8 мільйонів адрес хостів. ARIN уже мав 4 фіксовані біти, тож фіксує ще 5 бітів і призначає AT&T усі адреси, що починаються з цих 9 бітів. AT&T потім може видати префікс 1101 11001 110100010, щоб дати UC Berkeley 16 000 адрес. Коли ми виділяємо адреси підрозділам, фіксується дедалі більше бітів, причому фіксовані біти батьківських організацій завжди зберігаються.
 
 
-## Writing IP Addresses
+## Запис IP-адрес
 
-We could write IP addresses as a 32-bit sequence of 1s and 0s, or as a single big integer. In practice, for readability, we take each sequence of 8 bits and write it as an integer (between 0 and 255). For example, the IP address 00010001 00100010 10011110 00000101 can be written as 17.34.158.5. This is sometimes called a **dotted quad** representation.
+Ми могли б записувати IP-адреси як 32-бітову послідовність одиниць і нулів або як одне велике ціле число. На практиці для зручності читання ми беремо кожну послідовність із 8 бітів і записуємо її як ціле число (від 0 до 255). Наприклад, IP-адресу 00010001 00100010 10011110 00000101 можна записати як 17.34.158.5. Іноді це називають **десятковим записом із крапками** (dotted quad).
 
-So far, we've been writing ranges of addresses as bits (e.g. all IPs starting with 1101). To write a range of addresses, we can use **slash notation**. We write the fixed prefix, then we write 0s for all remaining unfixed bits, and we convert the resulting 32-bit value into an dotted quad IP address. Then, after the slash, we write the number of fixed bits.
+Досі ми записували діапазони адрес у вигляді бітів (наприклад, усі IP-адреси, що починаються з 1101). Щоб записати діапазон адрес, можна використати **запис через скісну риску** (slash notation). Ми записуємо фіксований префікс, потім записуємо нулі для всіх решти нефіксованих бітів і перетворюємо отримане 32-бітове значення на IP-адресу в десятковому записі з крапками. Потім після скісної риски записуємо кількість фіксованих бітів.
 
-For example, if the prefix is 11000000, we add zeros for all the unfixed bits to get 11000000 00000000 00000000 00000000. As a 32-bit address, this is 192.0.0.0. Then, because 8 bits were fixed, we write the range as 192.0.0.0/8.
+Наприклад, якщо префікс — 11000000, ми додаємо нулі для всіх нефіксованих бітів і отримуємо 11000000 00000000 00000000 00000000. Як 32-бітова адреса це 192.0.0.0. Потім, оскільки фіксовано 8 бітів, ми записуємо діапазон як 192.0.0.0/8.
 
-To write an individual address as a range, we could write something like 192.168.1.1/32, which indicates that all 32 bits are fixed. Also, the default route *.* can be written as 0.0.0.0/0.
+Щоб записати окрему адресу як діапазон, можна написати щось на кшталт 192.168.1.1/32, що вказує, що фіксовано всі 32 біти. Крім того, маршрут за замовчуванням *.* можна записати як 0.0.0.0/0.
 
-Slash notation can sometimes look a little confusing because we're using arbitrary 8-bit divisions and writing numbers in decimal. For example, the 8-bit prefix 11000000 and the 12-bit prefix 11000000 0000 would be written as 192.0.0.0/8 and 192.0.0.0/12 (same IP address representing different ranges). As another example, if I owned the 4-bit prefix 1100, I could assign the 5-bit prefix 11001. As ranges, these are written as 192.0.0.0/4 and 200.0.0.0/5. At first glance, it's not clear that the second range is actually a subset of the first one, and we'd have to write out the bits to confirm.
+Запис через скісну риску іноді може виглядати дещо заплутано, бо ми використовуємо довільні 8-бітові поділи й записуємо числа в десятковій системі. Наприклад, 8-бітовий префікс 11000000 і 12-бітовий префікс 11000000 0000 записуються як 192.0.0.0/8 і 192.0.0.0/12 (та сама IP-адреса позначає різні діапазони). Як інший приклад: якби мені належав 4-бітовий префікс 1100, я міг би призначити 5-бітовий префікс 11001. Як діапазони вони записуються як 192.0.0.0/4 і 200.0.0.0/5. На перший погляд неочевидно, що другий діапазон насправді є підмножиною першого, і щоб переконатися, нам довелося б розписати біти.
 
-An alternative to the slash (e.g. /16) in the slash notation is a **netmask**. Just like the number after the slash, the netmask tells us how which bits are fixed. To write a netmask, we write 1s for all fixed bits and 0 for all unfixed bits, and convert the result into a dotted quad. For example, if we had the range 192.168.1.0/29, we could write 29 ones (fixed bits) and 3 zeros (unfixed bits). 11111111 11111111 11111111 11111000 as a dotted quad is 255.255.255.248. The range in netmask notation is 192.168.1.0, with netmask 255.255.255.248 (replaced the slash with a netmask).
+Альтернативою скісній рисці (наприклад, /16) у такому записі є **маска мережі** (netmask). Як і число після скісної риски, маска мережі показує, які біти фіксовані. Щоб записати маску мережі, ми записуємо одиниці для всіх фіксованих бітів і нулі для всіх нефіксованих і перетворюємо результат на десятковий запис із крапками. Наприклад, якщо в нас діапазон 192.168.1.0/29, ми можемо записати 29 одиниць (фіксовані біти) і 3 нулі (нефіксовані біти). 11111111 11111111 11111111 11111000 у десятковому записі з крапками — це 255.255.255.248. Діапазон у записі з маскою мережі — 192.168.1.0 з маскою 255.255.255.248 (скісну риску замінено маскою мережі).
 
-In these notes, we'll usually use slash notations because they're more convenient to read. In practice, netmasks can be useful because given a specific IP address, if you perform a bitwise AND between the IP address and the netmask, all the host bits will get zeroed out, and only the network bits will remain.
+У цих матеріалах ми зазвичай використовуватимемо запис через скісну риску, бо його зручніше читати. На практиці маски мережі можуть бути корисними, бо якщо для конкретної IP-адреси виконати побітове І (AND) між IP-адресою та маскою мережі, усі біти хоста обнуляться, і залишаться лише біти мережі.
 
 
-## Aggregating Routes with CIDR
+## Агрегація маршрутів за допомогою CIDR
 
-In our original model with a network ID and host ID, we could aggregate all hosts inside the same network into a single route in the forwarding table (e.g. 2.* for everything in network 2).
+У нашій початковій моделі з ідентифікатором мережі та ідентифікатором хоста ми могли агрегувати всі хости в межах однієї мережі в один маршрут у таблиці пересилання (наприклад, 2.* для всього в мережі 2).
 
-Multi-layered hierarchical addressing means that we can also aggregate multiple networks into a single route.
+Багаторівнева ієрархічна адресація означає, що в один маршрут можна також агрегувати кілька мереж.
 
 <img width="900px" src="/assets/routing/2-109-aggregation1.png">
 
-Consider this diagram of networks. In our original model, R6 needs a separate forwarding entry for AT&T, UCB, and Stanford.
+Розгляньте цю діаграму мереж. У нашій початковій моделі R6 потребує окремого запису пересилання для AT&T, UCB і Stanford.
 
 <img width="900px" src="/assets/routing/2-110-aggregation2.png">
 
-However, if we used hierarchical addressing, then UCB's range (4.12.0.0/16) and Stanford's range (4.29.0.0/16) are both subsets of AT&T's range (4.0.0.0/8). This could happen if AT&T allocated those ranges to its subordinate customers UCB and Stanford.
+Однак якби ми використовували ієрархічну адресацію, то діапазон UCB (4.12.0.0/16) і діапазон Stanford (4.29.0.0/16) обидва є підмножинами діапазону AT&T (4.0.0.0/8). Таке могло б статися, якби AT&T виділила ці діапазони своїм підлеглим клієнтам UCB і Stanford.
 
-Now, R6 only needs a single entry for AT&T, UCB, and Stanford. We've aggregated the two smaller ranges into the wider range that they both belong to.
+Тепер R6 потребує лише одного запису для AT&T, UCB і Stanford. Ми агрегували два менші діапазони в ширший діапазон, до якого вони обидва належать.
 
 
-## Multi-Homing
+## Багатоканальне підключення
 
-Aggregating ranges doesn't always work. Suppose we added a link from R6 directly to Stanford.
+Агрегація діапазонів не завжди працює. Припустімо, ми додали канал від R6 безпосередньо до Stanford.
 
 <img width="900px" src="/assets/routing/2-111-aggregation3.png">
 
-Our aggregated route says that all packets to AT&T (and its subordinates) have a next hop of R2. We need to add an additional entry saying that Stanford has a next hop of R7.
+Наш агрегований маршрут каже, що всі пакети до AT&T (і її підлеглих) мають наступний перехід R2. Нам треба додати ще один запис, який каже, що Stanford має наступний перехід R7.
 
-Notice that our forwarding table now has ranges that overlap. A destination could match multiple ranges. To pick a route, we'll run **longest prefix matching**, which means we'll use the most specific range that matches our destination IP address. For example, if we had a packet destined for a UCM host, we would use the UCM-specific entry because it has the longer 19-bit prefix. Even though the 9-bit AT&T entry also matches the destination, its prefix is shorter, so we don't use this route.
+Зверніть увагу, що наша таблиця пересилання тепер має діапазони, які перетинаються. Пункт призначення може збігатися з кількома діапазонами. Щоб обрати маршрут, ми виконуватимемо **пошук найдовшого збігу префікса** (longest prefix matching), тобто використовуватимемо найконкретніший діапазон, що збігається з IP-адресою призначення. Наприклад, якби в нас був пакет, призначений для хоста UCM, ми використали б запис саме для UCM, бо він має довший 19-бітовий префікс. Хоча 9-бітовий запис AT&T теж збігається з пунктом призначення, його префікс коротший, тож ми не використовуємо цей маршрут.
 
-If instead we had a packet destined for a UCB host, we can't use the Stanford-specific entry, because the 16-bit prefix won't match the UCB host. But we can still use the 8-bit AT&T entry, which will match the destination.
+Якби натомість у нас був пакет, призначений для хоста UCB, ми не змогли б використати запис для Stanford, бо 16-бітовий префікс не збігається з хостом UCB. Але ми однаково можемо використати 8-бітовий запис AT&T, який збігається з пунктом призначення.
 
 
-## Brief History of IPv6
+## Коротка історія IPv6
 
-IPv4 addresses are 32 bits, which means we have roughly 4 billion addresses available. Is this enough?
+Адреси IPv4 мають 32 біти, тобто в нас доступно приблизно 4 мільярди адрес. Чи цього достатньо?
 
 <img width="900px" src="/assets/routing/2-112-ipv6-1.png">
 
-This graph plots the number of remaining unallocated IP addresses (y-axis) for each regional registry over time. 
+Цей графік показує кількість решти невиділених IP-адрес (вісь y) для кожного регіонального реєстратора з плином часу.
 
-By 2017, everybody had less than one /8 block (i.e. less than 2\^24 = 16 million addresses) available. Each regional registry held a spare /8 block of addresses just in case, but by 2017, everybody had to start using their spare supply of addresses. By 2021, even the spare supply of addresses was running out.
+До 2017 року в кожного залишилося менше одного блоку /8 (тобто менше ніж 2\^24 = 16 мільйонів адрес). Кожен регіональний реєстратор тримав запасний блок адрес /8 про всяк випадок, але до 2017 року всім довелося почати використовувати свій запас адрес. До 2021 року навіть запас адрес почав вичерпуватися.
 
-Fun fact: In February 2011, there was an in-person ceremony when the final /8 block was allocated. There was even a special paper certificate issued.
+Цікавий факт: у лютому 2011 року, коли було виділено останній блок /8, відбулася очна церемонія. Навіть було видано спеціальний паперовий сертифікат.
 
-As the Internet grew, we started to realize that we would eventually run out of addresses. Luckily, this was realized early on, and IPv6 was developed in 1998 as a response to IP address exhaustion.
+Коли Інтернет розрісся, ми почали усвідомлювати, що зрештою адреси закінчаться. На щастя, це усвідомили рано, і у відповідь на вичерпання IP-адрес у 1998 році було розроблено IPv6.
 
-Fundamentally, IPv6 addressing structure is the same as IPv4. There are some minor implementation changes needed for IPv6, though they aren't relevant here.
+По суті, структура адресації IPv6 така сама, як в IPv4. Для IPv6 потрібні деякі дрібні зміни в реалізації, але тут вони не мають значення.
 
-The main new feature in IPv6 is longer addresses. IPv6 addresses are 128 bits long, which means there are roughly $$3.4 \times 10^{38}$$ possible addresses. This is an astronomically big number, so we'll never run out. The universe is $$10^{21}$$ seconds old, so we could assign an address to every second and still have only used 0.000000000000001% of all available addresses.
+Головна нова можливість IPv6 — довші адреси. Адреси IPv6 мають довжину 128 бітів, тобто можливих адрес приблизно $$3.4 \times 10^{38}$$. Це астрономічно велике число, тож адреси ніколи не закінчаться. Всесвіту $$10^{21}$$ секунд, тож ми могли б призначати по адресі на кожну секунду й використати лише 0,000000000000001% усіх доступних адрес.
 
 <img width="900px" src="/assets/routing/2-113-ipv6-2.png">
 
-IPv6 was developed in the 1990s, but was not immediately adopted by all computers. Even in 2010, basically nobody used IPv6. As of 2024, IPv6 is used by around 45% of end users, and most of these users are located in developed countries with wider Internet adoption. The main reason why IPv6 is becoming more widely-adopted is because we're running out of IPv4 addresses.
+IPv6 розробили в 1990-х роках, але його не одразу прийняли всі комп'ютери. Навіть у 2010 році IPv6 практично ніхто не використовував. Станом на 2024 рік IPv6 використовують близько 45% кінцевих користувачів, і більшість із них перебуває в розвинених країнах із ширшим проникненням Інтернету. Головна причина, чому IPv6 поширюється дедалі ширше, — закінчення адрес IPv4.
 
-Why is IPv6 adoption so slow? Users, servers, and Internet operators have to upgrade their software and hardware (e.g. routers, links, device drivers on computers) to support IPv6. Routers now need two forwarding tables, one with IPv4 addresses and one with IPv6 addresses.
+Чому впровадження IPv6 таке повільне? Користувачі, сервери та оператори Інтернету мають оновити своє програмне та апаратне забезпечення (наприклад, маршрутизатори, канали, драйвери пристроїв на комп'ютерах), щоб підтримувати IPv6. Маршрутизаторам тепер потрібні дві таблиці пересилання: одна з адресами IPv4, а інша з адресами IPv6.
 
-IPv6 upgrades have to be backwards-compatible. If a server only had an IPv6 address, users on older computers that only support IPv4 can't use this server. IPv4 and IPv6 are essentially separate addressing systems, and there's no way to convert between IPv4 and IPv6 addresses. As of 2024, many computers still don't support IPv6, so many services need to support both IPv4 and IPv6.
+Оновлення до IPv6 мають бути зворотно сумісними. Якби сервер мав лише адресу IPv6, користувачі на старіших комп'ютерах, що підтримують лише IPv4, не могли б користуватися цим сервером. IPv4 і IPv6 — по суті окремі системи адресації, і способу перетворювати адреси IPv4 на адреси IPv6 і навпаки немає. Станом на 2024 рік багато комп'ютерів досі не підтримують IPv6, тож багатьом сервісам доводиться підтримувати і IPv4, і IPv6.
 
-Computers that do support both IPv4 and IPv6 also have to think about which one to use. Is one better than the other? In practice, IPv6 is faster, but many other implementation details could affect your choice.
+Комп'ютери, які підтримують і IPv4, і IPv6, також мають вирішувати, що використовувати. Чи одне краще за інше? На практиці IPv6 швидший, але на ваш вибір можуть впливати багато інших подробиць реалізації.
 
 
-## IPv6 Address Notation
+## Запис адрес IPv6
 
-IPv6 addresses are usually written in hexadecimal instead of decimal. For example:
+Адреси IPv6 зазвичай записують у шістнадцятковій системі, а не в десятковій. Наприклад:
 
 2001:0D08:CAFE:BEEF:DEAD:1234:5678:9012
 
-is an IPv6 address (32 hex digits = 128 bits). We add colons in between every 4 hex digits (16 bits) for readability.
+— це адреса IPv6 (32 шістнадцяткові цифри = 128 бітів). Для зручності читання ми ставимо двокрапки після кожних 4 шістнадцяткових цифр (16 бітів).
 
-For readability, we can omit leading zeros within a 4-digit block. For example:
+Для зручності читання можна пропускати початкові нулі в межах 4-цифрового блоку. Наприклад:
 
 2001:0DB8:0000:0000:0000:0000:0000:0001
 
-can be shortened to 2001:DB8:0:0:0:0:0:1.
+можна скоротити до 2001:DB8:0:0:0:0:0:1.
 
-For readability, we can also omit a long string of zeroes, e.g. 2001:DB8::1. The double colon says to fill in all missing 4-digit blocks with 0000. This can only be done once per address. (Omitting two ranges creates ambiguity, because we don't know how many zeroes go in each range.)
+Для зручності читання можна також пропустити довгу послідовність нулів, наприклад 2001:DB8::1. Подвійна двокрапка означає, що всі пропущені 4-цифрові блоки слід заповнити значенням 0000. Так можна зробити лише один раз в адресі. (Пропуск двох діапазонів створює неоднозначність, бо ми не знаємо, скільки нулів має бути в кожному діапазоні.)
 
-Slash notation can still be used in IPv6. An individual address has /128 (all bits fixed). A 32-bit prefix might look like 2001:0DB8::/32.
+Запис через скісну риску можна використовувати й в IPv6. Окрема адреса має /128 (усі біти фіксовані). 32-бітовий префікс може виглядати як 2001:0DB8::/32.
 
-Because the address space is so large, in IPv6, you could fix the network ID to be 64 bits and the host ID to be 64 bits, and still never run out of network IDs or host IDs. In fact, special protocols exist where networks and hosts can pick their own 64-bit network ID and host ID (and check that no one else is using it), without an organization needing to allocate specific IDs.
+Оскільки адресний простір такий великий, в IPv6 можна зафіксувати ідентифікатор мережі довжиною 64 біти й ідентифікатор хоста довжиною 64 біти — і все одно ніколи не вичерпати ні ідентифікаторів мереж, ні ідентифікаторів хостів. Насправді існують спеціальні протоколи, за якими мережі й хости можуть самі обирати собі 64-бітовий ідентифікатор мережі та ідентифікатор хоста (і перевіряти, що ніхто інший їх не використовує), без потреби в організації, яка виділяє конкретні ідентифікатори.
 
-In practice, regional registries typically allocate 32-bit prefixes to ISPs, and ISPs typically allocate 48-bit prefixes to organizations. The organization can then allocate 64-bit prefixes to smaller sub-networks. In IPv6, we usually don't see prefixes longer than /64. Even the smallest sub-networks inside an organization have a 64-bit prefix, and 64 bits for addressing specific hosts. Using these standardized prefix sizes allows prefixes to be more informative. For example, in IPv6, it's not clear what a /19 prefix represents, but in IPv6, we know a /32 prefix typically represents an ISP. TODO double check this
+На практиці регіональні реєстратори зазвичай виділяють провайдерам 32-бітові префікси, а провайдери зазвичай виділяють організаціям 48-бітові префікси. Організація потім може виділяти 64-бітові префікси меншим підмережам. В IPv6 зазвичай не трапляються префікси, довші за /64. Навіть найменші підмережі всередині організації мають 64-бітовий префікс і 64 біти для адресації конкретних хостів. Використання цих стандартизованих розмірів префіксів робить префікси інформативнішими. Наприклад, в IPv6 незрозуміло, що позначає префікс /19, але в IPv6 ми знаємо, що префікс /32 зазвичай позначає провайдера. TODO double check this

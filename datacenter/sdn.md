@@ -1,264 +1,263 @@
 ---
-title: Software-Defined Networking
-parent: Datacenters
+title: Програмно-визначені мережі
+parent: Дата-центри
 nav_order: 6
 layout: page-with-toc
 ---
 
-# Software-Defined Networking
+# Програмно-визначені мережі
 
-## Why Software-Defined Networking?
+## Навіщо програмно-визначені мережі?
 
-Previously, we saw how routing protocols can be adapted to work in datacenter contexts (e.g. equal-cost multi-path). What if we want to optimize our routing protocols even further for our specific network's constraints and use cases? The standard routing protocols might no longer work.
+Раніше ми бачили, як протоколи маршрутизації можна адаптувати для роботи в контексті дата-центрів (наприклад, маршрутизація за кількома шляхами однакової вартості). А що, як ми хочемо ще більше оптимізувати свої протоколи маршрутизації під обмеження й сценарії використання нашої конкретної мережі? Стандартні протоколи маршрутизації можуть уже не спрацювати.
 
-In this section, we'll explore **software-defined networking**, a totally new paradigm for thinking about routing and network management. In the context of routing, the SDN architecture involves having a centralized control center compute routes and distribute them to individual routers. We'll see how SDN works in the context of datacenters and the wide-area network, and discuss benefits and drawbacks of this new approach.
-
-
-## Brief History of Software-Defined Networking
-
-Although we'll be looking at SDN as a new approach for specialized routing protocols, the SDN paradigm was originally designed in response to headaches at the management plane.
-
-Recall that the management plane is critical for network operation. Routers can't do anything unless someone configures them (e.g. assigns costs to links) and tells them what to do (e.g. what routing protocol to run). Also, we need routers to report errors to keep the network up and running. A lot of this management work has historically been done manually.
-
-Even though the management plane is so important, there's been relatively little focus on innovating it. At the control plane, we've see lots of different routing protocols, but the way we configure and control routers has evolved more slowly.
-
-Over the Internet's history, there's been a slow evolution toward using scripts to programatically interact with the network. These scripts take jobs that the operator would manually do, and implement them in code (without much intelligence). For example, scripts allow automating the process of adding routers and links to the network. A script for repairing the network might say: if a router fails, check that it's actually failed, reboot it, and if it's still not fixed, report to the operator.
-
-Despite the progress, these management systems have been the bottleneck for network operations for a long time. We still might have to wait for human intervention every time a new router is added.
-
-In 2005, a paper by Albert Greenberg et. al. described the problem by saying: "Today's data networks are surprisingly fragile and difficult to manage. We argue that the root of these problems lies in the complexity of the control and management planes."
-
-In response to these problems, researchers began thinking about different ways to run a network system. This led to more radical proposals that reimagined the fundamental design of routers.
-
-The concepts we'll see were first considered in 2003, though they didn't gain much momentum at the time. Frustrations with network management accelerated the development of new management paradigms. By 2008, there was more momentum, leading to the OpenFlow switch interface (which we'll see soon).
-
-By 2011, it was evident the industry was moving in this new direction, and the Open Networking Foundation (ONF) was established by major network operators (Google, Yahoo, Verizon, Microsoft, Facebook) and vendors (Cisco, Juniper, HP, Dell). Nicira, the SDN-focused startup that developed the OpenFlow interface, was a \$40 million startup in 2012.
+У цьому розділі ми розглянемо **програмно-визначені мережі** (software-defined networking, SDN) — цілком нову парадигму мислення про маршрутизацію та керування мережею. У контексті маршрутизації архітектура SDN передбачає, що централізований центр керування обчислює маршрути й розподіляє їх окремим маршрутизаторам. Ми побачимо, як SDN працює в контексті дата-центрів і глобальної мережі, і обговоримо переваги й недоліки цього нового підходу.
 
 
-## Routers are Vertically Integrated and Standardized
+## Коротка історія програмно-визначених мереж
 
-If we wanted to reimagine the design of routers, how would that be implemented in practice? How do technologies on routers change over time?
+Хоча ми розглядатимемо SDN як новий підхід до спеціалізованих протоколів маршрутизації, парадигму SDN спочатку створили у відповідь на головний біль на площині управління.
 
-If your network needs a router, you'd probably purchase one from a major equipment vendor like Cisco or Juniper. In order to ensure that routers are compatible with each other, all the major equipment vendors build their routers according to some pre-defined standards. 
+Пригадайте, що площина управління критично важлива для роботи мережі. Маршрутизатори нічого не можуть робити, доки хтось їх не налаштує (наприклад, не призначить вартості каналам) і не скаже їм, що робити (наприклад, який протокол маршрутизації виконувати). Крім того, нам потрібно, щоб маршрутизатори повідомляли про помилки, щоб мережа працювала. Значну частину цієї роботи з управління історично виконували вручну.
 
-This business model can make innovation and experimentation with new approaches difficult. Suppose you had a new idea for a routing protocol. You would need to get the protocol approved by a standards body, which could take years. Then, you'd have to wait for the vendors to upgrade their manufacturing to conform to the new standard.
+Хоча площина управління така важлива, інноваціям у ній приділяли відносно мало уваги. На площині керування ми бачили багато різних протоколів маршрутизації, але спосіб налаштування й керування маршрутизаторами еволюціонував повільніше.
 
-Standardization also makes routers less flexible for users implementing custom solutions. If you have a problem specific to your network, but no one else has this problem, your solution probably won't be adopted by the standards body. Vendors want to make routers that satisfy everybody's needs, and they won't necessarily implement a solution that's perfect for you, if nobody else wants it.
+Протягом історії Інтернету відбувалася повільна еволюція в бік використання скриптів для програмної взаємодії з мережею. Ці скрипти беруть завдання, які оператор виконував би вручну, і реалізують їх у коді (без особливого інтелекту). Наприклад, скрипти дають змогу автоматизувати процес додавання маршрутизаторів і каналів до мережі. Скрипт для відновлення мережі може казати: якщо маршрутизатор відмовив, перевір, що він справді відмовив, перезавантаж його, а якщо він досі не працює, повідом оператора.
 
-On the other hand, standardization also means that if others have a problem that you don't, the router might come with a solution to their problem, even if you don't need it. This can make routers unnecessarily complex for the purposes of your specific network.
+Попри прогрес, ці системи управління довгий час були вузьким місцем у роботі мереж. Нам досі може доводитися чекати на втручання людини щоразу, коли додається новий маршрутизатор.
 
-Standardization also makes experimentation and research difficult. If you want to try a new idea to see if it works, you might not be able to buy routers that can implement your new idea. Vendors don't want to build experimental products, intended for one specific customer, that might not even work.
+У 2005 році стаття Альберта Грінберга (Albert Greenberg) та ін. описала проблему так: «Сучасні мережі даних напрочуд крихкі й складні в управлінні. Ми стверджуємо, що корінь цих проблем — у складності площин керування та управління».
 
-Another major obstacle to innovation and experimentation is routers being **vertically integrated**. The router you buy already has the functionality for all three planes wired on the chips. There's no modularity that would let you swap out just the control plane by itself.
+У відповідь на ці проблеми дослідники почали думати про різні способи експлуатації мережевої системи. Це привело до радикальніших пропозицій, що переосмислювали фундаментальний дизайн маршрутизаторів.
+
+Концепції, які ми побачимо, вперше розглянули в 2003 році, хоча тоді вони не набули особливого розмаху. Невдоволення управлінням мережами прискорило розробку нових парадигм управління. До 2008 року розмах зріс, що привело до інтерфейсу комутаторів OpenFlow (який ми скоро побачимо).
+
+До 2011 року стало очевидно, що галузь рухається в цьому новому напрямку, і великі мережеві оператори (Google, Yahoo, Verizon, Microsoft, Facebook) та постачальники (Cisco, Juniper, HP, Dell) заснували Open Networking Foundation (ONF). Nicira, стартап, зосереджений на SDN, що розробив інтерфейс OpenFlow, у 2012 році був стартапом вартістю \$40 мільйонів.
+
+
+## Маршрутизатори вертикально інтегровані та стандартизовані
+
+Якби ми хотіли переосмислити дизайн маршрутизаторів, як би це реалізувати на практиці? Як змінюються технології маршрутизаторів з часом?
+
+Якщо вашій мережі потрібен маршрутизатор, ви, найімовірніше, купите його в одного з великих постачальників обладнання, як-от Cisco чи Juniper. Щоб гарантувати сумісність маршрутизаторів між собою, усі великі постачальники обладнання будують свої маршрутизатори відповідно до певних заздалегідь визначених стандартів.
+
+Така бізнес-модель може ускладнювати інновації й експерименти з новими підходами. Припустімо, у вас нова ідея протоколу маршрутизації. Вам довелося б отримати схвалення протоколу органом стандартизації, що може тривати роки. Потім вам довелося б чекати, поки постачальники оновлять своє виробництво відповідно до нового стандарту.
+
+Стандартизація також робить маршрутизатори менш гнучкими для користувачів, що впроваджують власні рішення. Якщо у вас проблема, специфічна для вашої мережі, і ні в кого іншого цієї проблеми немає, ваше рішення, найімовірніше, не прийме орган стандартизації. Постачальники хочуть робити маршрутизатори, що задовольняють потреби всіх, і не обов'язково реалізують рішення, ідеальне для вас, якщо воно більше нікому не потрібне.
+
+З іншого боку, стандартизація також означає, що якщо в інших є проблема, якої немає у вас, маршрутизатор може містити розв'язок їхньої проблеми, навіть якщо вам він не потрібен. Це може робити маршрутизатори невиправдано складними для цілей вашої конкретної мережі.
+
+Стандартизація також ускладнює експерименти й дослідження. Якщо ви хочете спробувати нову ідею, щоб перевірити, чи вона працює, ви можете не знайти маршрутизаторів, що можуть реалізувати вашу нову ідею. Постачальники не хочуть будувати експериментальні продукти, призначені для одного конкретного клієнта, які можуть навіть не спрацювати.
+
+Ще одна велика перешкода для інновацій та експериментів — **вертикальна інтеграція** (vertically integrated) маршрутизаторів. Маршрутизатор, який ви купуєте, уже має функціональність усіх трьох площин, «зашиту» в мікросхеми. Немає модульності, яка дозволила б замінити лише площину керування окремо.
 
 <img width="300px" src="/assets/datacenter/6-063-vertical-integration.png">
 
 
-## Innovating Routers
+## Інновації в маршрутизаторах
 
-If we did want to innovate routers, what could we innovate at each plane, and what kinds of pre-existing standards would we be working with?
+Якби ми таки хотіли впроваджувати інновації в маршрутизатори, що можна було б удосконалити на кожній площині і з якими наявними стандартами нам довелося б працювати?
 
-The data plane is standardized by IEEE (electrical engineering group) and requires everyone to strictly follow the standards. If two routers from different vendors are connected, we have to make sure both sides are sending bits along the physical wire in the same consistent format.
+Площину даних стандартизує IEEE (організація інженерів-електриків), і вона вимагає, щоб усі суворо дотримувалися стандартів. Якщо з'єднано два маршрутизатори від різних постачальників, ми маємо переконатися, що обидві сторони надсилають біти фізичним дротом в однаковому узгодженому форматі.
 
-Data plane innovation is usually driven by the demand for higher-bandwidth routers, and new features are not often introduced. This development happens quite slowly, in 2-3 year increments, because we have to solve physical hardware problems and design chips for increased bandwidth. Since the core data plane features are relatively stable, router innovation is not really focused on the data plane, and it's okay that the development cycle is slow.
+Інновації на площині даних зазвичай рухає попит на маршрутизатори з вищою пропускною здатністю, і нові функції запроваджуються нечасто. Ця розробка відбувається доволі повільно, кроками по 2–3 роки, бо нам доводиться розв'язувати проблеми фізичного обладнання й проєктувати мікросхеми для підвищеної пропускної здатності. Оскільки ключові функції площини даних відносно стабільні, інновації в маршрутизаторах насправді не зосереджені на площині даних, і повільний цикл розробки — це нормально.
 
-The control plane is standardized by the IETF (the network group behind RFCs). Vendors sometimes add their own extensions, though the core features are mostly standardized. For example, we assume that every router (even if they're from different routers) are following the same routing protocol.
+Площину керування стандартизує IETF (мережева група, що стоїть за RFC). Постачальники іноді додають власні розширення, хоча ключові функції здебільшого стандартизовані. Наприклад, ми вважаємо, що кожен маршрутизатор (навіть якщо вони від різних маршрутизаторів) дотримується того самого протоколу маршрутизації.
 
-Control plane innovation (e.g. new routing protocols) can take several years to be adopted. You might have to submit an RFC draft proposal, and the community may spend some time discussing the proposal before agreeing on its terms.
+Інновації на площині керування (наприклад, нові протоколи маршрутизації) можуть впроваджуватися кілька років. Вам, можливо, доведеться подати чернетку пропозиції RFC, і спільнота може певний час обговорювати пропозицію, перш ніж погодити її умови.
 
-The management plane is also standardized by the IETF, though it's much less standardized. Different operators can use different software to configure their routers, and we don't really need different vendors to agree on some standardized software. Because this plane is only loosely standardized, many different approaches with different features exist.
+Площину управління теж стандартизує IETF, хоча вона стандартизована набагато менше. Різні оператори можуть використовувати різне програмне забезпечення для налаштування своїх маршрутизаторів, і нам насправді не потрібно, щоб різні постачальники домовлялися про якесь стандартизоване програмне забезпечення. Оскільки ця площина стандартизована лише нестрого, існує багато різних підходів із різними функціями.
 
-In summary: The data plane is standardized (but we don't really have new features in mind), the control plane is standardized (but we want to try new solutions), and the management plane is not really standardized.
+Підсумуємо: площина даних стандартизована (але нових функцій ми насправді не плануємо), площина керування стандартизована (але ми хочемо пробувати нові рішення), а площина управління насправді не стандартизована.
 
 
-## Radical Idea: Disaggregating Routers
+## Радикальна ідея: розукрупнення маршрутизаторів
 
-Standardization and vertical integration were making it difficult to innovate and experiment. This led to the radical idea of disaggregating routers by splitting the planes into different layers of abstraction. Instead of buying a single router with all three planes, we could now buy data and control plane functionality separately. This allows us to change layers independently from each other.
+Стандартизація й вертикальна інтеграція ускладнювали інновації та експерименти. Це привело до радикальної ідеї розукрупнення (disaggregating) маршрутизаторів шляхом розділення площин на різні рівні абстракції. Замість купувати один маршрутизатор з усіма трьома площинами, тепер ми могли б купувати функціональність площини даних і площини керування окремо. Це дає змогу змінювати рівні незалежно один від одного.
 
-In order to connect the three layers, we need an API between the layers of abstraction. In a vertically-coupled router, we don't care how the data plane and control plane talk to each other. However, if we buy the data plane separately, and we want to design our own custom control plane on top, we need an interface to interact with the data plane.
+Щоб з'єднати три рівні, нам потрібен API між рівнями абстракції. У вертикально інтегрованому маршрутизаторі нам байдуже, як площина даних і площина керування спілкуються між собою. Однак якщо ми купуємо площину даних окремо й хочемо спроєктувати поверх неї власну площину керування, нам потрібен інтерфейс для взаємодії з площиною даних.
 
 <img width="300px" src="/assets/datacenter/6-064-sdn1.png">
 
-An even more radical idea is to stop thinking about the three planes in terms of only the router, and instead design a new system architecture that naturally splits up the data plane and control plane.
+Ще радикальніша ідея — перестати думати про три площини лише в межах маршрутизатора й натомість спроєктувати нову системну архітектуру, яка природно розділяє площину даних і площину керування.
 
 <img width="900px" src="/assets/datacenter/6-065-sdn2.png">
 
-At the bottom, we have commodity network devices. You can think of these as buying just the data plane by itself. These routers receive instructions from the control program via the network OS, and simply forward packets according to those instructions. These routers don't need to think about routing protocols at all, so they can be cheaper.
+Унизу в нас серійні мережеві пристрої. Їх можна уявляти як окремо придбану площину даних. Ці маршрутизатори отримують інструкції від програми керування через мережеву ОС і просто пересилають пакети відповідно до цих інструкцій. Цим маршрутизаторам узагалі не треба думати про протоколи маршрутизації, тож вони можуть бути дешевшими.
 
-In the middle, we have the network OS. You can think of this as the API connecting the data plane routers and the control plane program. The network OS provides an abstraction of the routers (e.g. as a graph) that can be passed up to the control program. Then, the control program can send routing instructions to the network OS, without worrying about how to program specific routers. The network OS can take those instructions and program them onto individual routers.
+Посередині в нас мережева ОС. Її можна уявляти як API, що з'єднує маршрутизатори площини даних і програму площини керування. Мережева ОС надає абстракцію маршрутизаторів (наприклад, у вигляді графа), яку можна передати нагору програмі керування. Потім програма керування може надсилати мережевій ОС інструкції маршрутизації, не переймаючись тим, як програмувати конкретні маршрутизатори. Мережева ОС може взяти ці інструкції й запрограмувати їх на окремі маршрутизатори.
 
-At the top, we have the control program. You can think of this as buying or implementing the control plane by itself. Here, the operator receives an abstraction of the network (e.g. graph) from the network OS, and can use that to write their own custom routing protocol. Then, the resulting routes can be passed to the network OS, which will program them onto routers.
+Угорі в нас програма керування. Її можна уявляти як окремо придбану чи реалізовану площину керування. Тут оператор отримує від мережевої ОС абстракцію мережі (наприклад, граф) і може використати її, щоб написати власний протокол маршрутизації. Потім отримані маршрути можна передати мережевій ОС, яка запрограмує їх на маршрутизатори.
 
 
-## OpenFlow API Format
+## Формат API OpenFlow
 
-**OpenFlow** is an API for interacting with the data plane of a router. The operator writes their own fancy code, separate from the router, that computes routes through the network. Then, those routes can be programmed onto the forwarding chip.
+**OpenFlow** — API для взаємодії з площиною даних маршрутизатора. Оператор пише власний хитромудрий код, окремо від маршрутизатора, який обчислює маршрути через мережу. Потім ці маршрути можна запрограмувати на мікросхему пересилання.
 
 <img width="300px" src="/assets/datacenter/6-066-openflow1.png">
 
-The OpenFlow paradigm is different from traditional routers, where the control plane is implemented in the router, and there's no clear API for programming custom routes onto the forwarding chip.
+Парадигма OpenFlow відрізняється від традиційних маршрутизаторів, де площину керування реалізовано в маршрутизаторі і немає чіткого API для програмування власних маршрутів на мікросхему пересилання.
 
-The OpenFlow API defines a **flow table** abstraction to describe routes and forwarding rules. The operator code can output any rules and routes it wants, and install them on the router, as long as they're in the flow table format.
+API OpenFlow визначає абстракцію **таблиці потоків** (flow table) для опису маршрутів і правил пересилання. Код оператора може видавати будь-які правила й маршрути, які хоче, і встановлювати їх на маршрутизатор, якщо вони у форматі таблиці потоків.
 
-The basic building block of the API is a flow table, which you can think of as a generalized version of a forwarding table. Each flow table consists of key-value pairs, just like a forwarding table. The key specifies what to **match** the packet against. This could be a destination prefix, an exact destination, a 5-tuple, or other relatively simple matches. The corresponding value specifies what **action** to set when a packet matches. The action could be sending the packet to a next hop (like a forwarding table), but could also specify fancier actions like adding an extra header.
+Базовий будівельний блок API — таблиця потоків, яку можна уявляти як узагальнену версію таблиці пересилання. Кожна таблиця потоків складається з пар «ключ–значення», як і таблиця пересилання. Ключ визначає, з чим **зіставляти** (match) пакет. Це може бути префікс призначення, точний пункт призначення, п'ятірка чи інші відносно прості зіставлення. Відповідне значення визначає, яку **дію** (action) встановити, коли пакет збігається. Дією може бути надсилання пакета на наступний перехід (як у таблиці пересилання), але також можуть бути вишуканіші дії, як-от додавання додаткового заголовка.
 
-The output format is a sequence of one or more numbered flow tables, where each table has its own different match-action entries. These flow tables can then be programmed onto the forwarding chip.
+Вихідний формат — послідовність однієї чи кількох пронумерованих таблиць потоків, де кожна таблиця має власні записи «зіставлення–дія». Потім ці таблиці потоків можна запрограмувати на мікросхему пересилання.
 
 <img width="700px" src="/assets/datacenter/6-068-openflow3.png">
 
-When a packet arrives at a router, it is checked against each table in order (e.g. Table 0, Table 1, Table 2, etc.), and when there's a match, we write down the corresponding action (without executing it yet). Eventually, once the packet is checked against the final table, any action(s) we wrote down are applied to the packet.
+Коли пакет надходить до маршрутизатора, його по черзі перевіряють за кожною таблицею (наприклад, таблиця 0, таблиця 1, таблиця 2 тощо), і коли є збіг, ми записуємо відповідну дію (ще не виконуючи її). Зрештою, щойно пакет перевірено за останньою таблицею, усі записані дії застосовуються до пакета.
 
-There are also special actions for skipping to later tables, which we can use in rules like: If the source port matches this number, skip to table 5 to set additional actions.
+Є також спеціальні дії для переходу до пізніших таблиць, які можна використовувати в правилах на кшталт: якщо порт джерела збігається з цим числом, перейти до таблиці 5, щоб встановити додаткові дії.
 
 <img width="800px" src="/assets/datacenter/6-067-openflow2.png">
 
-The operator can run any code they want to generate flow tables, and the flow tables can be more general than a destination/next-hop forwarding table. However, the rules (match/action pairs) that we generate are still constrained by the specialized forwarding chip hardware. The forwarding chip is optimized for speed, and probably can't handle complex match rules like "if the TCP payload is in English, set this action."
+Оператор може запускати будь-який код для генерування таблиць потоків, і таблиці потоків можуть бути загальнішими за таблицю пересилання «пункт призначення / наступний перехід». Однак правила (пари «зіставлення/дія»), які ми генеруємо, однаково обмежені спеціалізованим обладнанням мікросхеми пересилання. Мікросхема пересилання оптимізована для швидкості й, найімовірніше, не впорається зі складними правилами зіставлення на кшталт «якщо корисне навантаження TCP англійською, встановити цю дію».
 
-As a result, the flow tables we see in practice end up looking pretty similar to the tables we've already seen. Common match rules include longest prefix matching on IP destinations, 5-tuples to identify flows, and exact matches on encapsulation headers (e.g. MPLS).
+Як наслідок, таблиці потоків, які ми бачимо на практиці, зрештою виглядають доволі схожими на таблиці, які ми вже бачили. Поширені правила зіставлення — пошук найдовшого збігу префікса за IP-адресами призначення, п'ятірки для ідентифікації потоків і точні збіги за заголовками інкапсуляції (наприклад, MPLS).
 
-If the forwarding rules aren't so different, why use OpenFlow at all? Remember, the main advantage is that it gives the operator total freedom at the control plane. We're not limited to distance-vector or link-state protocols anymore.
+Якщо правила пересилання не такі вже й різні, навіщо взагалі використовувати OpenFlow? Пам'ятайте: головна перевага в тому, що він дає операторові повну свободу на площині керування. Ми більше не обмежені дистанційно-векторними протоколами чи протоколами стану каналів.
 
 <img width="400px" src="/assets/datacenter/6-069-openflow4.png">
 
 
-## Benefits of a Flexible Control Plane
+## Переваги гнучкої площини керування
 
-Our new architecture gives the operator flexibility to implement their new routing protocol at the control plane. What are some benefits of this approach?
+Наша нова архітектура дає операторові гнучкість реалізовувати новий протокол маршрутизації на площині керування. Які переваги має цей підхід?
 
-The operator can implement custom routing protocols best-suited for the operator's specific needs. The operator is no longer constrained by standards bodies and vendors.
+Оператор може реалізовувати власні протоколи маршрутизації, що найкраще підходять для його конкретних потреб. Оператор більше не обмежений органами стандартизації та постачальниками.
 
-Flexibility also gives us an opportunity to simplify. For example, if the standardized protocol includes features we don't need, we don't have to implement them in our custom solution. Simpler protocols can have less code and simpler code, which might allow for easier development and maintenance of that protocol.
+Гнучкість також дає нам нагоду спрощувати. Наприклад, якщо стандартизований протокол містить функції, які нам не потрібні, нам не треба реалізовувати їх у власному рішенні. Простіші протоколи можуть мати менше коду й простіший код, що може полегшити розробку й підтримку протоколу.
 
-Finally, a flexible control plane enables centralized computation of routes at the control program, instead of distributed across multiple routers. Centralization comes with several benefits as well.
+Нарешті, гнучка площина керування уможливлює централізоване обчислення маршрутів у програмі керування, а не розподілене між кількома маршрутизаторами. Централізація теж має кілька переваг.
 
-Centralization can result in more intelligent routing decisions that lead to excellent performance. In a 2013 report from Google, engineers who deployed an SDN architecture noted that "centralized traffic engineering service drives links to near 100% utilization, while splitting application flows among multiple paths to balance capacity against application priority/demands." A 2013 paper from Microsoft describes using an OpenFlow controller to "achieve high utilization with software-driven WAN."
+Централізація може давати розумніші рішення маршрутизації, що ведуть до чудової продуктивності. У звіті Google 2013 року інженери, що розгорнули архітектуру SDN, зазначили, що «централізований сервіс інжинірингу трафіку доводить використання каналів майже до 100%, водночас розподіляючи потоки застосунків між кількома шляхами, щоб збалансувати пропускну здатність із пріоритетами/потребами застосунків». Стаття Microsoft 2013 року описує використання контролера OpenFlow, щоб «досягти високого використання за допомогою програмно керованої WAN».
 
-More intelligent routing decisions can help optimize other criteria besides performance, that a standard routing protocol can't easily optimize. For example, a US government network might implement a geofencing rule that says, don't send traffic via links that are in Canada. Or, a broadcast TV network might want to optimize for path diversity to increase reliability. We can enforce that two flows travel via paths that don't share any links, so that if a link goes down, only one of the flows is affected. The two paths can serve as backups for each other.
+Розумніші рішення маршрутизації можуть допомогти оптимізувати й інші критерії, окрім продуктивності, які стандартний протокол маршрутизації не може легко оптимізувати. Наприклад, урядова мережа США може реалізувати правило геообмеження, що каже: не надсилати трафік каналами, розташованими в Канаді. Або мережа ефірного телебачення може захотіти оптимізувати різноманітність шляхів для підвищення надійності. Ми можемо вимагати, щоб два потоки йшли шляхами, що не мають спільних каналів, тож якщо канал вийде з ладу, постраждає лише один із потоків. Два шляхи можуть слугувати резервом один для одного.
 
-Centralization can also make it easier for routing protocols to converge. In a distributed protocol, if the network changed, the routers have to coordinate to converge on a new routing state. In this centralized model, if a link fails, that router could tell the boss, and the boss could recompute routes and install the new routes on the routers.
+Централізація також може полегшити збіжність протоколів маршрутизації. У розподіленому протоколі, якщо мережа змінилася, маршрутизатори мають координуватися, щоб збігтися до нового стану маршрутизації. У цій централізованій моделі, якщо канал відмовляє, маршрутизатор може повідомити «начальника», а «начальник» може переобчислити маршрути й встановити нові маршрути на маршрутизатори.
 
+## Інжиніринг трафіку
 
-## Traffic Engineering
-
-A flexible control plane allows us to perform **traffic engineering**, which means we can route traffic in a more intelligent and efficient way than a standard distributed routing protocol could.
+Гнучка площина керування дає нам змогу виконувати **інжиніринг трафіку** (traffic engineering), тобто маршрутизувати трафік розумніше й ефективніше, ніж міг би стандартний розподілений протокол маршрутизації.
 
 <img width="700px" src="/assets/datacenter/6-070-engineering1.png">
 
-Suppose there are two connections, S1-D at 10 Gbps and S2-D at 10 Gbps. If we just ran standard least-cost routing, both flows would send traffic along the bottom path. The bottom path would be congested (20 Gbps on 10 Gbps link), while the top path's bandwidth is sitting there unused.
+Припустімо, є два з'єднання: S1–D на 10 Гбіт/с і S2–D на 10 Гбіт/с. Якби ми просто запустили стандартну маршрутизацію з найменшою вартістю, обидва потоки надсилали б трафік нижнім шляхом. Нижній шлях був би перевантажений (20 Гбіт/с на каналі 10 Гбіт/с), тоді як пропускна здатність верхнього шляху простоювала б.
 
-With a more intelligent routing scheme, we could send S1-D traffic along the top path, and S2-D traffic along the bottom path. Using traffic engineering, we've forced some packets to take a longer route, in order to better utilize the bandwidth in the network.
+Із розумнішою схемою маршрутизації ми могли б надсилати трафік S1–D верхнім шляхом, а трафік S2–D — нижнім. Використовуючи інжиніринг трафіку, ми змусили деякі пакети йти довшим маршрутом, щоб краще використовувати пропускну здатність мережі.
 
 <img width="700px" src="/assets/datacenter/6-071-engineering2.png">
 
-To compute these routes, we can modify least-cost routing, and instead enforce that traffic should be on the shortest path that has sufficient capacity. We can also enforce other constraints instead of capacity, such as latency. The resulting algorithm is called **constrained Shortest Path First (cSPF)**.
+Щоб обчислювати такі маршрути, можна змінити маршрутизацію з найменшою вартістю й натомість вимагати, щоб трафік ішов найкоротшим шляхом, що має достатню пропускну здатність. Замість пропускної здатності можна також застосовувати інші обмеження, як-от латентність. Отриманий алгоритм називається **обмеженим пошуком найкоротшого шляху** (constrained Shortest Path First, cSPF).
 
-Now, suppose that S1-D needs 12 Gbps, and S2-D needs 8 Gbps. cSPF will send the flows along different paths to maximize bandwidth, but S1-D is sending 12 Gbps over a 10 Gbps link.
+Тепер припустімо, що S1–D потребує 12 Гбіт/с, а S2–D — 8 Гбіт/с. cSPF надсилатиме потоки різними шляхами, щоб максимізувати пропускну здатність, але S1–D надсилає 12 Гбіт/с каналом на 10 Гбіт/с.
 
-To fix this, our traffic engineering can be even more intelligent, and split traffic in a flow across different paths. S1-D can send 10 Gbps of its traffic along the top path, and the remaining 2 Gbps along the bottom path.
+Щоб виправити це, наш інжиніринг трафіку може бути ще розумнішим і розділяти трафік потоку між різними шляхами. S1–D може надсилати 10 Гбіт/с свого трафіку верхнім шляхом, а решту 2 Гбіт/с — нижнім.
 
-Again, our traffic engineering allowed us to implement custom logic that resulted in better utilization of the network capacity.
+Знову ж таки, інжиніринг трафіку дав нам змогу реалізувати власну логіку, що призвела до кращого використання пропускної здатності мережі.
 
 <img width="700px" src="/assets/datacenter/6-074-engineering5.png">
 
-How do we actually implement split paths through the network, using the OpenFlow API from earlier? Remember, our routing decisions should still follow simple rules that forwarding tables can understand.
+Як насправді реалізувати розділені шляхи через мережу за допомогою API OpenFlow, який ми бачили раніше? Пам'ятайте, наші рішення маршрутизації однаково мають дотримуватися простих правил, зрозумілих таблицям пересилання.
 
-One approach is to use encapsulation. At the sender, we can add rules to add an extra header, where some packets get label 0, and the rest get label 1. This label tells us which path to send the traffic along.
+Один підхід — використати інкапсуляцію. На відправнику можна додати правила, що додають додатковий заголовок, де деякі пакети отримують мітку 0, а решта — мітку 1. Ця мітка вказує, яким шляхом надсилати трафік.
 
 <img width="700px" src="/assets/datacenter/6-075-engineering6.png">
 
-Now, at R1, we can add simple rules to route label 0 packets upwards to R2, and label 1 packets downwards to R3. This idea can be applied in addition to the other rules we had for constrained least-cost routing (e.g. the flow tables might have other entries for other destinations or other flows).
+Тепер на R1 можна додати прості правила, що маршрутизують пакети з міткою 0 угору до R2, а пакети з міткою 1 — униз до R3. Цю ідею можна застосовувати на додачу до інших правил, які ми мали для обмеженої маршрутизації з найменшою вартістю (наприклад, таблиці потоків можуть мати інші записи для інших пунктів призначення чи інших потоків).
 
 
-## Centralized Traffic Engineering and Globally Optimal Decisions
+## Централізований інжиніринг трафіку та глобально оптимальні рішення
 
-One major difference in the SDN model of custom routing protocols is centralization. In the original model, every router was running its own routing protocol. Now, we can have a single computer outside of the routers compute all the routes, and then use the flow table API to install those routes on the routers.
+Одна з головних відмінностей моделі SDN із власними протоколами маршрутизації — централізація. В оригінальній моделі кожен маршрутизатор виконував власний протокол маршрутизації. Тепер у нас може бути один комп'ютер поза маршрутизаторами, що обчислює всі маршрути, а потім за допомогою API таблиць потоків встановлює ці маршрути на маршрутизатори.
 
-Centralization allows us to make **globally optimal decisions**. In a distributed protocol, each router is making the best decision for itself, but that might not be the best decision for other routers. In the centralized model, the boss can use its global view of the network to decide what's best for everybody, and tell the routers to follow that decision.
+Централізація дає змогу ухвалювати **глобально оптимальні рішення** (globally optimal decisions). У розподіленому протоколі кожен маршрутизатор ухвалює найкраще рішення для себе, але воно може не бути найкращим рішенням для інших маршрутизаторів. У централізованій моделі «начальник» може використати свій глобальний погляд на мережу, щоб вирішити, що найкраще для всіх, і сказати маршрутизаторам дотримуватися цього рішення.
 
 <img width="700px" src="/assets/datacenter/6-072-engineering3.png">
 
-Consider this network with two flows, S1-D at 20 Gbps, and S2-D at 100 Gbps. Assume we haven't implemented support for splitting a flow onto multiple paths.
+Розгляньте цю мережу з двома потоками: S1–D на 20 Гбіт/с і S2–D на 100 Гбіт/с. Припустімо, ми не реалізували підтримку розділення потоку на кілька шляхів.
 
-Suppose the 20 Gbps S1-D flow starts first. Using constrained shortest path first, S1 could choose to use the bottom path. From the perspective of S1, this is a locally optimal decision (top and bottom paths both equally good).
+Припустімо, потік S1–D на 20 Гбіт/с починається першим. Використовуючи обмежений пошук найкоротшого шляху, S1 може вирішити використати нижній шлях. З погляду S1 це локально оптимальне рішення (верхній і нижній шляхи однаково добрі).
 
-Later, the 100 Gbps S2-D flow starts. Now, using constrained shortest path first, S2-D doesn't have any single path that meets its demands. The top path (20 Gbps) and bottom path (80 Gbps) both have insufficient capacity.
+Пізніше починається потік S2–D на 100 Гбіт/с. Тепер, використовуючи обмежений пошук найкоротшого шляху, S2–D не має жодного окремого шляху, що задовольняє його потреби. І верхній шлях (20 Гбіт/с), і нижній (80 Гбіт/с) мають недостатню пропускну здатність.
 
-The key problem here is, each individual router made its own decision independently, without coordination.
+Ключова проблема тут у тому, що кожен окремий маршрутизатор ухвалював власне рішення незалежно, без координації.
 
-By introducing a centralized controller, the controller can look at the overall network structure and the demands of each flow, and assign paths to each flow more intelligently. The resulting decision is globally optimal, and increases network efficiency.
+Запровадивши централізований контролер, контролер може подивитися на загальну структуру мережі й потреби кожного потоку і розумніше призначити шляхи кожному потоку. Отримане рішення глобально оптимальне й підвищує ефективність мережі.
 
 <img width="700px" src="/assets/datacenter/6-073-engineering4.png">
 
-Centralized traffic engineering can make even more intelligent routing decisions, depending on what the operator wants to optimize. For example, we could classify flows as high-priority or low-priority, and make decisions that optimize both network utilization and the needs of different applications.
+Централізований інжиніринг трафіку може ухвалювати ще розумніші рішення маршрутизації залежно від того, що хоче оптимізувати оператор. Наприклад, ми можемо класифікувати потоки як високопріоритетні чи низькопріоритетні й ухвалювати рішення, що оптимізують і використання мережі, і потреби різних застосунків.
 
 
-## SDN in Datacenter Overlay
+## SDN у накладеній мережі дата-центру
 
-In the previous section, we saw that virtual switches can apply encapsulation to connect the overlay and underlay networks. Given a virtual address, we can add a header with the corresponding physical address, which allows the packet to be sent along the underlay network. But, how do we know the mapping between virtual addresses and physical addresses?
+У попередньому розділі ми бачили, що віртуальні комутатори можуть застосовувати інкапсуляцію, щоб з'єднувати накладену й базову мережі. Маючи віртуальну адресу, ми можемо додати заголовок із відповідною фізичною адресою, що дає змогу надіслати пакет базовою мережею. Але як дізнатися відображення між віртуальними й фізичними адресами?
 
-We also saw that encapsulation can be used to to support multiple tenants in a single datacenter, each running their own private network. Switches can add headers with a virtual network ID. But, how do we know which virtual network ID to use?
+Ми також бачили, що інкапсуляцію можна використовувати для підтримки кількох орендарів в одному дата-центрі, кожен із яких обслуговує власну приватну мережу. Комутатори можуть додавати заголовки з ідентифікатором віртуальної мережі. Але як дізнатися, який ідентифікатор віртуальної мережі використовувати?
 
-A centralized SDN controller can be used in the datacenter to solve these problems. Each tenant can operate its own controller. When a new VM is created, the SDN learns about its virtual and physical addresses. Then, the SDN can update the forwarding tables in the other virtual switches, adding encapsulation rules with the new virtual/physical address mapping.
+Щоб розв'язати ці проблеми, у дата-центрі можна використати централізований контролер SDN. Кожен орендар може обслуговувати власний контролер. Коли створюється нова ВМ, SDN дізнається її віртуальну й фізичну адреси. Потім SDN може оновити таблиці пересилання в інших віртуальних комутаторах, додавши правила інкапсуляції з новим відображенням віртуальної адреси на фізичну.
 
 <img width="900px" src="/assets/datacenter/6-076-sdn-overlay.png">
 
-For example, suppose Coke VM 2 is created with virtual IP 192.0.2.1 and physical IP 2.2.2.2. The SDN knows Coke VM 1 lives on physical server 1.1.1.1, so it can go to the virtual switch on 1.1.1.1 and add an encapsulation rule for the new Coke VM 2.
+Наприклад, припустімо, створено Coke VM 2 з віртуальною IP-адресою 192.0.2.1 і фізичною IP-адресою 2.2.2.2. SDN знає, що Coke VM 1 розташована на фізичному сервері 1.1.1.1, тож може звернутися до віртуального комутатора на 1.1.1.1 і додати правило інкапсуляції для нової Coke VM 2.
 
-The flow table at 1.1.1.1 might say: If you receive a packet with destination 192.0.2.1, add a header with Coke's virtual network ID of 42. Also, add a header with the corresponding physical address 2.2.2.2. Then, send the packet along the underlay network.
-
-
-## Benefits of SDN in Datacenter Overlay
-
-Why might we use a centralized SDN architecture to support virtualization and multi-tenancy in datacenters, instead of a more standard routing protocol?
-
-The centralized SDN architecture allows us to cleanly split the overlay and underlay networks into two scalable layers. In a traditional architecture, the routers in the underlay network would have to process the custom encapsulation headers (e.g. virtual network IDs). SDN allows the underlay network to remain simple, without thinking about virtualization or multi-tenancy.
-
-Centralization gives us a simple way to implement the control plane at end hosts, without any complicated routing protocols. The controller learns about a new host and updates the other hosts accordingly. Without a centralized controller, we might need some complex distributed scheme to figure out which encapsulation headers to add.
-
-This SDN architecture also shows us why overlay networks can scale well. The SDN controller for a tenant only needs to know about the VMs belonging to that specific tenant. By contrast, if we used a traditional architecture, a new Coke VM might have to be advertised to all the other VMs, even Pepsi VMs.
+Таблиця потоків на 1.1.1.1 може казати: якщо ви отримуєте пакет із пунктом призначення 192.0.2.1, додайте заголовок з ідентифікатором віртуальної мережі Coke 42. Крім того, додайте заголовок із відповідною фізичною адресою 2.2.2.2. Потім надішліть пакет базовою мережею.
 
 
-## SDN in Datacenter Underlay
+## Переваги SDN у накладеній мережі дата-центру
 
-The datacenter underlay is a physical network, just like any other network, although with a special topology. Many general-purpose network challenges, like achieving high utilization of links, also apply to datacenter underlay networks. That means we can apply SDN to the underlay network as well.
+Чому для підтримки віртуалізації та багатокористувацькості в дата-центрах можна використати централізовану архітектуру SDN замість стандартнішого протоколу маршрутизації?
 
-SDN at the underlay network can help us efficiently route packets through the datacenter. For example, the operator might want to send mice flows along links with small delay, and elephant flows along links with high bandwidth. 
+Централізована архітектура SDN дає змогу чітко розділити накладену й базову мережі на два масштабовані рівні. У традиційній архітектурі маршрутизатори базової мережі мали б обробляти власні заголовки інкапсуляції (наприклад, ідентифікатори віртуальних мереж). SDN дає базовій мережі змогу залишатися простою, не думаючи про віртуалізацію чи багатокористувацькість.
+
+Централізація дає нам простий спосіб реалізувати площину керування на кінцевих хостах без жодних складних протоколів маршрутизації. Контролер дізнається про новий хост і відповідно оновлює інші хости. Без централізованого контролера нам може знадобитися якась складна розподілена схема, щоб з'ясовувати, які заголовки інкапсуляції додавати.
+
+Ця архітектура SDN також показує, чому накладені мережі можуть добре масштабуватися. Контролеру SDN орендаря достатньо знати про ВМ, що належать цьому конкретному орендарю. Натомість якби ми використовували традиційну архітектуру, нову ВМ Coke, можливо, довелося б оголошувати всім іншим ВМ, навіть ВМ Pepsi.
+
+
+## SDN у базовій мережі дата-центру
+
+Базова мережа дата-центру — фізична мережа, як і будь-яка інша, хоча й зі спеціальною топологією. Багато викликів мереж загального призначення, як-от досягнення високого використання каналів, стосуються й базових мереж дата-центрів. Це означає, що SDN можна застосовувати й до базової мережі.
+
+SDN у базовій мережі може допомогти ефективно маршрутизувати пакети через дата-центр. Наприклад, оператор може хотіти надсилати потоки-миші каналами з малою затримкою, а потоки-слони — каналами з високою пропускною здатністю.
 
 <img width="900px" src="/assets/datacenter/6-077-sdn-underlay.png">
 
-In our underlay Clos network, per-flow load balancing (hash 5-tuple to choose a path) could still send multiple elephant flows along the same path. Even if two elephant flows used different paths, the paths might share links, and those links might become congested. An SDN controller could solve this problem by coordinating the flows and placing them onto non-overlapping paths.
+У нашій базовій мережі Клоза балансування навантаження на рівні потоків (гешування п'ятірки для вибору шляху) однаково може надсилати кілька потоків-слонів тим самим шляхом. Навіть якщо два потоки-слони використовують різні шляхи, ці шляхи можуть мати спільні канали, і ці канали можуть стати перевантаженими. Контролер SDN може розв'язати цю проблему, координуючи потоки й розміщуючи їх на шляхах, що не перетинаються.
 
 <img width="800px" src="/assets/datacenter/6-078-sdn-paper.png">
 
-This 2022 Google paper describes eliminating layers in the Clos network (fewer links, cheaper datacenter) by using SDN to route traffic more intelligently.
+Ця стаття Google 2022 року описує усунення рівнів у мережі Клоза (менше каналів, дешевший дата-центр) завдяки використанню SDN для розумнішої маршрутизації трафіку.
 
-Hyperscale datacenters often use SDN in both the overlay and underlay networks. These are usually implemented as decoupled systems. There's one SDN thinking about the underlay, and a separate SDN thinking about the overlay.
-
-
-## SDN in Wide Area Networks
-
-In addition to datacenters, SDN can be useful in general wide-area networks, especially when efficient utilization of bandwidth is critical. For example, in the traffic engineering example from earlier, imagine if our 10 Gbps links were undersea cables. There's no cheap way to add additional bandwidth, so optimizations have to instead focus on efficient utilization of the bandwidth we do have.
+Гіпермасштабні дата-центри часто використовують SDN і в накладеній, і в базовій мережах. Зазвичай їх реалізують як незалежні системи. Є один SDN, що думає про базову мережу, і окремий SDN, що думає про накладену.
 
 
-## Drawbacks of Centralized Control
+## SDN у глобальних мережах
 
-Centralization doesn't come for free, and has some drawbacks.
-
-One drawback is reliability. In a traditional network, if a router fails, the routing protocol converges around the failure. The other routers can reroute traffic along other paths. By contrast, if the central controller fails, we don't have a way to update the network anymore, and the routers don't know how to adjust to changes.
-
-Note: We've drawn the centralized controller as a single entity, but it doesn't need to be run on a single server. The control plane computation could happen across multiple servers, where those servers coordinate to operate in a logically centralized way. This is different from the original model, where routers coordinated but still made their own distributed decisions. This helps to avoid having a single point of failure in hardware, though the controller as a logical unit could still fail (e.g. bug in the code).
-
-Centralization also introduces scalability problems. The controller has to make decisions for everybody, which can get expensive for large networks. By contrast, in a traditional network, each router only has to perform computations for itself.
-
-Centralization could also introduce different types of complexity. In a traditional network, we could buy a router and connect it, and it more or less starts working right away. With a central controller, we have additional infrastructure challenges. Where do we put this controller? How do we connect it to the individual routers in a reliable way?
-
-This is an active area of research, including a project by Sylvia Ratnasamy and Rob Shakir (Berkeley CS 168 instructors).
+Окрім дата-центрів, SDN може бути корисним у загальних глобальних мережах, особливо коли ефективне використання пропускної здатності критично важливе. Наприклад, у попередньому прикладі інжинірингу трафіку уявіть, що наші канали на 10 Гбіт/с — підводні кабелі. Дешевого способу додати пропускну здатність немає, тож оптимізації мають натомість зосереджуватися на ефективному використанні наявної пропускної здатності.
 
 
-## SDN in the Management and Data Plane
+## Недоліки централізованого керування
 
-We've seen SDN as a new way to implement the control plane. But, the initial frustration that led to the development of SDN was at the management plane.
+Централізація не дається задарма й має певні недоліки.
 
-It turns out, many of the design paradigms that SDN used at the control plane can also apply to the management plane. For example, we saw that SDN relies on well-defined, programmatic APIs (e.g. OpenFlow).
+Один недолік — надійність. У традиційній мережі, якщо маршрутизатор відмовляє, протокол маршрутизації збігається в обхід відмови. Інші маршрутизатори можуть перенаправити трафік іншими шляхами. Натомість якщо відмовляє центральний контролер, у нас більше немає способу оновлювати мережу, і маршрутизатори не знають, як пристосовуватися до змін.
+
+Примітка: ми зображали централізований контролер як єдину сутність, але він не мусить працювати на одному сервері. Обчислення площини керування можуть відбуватися на кількох серверах, які координуються, щоб працювати логічно централізовано. Це відрізняється від оригінальної моделі, де маршрутизатори координувалися, але однаково ухвалювали власні розподілені рішення. Це допомагає уникнути єдиної точки відмови в обладнанні, хоча контролер як логічна одиниця однаково може відмовити (наприклад, через помилку в коді).
+
+Централізація також створює проблеми масштабованості. Контролер має ухвалювати рішення за всіх, що може ставати дорогим для великих мереж. Натомість у традиційній мережі кожен маршрутизатор має виконувати обчислення лише для себе.
+
+Централізація також може створювати інші типи складності. У традиційній мережі ми можемо купити маршрутизатор і під'єднати його, і він більш-менш одразу починає працювати. З центральним контролером у нас додаткові інфраструктурні виклики. Де розмістити цей контролер? Як надійно під'єднати його до окремих маршрутизаторів?
+
+Це активна галузь досліджень, включно з проєктом Сільвії Ратнасамі (Sylvia Ratnasamy) і Роба Шакіра (Rob Shakir) (викладачів CS 168 у Берклі).
+
+
+## SDN у площинах управління та даних
+
+Ми розглядали SDN як новий спосіб реалізації площини керування. Але початкове невдоволення, що привело до розробки SDN, стосувалося площини управління.
+
+Виявляється, багато парадигм проєктування, які SDN використовував на площині керування, можна застосувати й до площини управління. Наприклад, ми бачили, що SDN спирається на чітко визначені програмні API (наприклад, OpenFlow).
 
 TODO ran out of time in SP24.

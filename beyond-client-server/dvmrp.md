@@ -1,193 +1,193 @@
 ---
 title: DVMRP
-parent: Beyond Client-Server
+parent: За межами клієнт-сервер
 nav_order: 3
 layout: page-with-toc
 ---
 
 # DVMRP
 
-## Naive Algorithm: Flooding
+## Наївний алгоритм: лавинне розсилання
 
-Recall that the goal of multicast routing: We have a packet whose destination is a group, and the routers need to work together to forward this packet to all members of the group.
+Пригадайте мету маршрутизації багатоадресної розсилки: у нас є пакет, пунктом призначення якого є група, і маршрутизатори мають спільно переслати цей пакет усім членам групи.
 
-The most naive way to implement this is flooding. When a router receives a packet, it simply forwards the packet out of every port (except the incoming port).
+Найнаївніший спосіб реалізувати це — лавинне розсилання. Коли маршрутизатор отримує пакет, він просто пересилає пакет через кожен порт (окрім вхідного).
 
 <img width="500px" src="/assets/beyond-client-server/7-012-dvmrp-flooding.png">
 
-Why does flooding work? It ensures that every host on the network receives the packet, and that will include all members of the desired group.
+Чому лавинне розсилання працює? Воно гарантує, що кожен хост у мережі отримує пакет, а отже, його отримають і всі члени потрібної групи.
 
-What's good about flooding? It's conceptually simple, and doesn't require running any routing protocols.
+Що доброго в лавинному розсиланні? Воно концептуально просте й не потребує виконання жодних протоколів маршрутизації.
 
-What are some problems with flooding? There are two major problems, which we'll solve one at a time:
+Які проблеми має лавинне розсилання? Є дві основні проблеми, які ми розв'яжемо по одній:
 
-1. Flooding wastes bandwidth sending the same data along multiple paths, when that data only needed to be sent along one path.
+1. Лавинне розсилання марнує пропускну здатність, надсилаючи ті самі дані кількома шляхами, коли ці дані треба було надіслати лише одним шляхом.
 
-2. Flooding wastes bandwidth sending the packet to non-members.
+2. Лавинне розсилання марнує пропускну здатність, надсилаючи пакет тим, хто не є членом групи.
 
-Also, loops can cause broadcast storms where the same packet is forwarded infinitely in a loop, though this can be solved by having routers discard a packet if they've seen it before.
+Крім того, петлі можуть спричиняти широкомовні шторми, коли той самий пакет нескінченно пересилається петлею, хоча це можна розв'язати, змусивши маршрутизатори відкидати пакет, якщо вони вже бачили його раніше.
 
 
-## Reverse Path Broadcasting (RPB)
+## Широкомовна розсилка зворотним шляхом (RPB)
 
-Let's focus on the first problem for now. (Note: This means that for now, we'll still be sending the multicast packet to everybody, including non-members. We'll solve that problem later.)
+Поки що зосередьмося на першій проблемі. (Примітка: це означає, що поки що ми й далі надсилатимемо пакет багатоадресної розсилки всім, включно з тими, хто не є членом групи. Цю проблему ми розв'яжемо пізніше.)
 
-Flooding correctly sends the packet to everybody, but it wastes data sending data along redundant links. For example, if there are many paths between R1 and R4, flooding will cause copies of the packet to travel along every path from R1 to R4. Then, R4 will discard all the duplicate copies of the packet.
+Лавинне розсилання правильно надсилає пакет усім, але марнує ресурси, надсилаючи дані надлишковими каналами. Наприклад, якщо між R1 і R4 багато шляхів, лавинне розсилання змусить копії пакета йти кожним шляхом від R1 до R4. Потім R4 відкине всі дублікати пакета.
 
 <img width="500px" src="/assets/beyond-client-server/7-013-redundant-paths.png">
 
-Ideally, we'd like the packet to travel along a single path from R1 to R4, and likewise between any other pair of routers.
+В ідеалі ми хотіли б, щоб пакет ішов одним шляхом від R1 до R4, і так само між будь-якою іншою парою маршрутизаторів.
 
-We'd like packets to take only a single path between any pair of nodes. What data structure does this remind you of? Trees have a single path between any pair of nodes!
+Ми хотіли б, щоб пакети йшли лише одним шляхом між будь-якою парою вершин. Яку структуру даних це вам нагадує? Дерева мають один шлях між будь-якою парою вершин!
 
 <img width="500px" src="/assets/beyond-client-server/7-014-single-path.png">
 
-Specifically, we want to build a **spanning tree**, so that everyone receives the packet along a single path only.
+Конкретно, ми хочемо побудувати **кістякове дерево** (spanning tree), щоб кожен отримував пакет лише одним шляхом.
 
-We could build a spanning tree from scratch, but we could be more clever and reuse some work that we've already done. Where have we already seen spanning trees?
+Можна побудувати кістякове дерево з нуля, але можна бути хитрішими й повторно використати вже виконану роботу. Де ми вже бачили кістякові дерева?
 
-When we ran distance-vector routing for unicast packets, we built a spanning tree pointing toward the destination. This allowed all packets to flow "upwards" in the network graph, toward the single destination (the root of the tree).
+Коли ми виконували дистанційно-векторну маршрутизацію для одноадресних пакетів, ми будували кістякове дерево, спрямоване до пункту призначення. Це давало всім пакетам змогу текти «вгору» графом мережі, до єдиного пункту призначення (кореня дерева).
 
 <img width="500px" src="/assets/beyond-client-server/7-015-unicast-trees.png">
 
-If we took this graph and just reversed all the arrows, we now have a suitable spanning tree for multicast packets. The root of the tree is now the sender, and copies of the packet flow "downwards" in the network graph, away from the sender and through the network to reach every destination.
+Якщо взяти цей граф і просто розвернути всі стрілки, ми отримаємо придатне кістякове дерево для пакетів багатоадресної розсилки. Тепер корінь дерева — відправник, а копії пакета течуть «униз» графом мережі, від відправника, через мережу, щоб дістатися кожного пункту призначення.
 
 <img width="500px" src="/assets/beyond-client-server/7-016-multicast-trees.png">
 
-At this point, thinking about reversed arrows can be confusing, so let's switch to using some less confusing terminology. In the tree of routers, every router has exactly one parent, and zero or more children. The router at the "top" of the tree is the root, and routers at the "bottom" of the tree with no children are called leaves. (These are the same definitions that you're probably used to from any data structures course. Nothing special about them.)
+На цьому етапі міркування про розвернуті стрілки можуть заплутувати, тож перейдімо до менш заплутаної термінології. У дереві маршрутизаторів кожен маршрутизатор має рівно одного батька (parent) і нуль чи більше дітей (children). Маршрутизатор на «верхівці» дерева — корінь, а маршрутизатори «внизу» дерева без дітей називаються листками. (Це ті самі визначення, до яких ви, мабуть, звикли з будь-якого курсу структур даних. Нічого особливого.)
 
-When we thought about unicast routing, the root was the destination. Everyone receives packets from their children, and forwards their packets to their parents, "upwards" toward the destination.
+Коли ми думали про одноадресну маршрутизацію, коренем був пункт призначення. Кожен отримує пакети від своїх дітей і пересилає їх своїм батькам, «угору» до пункту призначення.
 
-By contrast, when we think about multicast routing, the root is the source. Everyone receives packets from their parent, and forwards their packets to their children, "downwards" through the network to reach every destination.
+Натомість коли ми думаємо про маршрутизацію багатоадресної розсилки, коренем є джерело. Кожен отримує пакети від свого батька й пересилає їх своїм дітям, «униз» через мережу, щоб дістатися кожного пункту призначення.
 
-In summary, the forwarding rule for multicast routing is: If you get a packet from your parent, send it to all your children. Otherwise, if you get a packet from someone else (not your parent), drop the packet.
+Підсумуємо: правило пересилання для маршрутизації багатоадресної розсилки таке: якщо ви отримали пакет від свого батька, надішліть його всім своїм дітям. Інакше, якщо ви отримали пакет від когось іншого (не від свого батька), відкиньте пакет.
 
-This rule helps us avoid packets getting sent along multiple paths. Even if there are multiple paths to you, you will only receive the packet from your parent (and forward it to your children) a single time. If you receive another copy of the packet from someone else (not your parent), you'll drop the packet.
+Це правило допомагає уникнути надсилання пакетів кількома шляхами. Навіть якщо до вас веде кілька шляхів, ви отримаєте пакет від свого батька (і перешлете його своїм дітям) лише один раз. Якщо ви отримаєте ще одну копію пакета від когось іншого (не від свого батька), ви відкинете пакет.
 
 
-## RPM: Learning Your Parent and Children
+## RPM: як дізнатися свого батька й дітей
 
-How do we actually implement this rule? Each router needs to know about its parent, and all of its children.
+Як насправді реалізувати це правило? Кожен маршрутизатор має знати про свого батька та всіх своїх дітей.
 
-Figuring out your parent is easy. Remember that this tree is exactly the same as the tree from distance-vector for unicast routing. In your unicast forwarding table, your next-hop to the root is your parent! To determine your parent, you can just reuse the forwarding table entry you computed for unicast routing.
+З'ясувати свого батька легко. Пам'ятайте, що це дерево точнісінько таке саме, як дерево з дистанційно-векторної одноадресної маршрутизації. У вашій таблиці одноадресного пересилання ваш наступний перехід до кореня — це і є ваш батько! Щоб визначити свого батька, можна просто повторно використати запис таблиці пересилання, обчислений для одноадресної маршрутизації.
 
 <img width="900px" src="/assets/beyond-client-server/7-017-learning-parents.png">
 
-Figuring out your children takes a bit more work. The forwarding table only tells you about your parent (next-hop, toward the root), but the forwarding table has no information about your children (previous-hop, away from the root).
+З'ясувати своїх дітей трохи складніше. Таблиця пересилання повідомляє лише про вашого батька (наступний перехід до кореня), але не має жодної інформації про ваших дітей (попередній перехід, від кореня).
 
-Since you don't know about your children, you need your children to tell you who they are. Specifically, everybody sends multicast routing advertisements to their parents saying: "I am your child (in the tree rooted at A)." (Remember that everybody knows their parents from their unicast forwarding table.)
+Оскільки ви не знаєте про своїх дітей, вам потрібно, щоб діти самі повідомили вам, хто вони. Конкретно, кожен надсилає своїм батькам оголошення маршрутизації багатоадресної розсилки: «Я твоя дитина (у дереві з коренем A)». (Пам'ятайте, що кожен знає своїх батьків із таблиці одноадресного пересилання.)
 
 <img width="600px" src="/assets/beyond-client-server/7-018-learning-children.png">
 
-Then, every router receives these advertisements and stores additional information about who their children are. This is new information that we've added specifically for multicast routing. This new multicast forwarding table is separate from the forwarding table we used in unicast routing (and for determining parents).
+Потім кожен маршрутизатор отримує ці оголошення й зберігає додаткову інформацію про те, хто його діти. Це нова інформація, яку ми додали спеціально для маршрутизації багатоадресної розсилки. Ця нова таблиця пересилання багатоадресної розсилки окрема від таблиці пересилання, яку ми використовували в одноадресній маршрутизації (і для визначення батьків).
 
 <img width="900px" src="/assets/beyond-client-server/7-019-learning-children-tables.png">
 
-In summary, the forwarding rule for multicast is implemented like this. When you receive a packet, use the unicast forwarding table (which lists your parent) to check if the packet is from your parent. If the packet is from your parent, use the new multicast forwarding table (containing advertisements from your children) to forward it to your children.
+Підсумуємо: правило пересилання для багатоадресної розсилки реалізовано так. Коли ви отримуєте пакет, за допомогою таблиці одноадресного пересилання (де вказано вашого батька) перевірте, чи пакет надійшов від вашого батька. Якщо пакет від вашого батька, за допомогою нової таблиці пересилання багатоадресної розсилки (що містить оголошення від ваших дітей) перешліть його своїм дітям.
 
 <img width="700px" src="/assets/beyond-client-server/7-020-rpb-recap.png">
 
-Now that we have two forwarding tables, let's stop and think about how each one is used. The unicast forwarding table lists your parents. This table is used for unicasting packets toward their destinations, as in standard distance-vector routing. This table is also used for checking if a multicast packet came from your parent. Finally, this table is used to send multicast routing advertisements to tell your parents "I am your child."
+Тепер, коли в нас дві таблиці пересилання, зупинімося й подумаймо, як використовується кожна з них. Таблиця одноадресного пересилання містить ваших батьків. Ця таблиця використовується для одноадресного надсилання пакетів до їхніх пунктів призначення, як у стандартній дистанційно-векторній маршрутизації. Ця таблиця також використовується для перевірки, чи пакет багатоадресної розсилки надійшов від вашого батька. Нарешті, ця таблиця використовується для надсилання оголошень маршрутизації багатоадресної розсилки, щоб повідомити батькам: «Я твоя дитина».
 
-The multicast forwarding table lists your children. This table is constructed by receiving advertisements from your children. This table is used to forward multicast packets to all of your children.
+Таблиця пересилання багатоадресної розсилки містить ваших дітей. Ця таблиця будується з оголошень, отриманих від ваших дітей. Ця таблиця використовується для пересилання пакетів багатоадресної розсилки всім вашим дітям.
 
-One last, but important, observation: In distance-vector unicast routing, we built one spanning tree for every destination. As a result, our unicast forwarding table has one next-hop for every destination. In other words, for each destination, you have a parent for that particular tree.
+Останнє, але важливе спостереження: у дистанційно-векторній одноадресній маршрутизації ми будували по одному кістяковому дереву для кожного пункту призначення. Як наслідок, наша таблиця одноадресного пересилання має по одному наступному переходу для кожного пункту призначення. Іншими словами, для кожного пункту призначення у вас є батько в цьому конкретному дереві.
 
-When we reverse the arrows, we now end up with one spanning tree for every source. Our multicast forwarding table has a list of children for each different source. In other words, a multicast forwarding table entry can be interpreted as: "If you receive a packet from source A, forward it to children R6, R7."
+Коли ми розвертаємо стрілки, ми зрештою отримуємо по одному кістяковому дереву для кожного джерела. Наша таблиця пересилання багатоадресної розсилки має список дітей для кожного окремого джерела. Іншими словами, запис таблиці пересилання багатоадресної розсилки можна тлумачити так: «Якщо ви отримали пакет від джерела A, перешліть його дітям R6, R7».
 
 <img width="900px" src="/assets/beyond-client-server/7-021-multiple-rpb-trees-1.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-022-multiple-rpb-trees-2.png">
 
 
-## Reverse Path Multicasting (RPM): Pruning
+## Багатоадресна розсилка зворотним шляхом (RPM): обрізання
 
-Our Reverse Path Broadcasting rule ensured that packets travel along a spanning tree, starting at the source (the root) and traveling "downwards" through the network to all destinations. Using a tree solved our first problem (packets taking multiple paths and wasting bandwidth).
+Наше правило широкомовної розсилки зворотним шляхом гарантувало, що пакети йдуть кістяковим деревом, починаючи від джерела (кореня) і рухаючись «униз» через мережу до всіх пунктів призначення. Використання дерева розв'язало нашу першу проблему (пакети йдуть кількома шляхами й марнують пропускну здатність).
 
-However, we still have the second problem to solve. So far, our packets are still being broadcast to everybody, including hosts who are not in the group. This wastes bandwidth.
+Однак нам ще треба розв'язати другу проблему. Досі наші пакети й далі розсилаються широкомовно всім, включно з хостами, що не входять до групи. Це марнує пропускну здатність.
 
-To solve this, we will **prune** the tree by cutting off any branches where there are no group members.
+Щоб розв'язати це, ми **обрізатимемо** (prune) дерево, відтинаючи будь-які гілки, де немає членів групи.
 
 <img width="900px" src="/assets/beyond-client-server/7-023-pruning-end-goal-1.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-024-pruning-end-goal-2.png">
 
-Pruning propagates from children to their parents. Suppose you are R5, and you are directly connected to 3 hosts. Using IGMP (i.e. talking to those hosts), you learn that none of them are in the group. This means that there's no reason for you to be part of this tree.
+Обрізання поширюється від дітей до їхніх батьків. Припустімо, ви R5 і безпосередньо під'єднані до 3 хостів. За допомогою IGMP (тобто спілкуючись із цими хостами) ви дізнаєтеся, що жоден із них не входить до групи. Це означає, що вам немає сенсу бути частиною цього дерева.
 
 <img width="900px" src="/assets/beyond-client-server/7-025-pruning-igmp.png">
 
-You can send an advertisement to your parent: "I am your child, but none of my descendants are involved in this group, so don't send me data packets." Your parent can then update their multicast forwarding table entry accordingly, so that you are no longer one of the children. Note that pruning messages are only sent to your direct parent (they're not forwarded any further).
+Ви можете надіслати своєму батькові оголошення: «Я твоя дитина, але жоден із моїх нащадків не бере участі в цій групі, тож не надсилай мені пакетів даних». Потім ваш батько може відповідно оновити свій запис таблиці пересилання багатоадресної розсилки, щоб ви більше не були серед його дітей. Зауважте, що повідомлення про обрізання надсилаються лише вашому безпосередньому батькові (далі вони не пересилаються).
 
 <img width="900px" src="/assets/beyond-client-server/7-026-pruning-message-1.png">
 
 <img width="900px" src="/assets/beyond-client-server/7-027-pruning-message-2.png">
 
-Pruning can happen at higher levels of the tree as well. Consider R3, a router with 2 children. Suppose both children send pruning advertisements, saying that they're not involved in this group. If none of your children are involved in this group, then there's no reason for you to be involved in this group either. Therefore, you can remove yourself from this tree as well. You can do this by sending a pruning advertisement to your parent, so that your parent stops sending you data packets.
+Обрізання може відбуватися й на вищих рівнях дерева. Розгляньте R3 — маршрутизатор із 2 дітьми. Припустімо, обидві дитини надсилають оголошення про обрізання, кажучи, що не беруть участі в цій групі. Якщо жодна з ваших дітей не бере участі в цій групі, то й вам немає сенсу брати в ній участь. Тому ви теж можете вилучити себе з цього дерева. Це можна зробити, надіславши оголошення про обрізання своєму батькові, щоб він перестав надсилати вам пакети даних.
 
 <img width="900px" src="/assets/beyond-client-server/7-028-pruning-message-3.png">
 
-Note: Routers at higher levels could have both children routers *and* directly-connected hosts. In this case, the router can only remove themselves from the tree if all their children send pruning advertisements, *and* all their directly-connected hosts are not part of this group.
+Примітка: маршрутизатори на вищих рівнях можуть мати і дочірні маршрутизатори, *і* безпосередньо під'єднані хости. У такому разі маршрутизатор може вилучити себе з дерева, лише якщо всі його діти надіслали оголошення про обрізання, *і* жоден із його безпосередньо під'єднаних хостів не входить до цієї групи.
 
 <img width="700px" src="/assets/beyond-client-server/7-029-pruning-children-and-igmp.png">
 
-Pruning makes our multicast forwarding tables a little more complicated. So far, each entry maps a source to a list of children: "If you receive a packet from source A, forward it to children R11, R12." However, the list of children now also depends on the destination group. For example, maybe R11 and R2 both have descendants belonging to group G1. But, only R11 has descendants belonging to group G2 (i.e. R12 has sent you a prune message).
+Обрізання робить наші таблиці пересилання багатоадресної розсилки дещо складнішими. Досі кожен запис відображав джерело на список дітей: «Якщо ви отримали пакет від джерела A, перешліть його дітям R11, R12». Однак тепер список дітей залежить і від групи-адресата. Наприклад, можливо, і R11, і R2 мають нащадків, що належать до групи G1. Але лише R11 має нащадків, що належать до групи G2 (тобто R12 надіслав вам повідомлення про обрізання).
 
-To fix this, our multicast forwarding table must have one entry per source, per group. For example: "If you receive a packet from source A to group G1, forward it to children R11, R12."
+Щоб це виправити, наша таблиця пересилання багатоадресної розсилки має мати по одному запису на кожне джерело для кожної групи. Наприклад: «Якщо ви отримали пакет від джерела A для групи G1, перешліть його дітям R11, R12».
 
 <img width="900px" src="/assets/beyond-client-server/7-030-pruning-multiple-tables-1.png">
 
-Another separate entry would be: "If you receive a packet from source A to group G2, forward it to child R11."
+Ще один окремий запис був би таким: «Якщо ви отримали пакет від джерела A для групи G2, перешліть його дитині R11».
 
 <img width="900px" src="/assets/beyond-client-server/7-031-pruning-multiple-tables-2.png">
 
-Another way to think about this modification: Previously, we had one tree per source, showing how that source sends multicast packets to everyone else. However, we are now cutting off tree branches depending on the destination group. Therefore, we need one tree per source, per destination group.
+Ще один спосіб подумати про цю модифікацію: раніше в нас було по одному дереву на джерело, що показувало, як це джерело надсилає пакети багатоадресної розсилки всім іншим. Однак тепер ми відтинаємо гілки дерева залежно від групи-адресата. Тому нам потрібно по одному дереву на кожне джерело для кожної групи-адресата.
 
-One final note: It's possible that none of your children currently belong to a group, but some time later, one of your descendants decides to join the group. To fix this problem, every router will periodically clear all of its pruning information, so that nobody is pruned anymore. This causes everyone to revert to the original RPB behavior, where you always forward to all your children.
+Останнє зауваження: можливо, зараз жодна з ваших дітей не належить до групи, але згодом один із ваших нащадків вирішить приєднатися до групи. Щоб виправити цю проблему, кожен маршрутизатор періодично очищатиме всю свою інформацію про обрізання, щоб більше нікого не було обрізано. Це змушує всіх повернутися до початкової поведінки RPB, коли ви завжди пересилаєте всім своїм дітям.
 
-This way, if one of your descendants has joined a group, then after the timer expires, you are no longer pruned and you have re-joined the tree. On the other hand, if it's still the case that none of your descendants belong to the group, you can just send another pruning message to your parent, so that you are removed from the tree again.
-
-
-## Summary of DVMRP Rules
-
-**Routing Rules:**
-
-For each source's spanning tree, you need to learn your parents and your children.
-
-1. Learning your parents: No action needed. Your unicast forwarding table already identifies your parent.
-
-2. Learning your children: Everyone sends an advertisement to their parent. When you receive these advertisements, you learn who your children are.
-
-**Forwarding Rules:**
-
-1. When you receive a packet, use the unicast forwarding table for the given source to check if the packet is from your parent.
-
-2. If the packet is from your parent, use the new multicast forwarding table to forward it to your children. Only forward to the non-pruned children for the given destination.
-
-3. Otherwise, if the packet is not from your parent, then just drop the packet.
-
-**Pruning Rules:**
-
-For each (destination group, source) pair:
-
-1. If you receive a pruning message from a child, remove that child from your multicast forwarding table entry for this destination group.
-
-2. If none of your descendants (directly-connected hosts or children) belong to this group, send a pruning message to your parent.
-
-3. Periodically clear all pruning information (revert to forwarding to all children).
+Таким чином, якщо один із ваших нащадків приєднався до групи, то після спливу таймера вас більше не обрізано, і ви знову приєдналися до дерева. З іншого боку, якщо досі жоден із ваших нащадків не належить до групи, ви можете просто надіслати своєму батькові ще одне повідомлення про обрізання, щоб вас знову вилучили з дерева.
 
 
-## DVMRP Pros and Cons
+## Підсумок правил DVMRP
 
-What's bad about this routing protocol?
+**Правила маршрутизації:**
 
-Pruning information is periodically cleared. When that happens, packets end up getting broadcast to everybody again, until pruning converges again (Recall that without pruning, packets were getting sent to everybody.)
+Для кістякового дерева кожного джерела вам треба дізнатися своїх батьків і своїх дітей.
 
-Forwarding tables scale poorly. The multicast forwarding table needs one entry per source, per destination group.
+1. Як дізнатися своїх батьків: жодних дій не потрібно. Ваша таблиця одноадресного пересилання вже визначає вашого батька.
 
-What's good about this routing protocol?
+2. Як дізнатися своїх дітей: кожен надсилає оголошення своєму батькові. Отримуючи ці оголошення, ви дізнаєтеся, хто ваші діти.
 
-DVMRP is a simple, elegant extension to an existing routing protocol (distance-vector). We were able to elegantly reuse the unicast forwarding table to help us implement DVMRP. For example, we didn't have to think hard about how to identify our parent, because it was already done for us.
+**Правила пересилання:**
 
-Because we reused the delivery trees from the distance-vector protocol, the trees we produced are also least-cost trees. In other words, they give us the best path from the sender to all group members. This property is why we say that IP multicasting is optimal: in other words, DVMRP achieves the best possible performance, in terms of the costs in the network topology.
+1. Коли ви отримуєте пакет, за допомогою таблиці одноадресного пересилання для даного джерела перевірте, чи пакет надійшов від вашого батька.
 
-One downside of coupling multicast and unicast routing is that switching protocols is harder. For example, if we switched our unicast routing protocol from distance-vector to link-state, we would have to rethink our multicast routing protocol as well.
+2. Якщо пакет від вашого батька, за допомогою нової таблиці пересилання багатоадресної розсилки перешліть його своїм дітям. Пересилайте лише необрізаним дітям для даного пункту призначення.
+
+3. Інакше, якщо пакет не від вашого батька, просто відкиньте пакет.
+
+**Правила обрізання:**
+
+Для кожної пари (група-адресат, джерело):
+
+1. Якщо ви отримали повідомлення про обрізання від дитини, вилучіть цю дитину зі свого запису таблиці пересилання багатоадресної розсилки для цієї групи-адресата.
+
+2. Якщо жоден із ваших нащадків (безпосередньо під'єднаних хостів чи дітей) не належить до цієї групи, надішліть повідомлення про обрізання своєму батькові.
+
+3. Періодично очищайте всю інформацію про обрізання (повертайтеся до пересилання всім дітям).
+
+
+## Переваги й недоліки DVMRP
+
+Що поганого в цьому протоколі маршрутизації?
+
+Інформація про обрізання періодично очищається. Коли це відбувається, пакети знову розсилаються широкомовно всім, доки обрізання знову не збіжиться. (Пригадайте, що без обрізання пакети надсилалися всім.)
+
+Таблиці пересилання погано масштабуються. Таблиця пересилання багатоадресної розсилки потребує по одному запису на кожне джерело для кожної групи-адресата.
+
+Що доброго в цьому протоколі маршрутизації?
+
+DVMRP (Distance Vector Multicast Routing Protocol) — просте, елегантне розширення наявного протоколу маршрутизації (дистанційно-векторного). Ми змогли елегантно повторно використати таблицю одноадресного пересилання, щоб допомогти собі реалізувати DVMRP. Наприклад, нам не довелося напружено думати, як визначити свого батька, бо це вже зроблено за нас.
+
+Оскільки ми повторно використали дерева доставки з дистанційно-векторного протоколу, отримані дерева теж є деревами з найменшою вартістю. Іншими словами, вони дають нам найкращий шлях від відправника до всіх членів групи. Саме через цю властивість ми кажемо, що багатоадресна розсилка IP оптимальна: інакше кажучи, DVMRP досягає найкращої можливої продуктивності з погляду вартостей у топології мережі.
+
+Один недолік поєднання маршрутизації багатоадресної розсилки й одноадресної маршрутизації полягає в тому, що змінювати протоколи складніше. Наприклад, якби ми змінили свій протокол одноадресної маршрутизації з дистанційно-векторного на протокол стану каналів, нам довелося б переосмислити й свій протокол маршрутизації багатоадресної розсилки.

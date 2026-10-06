@@ -1,612 +1,611 @@
 ---
-title: Distance-Vector Protocols
-parent: Routing
+title: Дистанційно-векторні протоколи
+parent: Маршрутизація
 nav_order: 4
 layout: page-with-toc
 ---
 
-# Distance-Vector Protocols
+# Дистанційно-векторні протоколи
 
-## Algorithm Sketch
+## Ескіз алгоритму
 
-In this section, we'll design a **distance-vector protocol**, which is one of three classes of routing algorithms (along with link-state and path-vector).
+У цьому розділі ми спроєктуємо **дистанційно-векторний протокол** (distance-vector protocol) — один із трьох класів алгоритмів маршрутизації (поряд із протоколами стану каналів і протоколами вектора шляху).
 
-Distance-vector protocols have a long history on the Internet and ARPANET (the predecessor to the Internet). The prototypical distance-vector protocol is the **Routing Information Protocol (RIP)**, and the D-V protocol we'll design shares many similarities with RIP.
+Дистанційно-векторні протоколи мають довгу історію в Інтернеті та ARPANET (попереднику Інтернету). Прототипним дистанційно-векторним протоколом є **протокол маршрутної інформації** (Routing Information Protocol, RIP), і дистанційно-векторний (D-V) протокол, який ми спроєктуємо, має багато спільного з RIP.
 
-To gain some intuition for the routing protocol we'll study in this section, consider the following network.
+Щоб набути певної інтуїції щодо протоколу маршрутизації, який ми вивчатимемо в цьому розділі, розгляньте таку мережу.
 
 <img width="800px" src="/assets/routing/2-032-sketch1.png">
 
-To start out, every router's forwarding table is empty. Our goal is to fill in the forwarding tables of every router, such that packets can be routed from anywhere to the destination, A.
+Спочатку таблиця пересилання кожного маршрутизатора порожня. Наша мета — заповнити таблиці пересилання кожного маршрутизатора так, щоб пакети можна було маршрутизувати звідусіль до пункту призначення A.
 
-To start, A can tell R1: "I am A." Now, R1 knows how to forward packets to A.
+Для початку A може сказати R1: «Я — A». Тепер R1 знає, як пересилати пакети до A.
 
-Now that R1 has a path to A, it can tell its neighbors, R2 and R3: "I am R1, and I can reach A."
+Тепер, коли R1 має шлях до A, він може сказати своїм сусідам, R2 і R3: «Я — R1, і я можу дістатися A».
 
 <img width="800px" src="/assets/routing/2-033-sketch2.png">
 
-Now, R2 and R3 know that they can reach A by forwarding packets to R1.
+Тепер R2 і R3 знають, що можуть дістатися A, пересилаючи пакети до R1.
 
-R2 can now tell its neighbors, R4 and R5: "I am R2, and I can reach A." Similarly, R3 can tell its neighbors, R6 and R7: "I am R3, and I can reach A."
+Тепер R2 може сказати своїм сусідам, R4 і R5: «Я — R2, і я можу дістатися A». Аналогічно R3 може сказати своїм сусідам, R6 і R7: «Я — R3, і я можу дістатися A».
 
 <img width="800px" src="/assets/routing/2-034-sketch3.png">
 
-Now, R4 and R5 know that packets for A can be forwarded to R2, and R6 and R7 know that packets for A can be forwarded to R3.
+Тепер R4 і R5 знають, що пакети для A можна пересилати до R2, а R6 і R7 знають, що пакети для A можна пересилати до R3.
 
-The process continues: R4, R5, R6, and R7 each tell their neighbors who they are, and that they can reach A. By the end, everybody's forwarding table is filled in, and we can route packets from anywhere in the network towards A.
+Процес триває: R4, R5, R6 і R7 кожен повідомляють своїм сусідам, хто вони, і що можуть дістатися A. Наприкінці таблиці пересилання всіх заповнено, і ми можемо маршрутизувати пакети з будь-якого місця мережі до A.
 
 <img width="800px" src="/assets/routing/2-035-sketch4.png">
 
-In summary: When you receive an announcement from someone saying they can reach A, you should write down who sent the announcement. Now, you can send messages bound for A through that person.
+Підсумуємо: коли ви отримуєте від когось оголошення, що він може дістатися A, слід записати, хто надіслав оголошення. Тепер ви можете надсилати повідомлення для A через цього відправника.
 
-Also, now that you have a way to send messages to A, you should make an announcement to all of your neighbors, so that they can send messages bound for A through you.
+Крім того, тепер, коли у вас є спосіб надсилати повідомлення до A, вам слід зробити оголошення всім своїм сусідам, щоб вони могли надсилати повідомлення для A через вас.
 
-What if there were multiple destinations? We could run this same algorithm repeatedly, once per destination. The forwarding table would then contain multiple entries, one per destination.
+А що, як пунктів призначення кілька? Ми можемо запускати той самий алгоритм кілька разів, по одному разу для кожного пункту призначення. Тоді таблиця пересилання міститиме кілька записів, по одному для кожного пункту призначення.
 
-In these notes, we'll focus on a single section for simplicity, but the protocol we'll design can extend to multiple destinations.
+Для простоти в цих матеріалах ми зосередимося на одному пункті призначення, але протокол, який ми спроєктуємо, можна поширити на кілька пунктів призначення.
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear about a path to that destination, update the table.
-> - Then, tell all your neighbors.
+> Для кожного пункту призначення:
+> - Якщо ви дізналися про шлях до цього пункту призначення, оновіть таблицю.
+> - Потім повідомте всіх своїх сусідів.
 
 
-## Direction of Announcements and Messages
+## Напрямок оголошень і повідомлень
 
-In this protocol, it's easy to confuse the the direction in which announcements and messages are sent.
+У цьому протоколі легко сплутати напрямки, у яких надсилаються оголошення й повідомлення.
 
-The announcements for how to reach A start at A, and propagate outward. For example, B sent an announcement to D, saying "I am B, and messages for A can be sent through me."
+Оголошення про те, як дістатися A, починаються в A і поширюються назовні. Наприклад, B надіслав D оголошення: «Я — B, і повідомлення для A можна надсилати через мене».
 
-By contrast, the actual messages being sent to A are sent inward, toward A. For example, a message might start at D and be sent to B on its way to A.
+Натомість самі повідомлення для A надсилаються всередину, у бік A. Наприклад, повідомлення може початися в D і бути надісланим до B на шляху до A.
 
 <img width="800px" src="/assets/routing/2-036-directions.png">
 
-The direction of announcements is exactly the opposite of the direction of the messages themselves. Be careful not to confuse announcements with the actual messages!
+Напрямок оголошень точно протилежний напрямку самих повідомлень. Будьте уважні й не плутайте оголошення з самими повідомленнями!
 
 
-## Rule 1: Bellman-Ford Updates
+## Правило 1: оновлення Беллмана–Форда
 
-What if there are multiple paths to reach A?
+А що, як є кілька шляхів до A?
 
 <img width="500px" src="/assets/routing/2-037-multipath1.png">
 
-In this scenario, both R3 and R4 will announce that they can reach A. Should R5 choose to forward packets to R3 or R4?
+У цьому сценарії і R3, і R4 оголосять, що можуть дістатися A. Кому R5 слід пересилати пакети — R3 чи R4?
 
-Recall that our goal is to find least-cost routes through the network. To allow routers to pick the least-cost path out of multiple being advertised, we'll need to also include costs in the announcements.
+Пригадайте, що наша мета — знайти маршрути з найменшою вартістю через мережу. Щоб маршрутизатори могли обирати шлях із найменшою вартістю серед кількох оголошених, нам доведеться також включати вартості в оголошення.
 
-R3's announcement now says: "I am R3, and I can reach A with cost 3."
+Оголошення R3 тепер звучить так: «Я — R3, і я можу дістатися A з вартістю 3».
 
-R4's announcement now says: "I am R4, and I can reach A with cost 2."
+Оголошення R4 тепер звучить так: «Я — R4, і я можу дістатися A з вартістю 2».
 
-Now, R5 notices that R4 is offering the shorter path, and decides to forward packets via R4.
+Тепер R5 помічає, що R4 пропонує коротший шлях, і вирішує пересилати пакети через R4.
 
 <img width="700px" src="/assets/routing/2-038-multipath2.png">
 
-We'll use the forwarding table to remember the best-known cost to the destination (and the corresponding next-hop). Each entry of the forwarding table now tells us: the destination, the next-hop for that destination, and the cost to reach the destination via that next hop.
+Ми використовуватимемо таблицю пересилання, щоб запам'ятовувати найкращу відому вартість до пункту призначення (і відповідний наступний перехід). Кожен запис таблиці пересилання тепер містить: пункт призначення, наступний перехід для цього пункту призначення і вартість досягнення пункту призначення через цей наступний перехід.
 
-Note: Formally, the forwarding table stores key-value pairs, mapping each destination to a 2-tuple containing the next hop and the distance. We'll draw tables with 3 columns for simplicity.
+Примітка: формально таблиця пересилання зберігає пари «ключ–значення», що відображають кожен пункт призначення на кортеж із двох елементів: наступного переходу та відстані. Для простоти ми малюватимемо таблиці з 3 стовпцями.
 
-R5 might not hear about both paths simultaneously, so we'll need to be more precise about what happens when we hear about a new path. There are three possibilities when we hear about a path:
+R5 може дізнатися про обидва шляхи не одночасно, тож нам треба точніше визначити, що відбувається, коли ми дізнаємося про новий шлях. Коли ми дізнаємося про шлях, можливі три варіанти:
 
-1. If the table doesn't have a path to the destination, accept the path. If I don't have a way to reach A, I should accept any path offered.
+1. Якщо в таблиці немає шляху до пункту призначення, прийняти шлях. Якщо в мене немає способу дістатися A, слід прийняти будь-який запропонований шлях.
 
     <img width="900px" src="/assets/routing/2-039-multipath3.png">
 
-2. If the new path (that we hear about) is better than the best-known path (from the forwarding table), we should accept the new path, and replace the old path from the table.
+2. Якщо новий шлях (про який ми дізналися) кращий за найкращий відомий шлях (з таблиці пересилання), слід прийняти новий шлях і замінити ним старий шлях у таблиці.
 
     <img width="900px" src="/assets/routing/2-040-multipath4.png">
 
-3. If the new path (that we hear about) is worse than the best-known path (from the forwarding table), we should ignore the new path, and keep using the path in the table.
+3. Якщо новий шлях (про який ми дізналися) гірший за найкращий відомий шлях (з таблиці пересилання), слід проігнорувати новий шлях і далі використовувати шлях із таблиці.
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear about a path to that destination, update the table if:
->     - **The destination isn't in the table.**
->     - **The advertised cost is better than the best-known cost.**
-> - Then, tell all your neighbors.
+> Для кожного пункту призначення:
+> - Якщо ви дізналися про шлях до цього пункту призначення, оновіть таблицю, якщо:
+>     - **Пункту призначення немає в таблиці.**
+>     - **Оголошена вартість краща за найкращу відому вартість.**
+> - Потім повідомте всіх своїх сусідів.
 
-How do we know if a new path is better or worse? We have to be careful, because not all link costs are the same. When someone advertises a path, the cost via that path is actually the sum of two numbers: The link cost from you to the neighbor, plus the cost from the neighbor to the destination (as advertised by the neighbor).
+Як дізнатися, чи новий шлях кращий чи гірший? Тут треба бути обережним, бо не всі вартості каналів однакові. Коли хтось оголошує шлях, вартість через цей шлях насправді є сумою двох чисел: вартості каналу від вас до сусіда плюс вартості від сусіда до пункту призначення (як її оголосив сусід).
 
-As a concrete example, suppose we hear: "I am R1, and A is 5 away from me." The cost of this new path is actually 1 (the link cost from us to R1), plus 5 (the cost from R1 to A, from the advertisement), which is 6.
+Як конкретний приклад, припустімо, ми чуємо: «Я — R1, і A розташоване за 5 від мене». Вартість цього нового шляху насправді дорівнює 1 (вартість каналу від нас до R1) плюс 5 (вартість від R1 до A з оголошення), тобто 6.
 
 <img width="600px" src="/assets/routing/2-041-costs1.png">
 
-Later, we might hear: "I am R2, and A is 3 away from me." It is incorrect to just look at the cost in the advertisement. In this case, the cost of the new path is actually 10 (the link cost from us to R2), plus 3 (the cost from R2 to A, from the advertisement), which is 13. This cost is not better than our best-known cost of 6, so we don't update the table. Packets still get forwarded to R1.
+Пізніше ми можемо почути: «Я — R2, і A розташоване за 3 від мене». Неправильно дивитися лише на вартість в оголошенні. У цьому випадку вартість нового шляху насправді дорівнює 10 (вартість каналу від нас до R2) плюс 3 (вартість від R2 до A з оголошення), тобто 13. Ця вартість не краща за нашу найкращу відому вартість 6, тож ми не оновлюємо таблицю. Пакети й далі пересилаються до R1.
 
 <img width="600px" src="/assets/routing/2-042-costs2.png">
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear about a path to that destination, update the table if:
->     - The destination isn't in the table.
->     - The advertised cost, **plus the link cost to the neighbor**, is better than the best-known cost.
-> - Then, tell all your neighbors.
+> Для кожного пункту призначення:
+> - Якщо ви дізналися про шлях до цього пункту призначення, оновіть таблицю, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість **плюс вартість каналу до сусіда** краща за найкращу відому вартість.
+> - Потім повідомте всіх своїх сусідів.
 
 
-For every announcement we hear, we have to compare two numbers. One number is the best-known cost in the table. The other number is the sum of the link cost to the neighbor, plus the advertised cost from neighbor to destination. If the latter number is lower, we use the new path and abandon the old path.
+Для кожного отриманого оголошення ми маємо порівняти два числа. Одне число — найкраща відома вартість у таблиці. Інше число — сума вартості каналу до сусіда та оголошеної вартості від сусіда до пункту призначення. Якщо друге число менше, ми використовуємо новий шлях і відмовляємося від старого.
 
 
-## Rule 1: Distributed Bellman-Ford Algorithm
+## Правило 1: розподілений алгоритм Беллмана–Форда
 
-Does this operation look familiar? It turns out, this is exactly the relaxation operation from Dijkstra's shortest paths algorithm!
+Ця операція здається знайомою? Виявляється, це саме операція релаксації з алгоритму найкоротших шляхів Дейкстри!
 
-**Bellman-Ford** is another shortest paths algorithm that relies on relaxation as the key operation. Bellman-Ford is even simpler than Dijkstra's: Cycle through all the edges repeatedly, relaxing every edge, until we get all the shortest paths.
+**Беллман–Форд** (Bellman-Ford) — ще один алгоритм найкоротших шляхів, ключовою операцією якого є релаксація. Беллман–Форд навіть простіший за алгоритм Дейкстри: раз у раз циклічно перебирати всі ребра, виконуючи релаксацію кожного ребра, доки не отримаємо всі найкоротші шляхи.
 
-You might have implemented Dijkstra's or Bellman-Ford before in a data structures class, like CS 61B at UC Berkeley. Unfortunately, the code you wrote wouldn't be very useful for our routing protocol. Remember, the routing protocol must be distributed, because routers don't have a global view of the network (no central mastermind). Also, the routers are operating asynchronously. There's nobody enforcing the order in which routers perform relaxation operations, or the order in which routers send out announcements.
+Можливо, ви вже реалізовували алгоритм Дейкстри чи Беллмана–Форда на курсі структур даних, як-от CS 61B в UC Berkeley. На жаль, написаний вами код не надто знадобився б для нашого протоколу маршрутизації. Пам'ятайте: протокол маршрутизації має бути розподіленим, бо маршрутизатори не мають глобального погляду на мережу (немає центрального «мозку»). Крім того, маршрутизатори працюють асинхронно. Ніхто не визначає порядку, в якому маршрутизатори виконують операції релаксації чи надсилають оголошення.
 
-Instead, the routing protocol that we've been designing is a distributed, asynchronous version of the Bellman-Ford algorithm. The protocol is distributed, because we aren't asking a single computer to run the entire algorithm. Instead, every router is computing its own part of the answer (populating its own forwarding table) without seeing the entire graph. The protocol is asynchronous, because the routers can all run the algorithm at the same time, without needing to control the order of operations.
+Натомість протокол маршрутизації, який ми проєктуємо, — це розподілена асинхронна версія алгоритму Беллмана–Форда. Протокол розподілений, бо ми не просимо один комп'ютер виконувати весь алгоритм. Натомість кожен маршрутизатор обчислює власну частину відповіді (заповнює власну таблицю пересилання), не бачачи всього графа. Протокол асинхронний, бо всі маршрутизатори можуть виконувати алгоритм одночасно, без потреби керувати порядком операцій.
 
 <img width="900px" src="/assets/routing/2-043-bellman-ford.png">
 
-Note: Although we're showing a single destination for simplicity, don't forget that our routing protocol will be able to find shortest paths to all destinations, just like the centralized (single-computer) Dijkstra's or Bellman-Ford algorithms.
+Примітка: хоча для простоти ми показуємо один пункт призначення, не забувайте, що наш протокол маршрутизації зможе знаходити найкоротші шляхи до всіх пунктів призначення, так само як централізовані (на одному комп'ютері) алгоритми Дейкстри чи Беллмана–Форда.
 
 
-## Bellman-Ford Demo
+## Демонстрація Беллмана–Форда
 
-Terminology note: When we send a message like "I am R1, and I can reach A with cost 5," to our neighbors, this is often called **announcing** or **advertising** a route. Notice that the advertisement contains three values: the destination, your identity (so your neighbors can forward to you), and the total cost from you to the destination.
+Примітка щодо термінології: коли ми надсилаємо сусідам повідомлення на кшталт «Я — R1, і я можу дістатися A з вартістю 5», це часто називають **оголошенням** (announcing або advertising) маршруту. Зверніть увагу, що оголошення містить три значення: пункт призначення, вашу ідентичність (щоб сусіди могли пересилати вам) і загальну вартість від вас до пункту призначення.
 
-To restate the algorithm so far one more time:
+Ще раз сформулюймо алгоритм на цей момент:
 
-When you receive an announcement from another router, you add the cost from the destination to the other router (this cost is in the announcement), plus the cost of the link from the other router to you. If this sum is less than the best-known distance to destination in your table, you replace your forwarding table entry for this destination with the new next hop (identity of the other router from the announcement) and the new distance (the sum you just computed).
+Коли ви отримуєте оголошення від іншого маршрутизатора, ви додаєте вартість від пункту призначення до іншого маршрутизатора (ця вартість є в оголошенні) і вартість каналу від іншого маршрутизатора до вас. Якщо ця сума менша за найкращу відому відстань до пункту призначення у вашій таблиці, ви замінюєте запис таблиці пересилання для цього пункту призначення новим наступним переходом (ідентичність іншого маршрутизатора з оголошення) і новою відстанню (щойно обчисленою сумою).
 
-What if you receive an announcement from another router, and the destination isn't in your forwarding table? You don't have a best-known distance to this destination, because you don't know how to reach this destination yet. In this case, you can add a new entry to your forwarding table with the new destination, and the next hop and cost from the announcement.
+А що, як ви отримали оголошення від іншого маршрутизатора, а пункту призначення немає у вашій таблиці пересилання? У вас немає найкращої відомої відстані до цього пункту призначення, бо ви ще не знаєте, як його досягти. У цьому разі ви можете додати до таблиці пересилання новий запис із новим пунктом призначення та наступним переходом і вартістю з оголошення.
 
-When you change your forwarding table, that means that you've discovered a new path to the destination. In order to propagate this new path to the rest of the network, you will need to announce this new path (destination, your identity, and cost via you) to your adjacent routers.
+Коли ви змінюєте таблицю пересилання, це означає, що ви знайшли новий шлях до пункту призначення. Щоб поширити цей новий шлях рештою мережі, вам доведеться оголосити цей новий шлях (пункт призначення, вашу ідентичність і вартість через вас) суміжним маршрутизаторам.
 
-With this algorithm in mind, let's run through an example. In this network, we'll assume all edges have cost 1 since the edges are unlabeled. We want to populate the forwarding tables with routes to A, the one and only destination.
+Пам'ятаючи про цей алгоритм, розберімо приклад. У цій мережі вважатимемо, що всі ребра мають вартість 1, оскільки ребра не позначені. Ми хочемо заповнити таблиці пересилання маршрутами до A — єдиного пункту призначення.
 
 <img width="900px" src="/assets/routing/2-044-demo1.png">
 
-First, using static routing, we hard-code an entry in R1's forwarding table. To reach destination A, the next hop is A itself, and the cost of this path is 1.
+Спершу за допомогою статичної маршрутизації ми жорстко задаємо запис у таблиці пересилання R1. Щоб дістатися пункту призначення A, наступним переходом є саме A, а вартість цього шляху — 1.
 
 <img width="900px" src="/assets/routing/2-045-demo2.png">
 
-R1's forwarding table has changed, so R1 will create a new announcement with 3 values: the destination (A), the router's identity (R1), and the cost to the destination via this router (1). This announcement is sent to all of R1's adjacent routers, namely only R2.
+Таблиця пересилання R1 змінилася, тож R1 створює нове оголошення з 3 значеннями: пункт призначення (A), ідентичність маршрутизатора (R1) і вартість до пункту призначення через цей маршрутизатор (1). Це оголошення надсилається всім суміжним із R1 маршрутизаторам, а саме лише R2.
 
 <img width="900px" src="/assets/routing/2-046-demo3.png">
 
-R2 receives this announcement and looks in its forwarding table for an entry corresponding to destination A. The forwarding table is empty, so no such entry exists. Therefore, R2 will add a new entry with 3 values: the destination (A), the next hop (R1, from the announcement), and the cost to the destination via R1 (2, summing the cost in the announcement and the cost of the link to R1).
+R2 отримує це оголошення й шукає у своїй таблиці пересилання запис для пункту призначення A. Таблиця пересилання порожня, тож такого запису немає. Тому R2 додає новий запис із 3 значеннями: пункт призначення (A), наступний перехід (R1, з оголошення) і вартість до пункту призначення через R1 (2 — сума вартості в оголошенні та вартості каналу до R1).
 
-R2's forwarding table has changed, so R2 will make an announcement with 3 values: the destination (A), the router's identity (R2), and the cost to the destination via this router (2). This announcement is sent to all of R2's adjacent routers, namely R3 and R1.
+Таблиця пересилання R2 змінилася, тож R2 робить оголошення з 3 значеннями: пункт призначення (A), ідентичність маршрутизатора (R2) і вартість до пункту призначення через цей маршрутизатор (2). Це оголошення надсилається всім суміжним із R2 маршрутизаторам, а саме R3 і R1.
 
 <img width="900px" src="/assets/routing/2-047-demo4.png">
 
-Note that in our protocol so far, routers send announcements to all of their neighbors. This means that R2's announcement is sent to R1 as well. If this bothers you, stay tuned, we'll revisit it later.
+Зауважте, що в нашому протоколі на цей момент маршрутизатори надсилають оголошення всім своїм сусідам. Це означає, що оголошення R2 надсилається й R1. Якщо вас це бентежить — не перемикайтеся, ми повернемося до цього пізніше.
 
-R1 receives this announcement. According to R1's forwarding table, the best-known way to reach A has cost 1. The path via R2 would instead cost 2 (from R2's announcement), plus 1 (link to R2), for a total of 3. This is a worse way to reach A, so R1 will ignore this announcement and leave its forwarding table unchanged.
+R1 отримує це оголошення. Згідно з таблицею пересилання R1, найкращий відомий спосіб дістатися A має вартість 1. Шлях через R2 натомість коштував би 2 (з оголошення R2) плюс 1 (канал до R2), разом 3. Це гірший спосіб дістатися A, тож R1 ігнорує це оголошення й залишає таблицю пересилання без змін.
 
 <img width="900px" src="/assets/routing/2-048-demo5.png">
 
-R3 also receives the same announcement. R3's forwarding table is empty, so R3 will install a new entry with 3 values: the destination (A), the next hop (R2, from the announcement), and the cost to the destination via R2 (3 summing the cost from the announcement, and the cost of the R3-R2 link).
+R3 також отримує те саме оголошення. Таблиця пересилання R3 порожня, тож R3 встановлює новий запис із 3 значеннями: пункт призначення (A), наступний перехід (R2, з оголошення) і вартість до пункту призначення через R2 (3 — сума вартості з оголошення та вартості каналу R3–R2).
 
 <img width="900px" src="/assets/routing/2-049-demo6.png">
 
-According to our rules so far, if you update your forwarding table, you need to send an announcement to all your neighbors. Even though we can see that this next announcement won't change anything, R3 doesn't have the same global view of the network that we have, so R3 will send an announcement to all of its neighbors, namely R2. The announcement contains: destination (A), next hop (R3), and cost via this next hop (3).
+Згідно з нашими правилами на цей момент, якщо ви оновлюєте таблицю пересилання, вам треба надіслати оголошення всім своїм сусідам. Хоча ми бачимо, що це наступне оголошення нічого не змінить, R3 не має того глобального погляду на мережу, що маємо ми, тож R3 надішле оголошення всім своїм сусідам, а саме R2. Оголошення містить: пункт призначення (A), наступний перехід (R3) і вартість через цей наступний перехід (3).
 
 <img width="900px" src="/assets/routing/2-050-demo7.png">
 
-R2 receives this announcement. R2 knows of a way to reach A with cost 2, from the forwarding table. The announcement offers a path with cost 3 (from the announcement), plus 1 (cost of R2-R3 link), for a total cost of 4. This is worse than the cost in the forwarding table, so R2 ignores the announcement.
+R2 отримує це оголошення. З таблиці пересилання R2 знає спосіб дістатися A з вартістю 2. Оголошення пропонує шлях із вартістю 3 (з оголошення) плюс 1 (вартість каналу R2–R3), разом 4. Це гірше за вартість у таблиці пересилання, тож R2 ігнорує оголошення.
 
-R2 did not update its forwarding table, so it does not make an announcement. At this point, no further announcements are made, and we can see that every router has populated its forwarding table with information about how to reach A. We can also see that the forwarding tables together form a valid, least-cost delivery tree with the shortest routes for reaching A.
+R2 не оновив таблицю пересилання, тож він не робить оголошення. На цьому етапі більше оголошень не надсилається, і ми бачимо, що кожен маршрутизатор заповнив свою таблицю пересилання інформацією про те, як дістатися A. Ми також бачимо, що таблиці пересилання разом утворюють коректне дерево доставки з найменшою вартістю, з найкоротшими маршрутами до A.
 
 <img width="900px" src="/assets/routing/2-051-demo8.png">
 
 
-## Rule 2: Updates From Next-Hop
+## Правило 2: оновлення від наступного переходу
 
-Recall one of our routing challenges from the last section: The network topology can change.
+Пригадайте одну з проблем маршрутизації з попереднього розділу: топологія мережі може змінюватися.
 
-Suppose that we hear an advertisement from R2, saying that A is 3 away from R2. If there's nothing in our table, we'll accept this advertisement and record a cost of 1+3=4..
+Припустімо, ми отримуємо оголошення від R2 про те, що A розташоване за 3 від R2. Якщо в нашій таблиці нічого немає, ми приймаємо це оголошення й записуємо вартість 1+3=4.
 
 <img width="900px" src="/assets/routing/2-052-change1.png">
 
-Later, we might hear a different advertisement from R2, saying that A is 8 away from R2. From the previous rule, we would reject this, because the advertised cost (1+8=9) is worse than our current cost (4).
+Пізніше ми можемо отримати від R2 інше оголошення: A розташоване за 8 від R2. За попереднім правилом ми відхилили б його, бо оголошена вартість (1+8=9) гірша за нашу поточну вартість (4).
 
 <img width="900px" src="/assets/routing/2-053-change2.png">
 
-However, we have to be careful about rejecting this advertisement. The router making the announcement (R2), was the same as the next hop router we were using. R2 is trying to say: "If you're using me as a next hop, my distance to A is no longer 3, it's 8." But we ignored this message because we weren't thinking about the possibility that paths might change.
+Однак із відхиленням цього оголошення треба бути обережним. Маршрутизатор, що зробив оголошення (R2), — той самий маршрутизатор, який ми використовували як наступний перехід. R2 намагається сказати: «Якщо ви використовуєте мене як наступний перехід, то моя відстань до A вже не 3, а 8». Але ми проігнорували це повідомлення, бо не зважали на можливість зміни шляхів.
 
-To fix this, we have to modify our update rule. If we hear an announcement from the next-hop router (the router with the best-known path that we were forwarding packets to), we should treat that announcement as an update, and edit our forwarding table. We should do this even if the announcement produces a worse path, because the next hop could be telling us that the path cost has changed and gotten worse.
+Щоб виправити це, треба змінити наше правило оновлення. Якщо ми отримуємо оголошення від маршрутизатора наступного переходу (маршрутизатора з найкращим відомим шляхом, якому ми пересилали пакети), слід розглядати це оголошення як оновлення й редагувати таблицю пересилання. Слід робити це, навіть якщо оголошення дає гірший шлях, бо наступний перехід може повідомляти нам, що вартість шляху змінилася й погіршилася.
 
 <img width="900px" src="/assets/routing/2-054-change3.png">
 
-Note that when this new rule applies, we don't update the destination or the next hop in the forwarding table, only the distance. In the example, packets at R3 destined for A are still forwarded to R2 (same destination, same next hop), but the cost via R2 changed.
+Зауважте, що коли застосовується це нове правило, ми не оновлюємо пункт призначення чи наступний перехід у таблиці пересилання — лише відстань. У прикладі пакети на R3, призначені для A, і далі пересилаються до R2 (той самий пункт призначення, той самий наступний перехід), але вартість через R2 змінилася.
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - **The advertisement is from the current next-hop.**
-> - Then, tell all your neighbors.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - **Оголошення надійшло від поточного наступного переходу.**
+> - Потім повідомте всіх своїх сусідів.
 
-In order to support changing topologies, routers will run the routing protocol indefinitely.
+Щоб підтримувати зміни топології, маршрутизатори виконуватимуть протокол маршрутизації безперервно.
 
-Suppose we ran the protocol indefinitely, with no topology changes. Initially, some relaxations will succeed and the forwarding tables will change. Eventually, the algorithm will **converge** when we have found all the least-cost routes through the network. At this point, if we continue relaxing the edges, the forwarding tables will not change. Every relaxation will be rejected, because the best-known paths to the goal are all the shortest paths, and we'll never find a better path to replace the current shortest paths. The state of the network at convergence is called **steady state**.
+Припустімо, ми виконуємо протокол безперервно, без змін топології. Спочатку деякі релаксації будуть успішними, і таблиці пересилання змінюватимуться. Зрештою алгоритм **збіжиться** (converge), коли ми знайдемо всі маршрути з найменшою вартістю в мережі. Після цього, якщо продовжувати релаксацію ребер, таблиці пересилання не змінюватимуться. Кожну релаксацію буде відхилено, бо найкращі відомі шляхи до цілі — це всі найкоротші шляхи, і ми ніколи не знайдемо кращого шляху, щоб замінити поточні найкоротші. Стан мережі після збіжності називається **усталеним станом** (steady state).
 
-Later, suppose we change the topology (e.g. maybe a router fails). As we continue running the protocol, some relaxations might succeed again, since we've changed the underlying graph. After some time, the delivery tree will converge again on the new least-cost routes and stop changing until the next time the topology changes.
+Припустімо, пізніше ми змінюємо топологію (наприклад, відмовляє маршрутизатор). Коли ми продовжуємо виконувати протокол, деякі релаксації можуть знову бути успішними, бо ми змінили базовий граф. За деякий час дерево доставки знову збіжиться до нових маршрутів із найменшою вартістю й перестане змінюватися до наступної зміни топології.
 
-As an analogy, consider a pool of water. In the steady state, with no disturbances, the surface of the water is perfectly still. If you toss a rock in the water, there will be some ripples as the environment adjusts to the change you just made, but after some time, the surface of the water will become perfectly still again.
+Як аналогію розгляньте ставок. В усталеному стані, коли нічого не заважає, поверхня води ідеально нерухома. Якщо кинути у воду камінь, з'являться брижі, поки середовище пристосовується до щойно внесеної зміни, але за деякий час поверхня води знову стане ідеально нерухомою.
 
 
-## Rule 3: Resending
+## Правило 3: повторне надсилання
 
-Recall another one of our routing challenges from the last section: Packets can get dropped.
+Пригадайте ще одну проблему маршрутизації з попереднього розділу: пакети можуть відкидатися.
 
-For example, let's rewind to the very beginning of the example from earlier. R2 and R3 have empty forwarding tables, and R1 is updated with the hard-coded route to A. What if R1 issues an announcement, but the packet is dropped? R2 never hears an announcement, and the protocol fails.
+Наприклад, повернімося до самого початку попереднього прикладу. R2 і R3 мають порожні таблиці пересилання, а R1 оновлено жорстко заданим маршрутом до A. Що, як R1 робить оголошення, але пакет відкидається? R2 так і не отримує оголошення, і протокол не спрацьовує.
 
 <img width="900px" src="/assets/routing/2-055-dropped.png">
 
-You could try to design a more complicated scheme to ensure reliability (e.g. forcing recipients to send acknowledgements), but let's use something simple: If you have an announcement to make, re-send that announcement every few seconds. It turns out this simple approach works well with some of our later design choices, and nothing more complicated is necessary.
+Можна спробувати спроєктувати складнішу схему для забезпечення надійності (наприклад, змушувати отримувачів надсилати підтвердження), але скористаймося чимось простим: якщо у вас є оголошення, повторно надсилайте його кожні кілька секунд. Виявляється, цей простий підхід добре поєднується з деякими нашими подальшими проєктними рішеннями, і нічого складнішого не потрібно.
 
-Formally, the protocol will define an **advertisement interval**. 30 seconds is a common interval used in practice. If the interval is X seconds, then every advertisement must be re-sent every X seconds.
+Формально протокол визначатиме **інтервал оголошень** (advertisement interval). На практиці поширеним є інтервал 30 секунд. Якщо інтервал дорівнює X секундам, кожне оголошення має повторно надсилатися кожні X секунд.
 
-As long as we wait long enough and re-send the packet enough times, the link will eventually successfully send the advertisement, as long as the link works some of the time. If the link was dropping every single packet, then there's no way for the advertisement to be sent (and maybe a link with 0% success rate probably shouldn't be in the graph anyway). Eventually, with enough re-sending, this protocol will still converge.
+Якщо чекати достатньо довго й повторно надіслати пакет достатньо разів, канал зрештою успішно передасть оголошення, якщо він бодай іноді працює. Якби канал відкидав геть кожен пакет, оголошення ніяк не вдалося б надіслати (і, можливо, каналу з 0% успішності взагалі не місце в графі). Зрештою за достатньої кількості повторних надсилань цей протокол однаково збіжиться.
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - **The advertisement is from the current next-hop.**
-> - Advertise to all your neighbors **when the table updates, and periodically (advertisement interval)**.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - **Оголошення надійшло від поточного наступного переходу.**
+> - Оголошуйте всім своїм сусідам, **коли таблиця оновлюється, а також періодично (інтервал оголошень)**.
 
-Note that re-sending at intervals can work in combination with our rule from earlier, where we sent an announcement any time the forwarding table changes. Announcements sent immediately after a change are called **triggered updates**.
+Зауважте, що повторне надсилання з інтервалами може працювати разом із нашим попереднім правилом, за яким ми надсилали оголошення щоразу, коли змінювалася таблиця пересилання. Оголошення, надіслані одразу після зміни, називаються **ініційованими оновленнями** (triggered updates).
 
-The protocol would still converge if we only sent announcements at intervals. The table changes, we wait for the interval to expire, and send out the announcement. However, adding triggered updates in addition to interval updates is an optimization that can help the protocol converge quicker. As soon as we know the update, we might as well announce it, without waiting for the interval.
+Протокол однаково збігався б, якби ми надсилали оголошення лише з інтервалами. Таблиця змінюється, ми чекаємо завершення інтервалу й надсилаємо оголошення. Однак додавання ініційованих оновлень до інтервальних — це оптимізація, яка може допомогти протоколу збігатися швидше. Щойно ми дізналися про оновлення, можна одразу його оголосити, не чекаючи інтервалу.
 
-With this new rule, once the network converges, every router will continue to re-send announcements periodically, but none of the announcements will be accepted, because we're in steady state and everybody already has the shortest-cost routes.
+За цього нового правила, щойно мережа збіжиться, кожен маршрутизатор і далі періодично повторно надсилатиме оголошення, але жодне оголошення не буде прийнято, бо ми в усталеному стані й усі вже мають маршрути з найменшою вартістю.
 
-In the example from earlier, after the network converges, R3 might decide to re-send its announcement, with destination A, next hop R3, and cost via R3 of 3. But R2 will ignore this announcement because its forwarding table has a cheaper route of cost 2 already (the announcement path costs 3 + 1 = 4).
+У попередньому прикладі після збіжності мережі R3 може вирішити повторно надіслати своє оголошення з пунктом призначення A, наступним переходом R3 і вартістю через R3, що дорівнює 3. Але R2 проігнорує це оголошення, бо в його таблиці пересилання вже є дешевший маршрут із вартістю 2 (шлях з оголошення коштує 3 + 1 = 4).
 
 
-## Rule 4: Expiring
+## Правило 4: закінчення терміну дії
 
-Recall our routing challenge from earlier: The network topology can change. In particular, links and routers can fail. If a router fails in the network, our route might become invalid. The failed router won't tell us about the problem (since it's failed), so we're stuck with this invalid route.
+Пригадайте нашу попередню проблему маршрутизації: топологія мережі може змінюватися. Зокрема, канали та маршрутизатори можуть відмовляти. Якщо в мережі відмовляє маршрутизатор, наш маршрут може стати некоректним. Маршрутизатор, що відмовив, не повідомить нам про проблему (бо він відмовив), тож ми застрягаємо з некоректним маршрутом.
 
-To solve this problem, we'll give every route (i.e. every table entry) a finite **time to live (TTL)**. This is a countdown timer, telling us how much longer we can keep this forwarding entry.
+Щоб розв'язати цю проблему, ми надамо кожному маршруту (тобто кожному запису таблиці) скінченний **час життя** (time to live, TTL). Це таймер зворотного відліку, що показує, скільки ще ми можемо зберігати цей запис пересилання.
 
-Periodic updates help us confirm that a route still exists. If we get an advertisement from the next-hop, we can reset ("recharge") the TTL to its original value.
+Періодичні оновлення допомагають нам підтверджувати, що маршрут досі існує. Якщо ми отримуємо оголошення від наступного переходу, ми можемо скинути («перезарядити») TTL до початкового значення.
 
-If something in the network fails, we'll stop getting periodic updates. Eventually, the TTL will expire. If the TTL expires, we'll delete the entry from the table. Intuitively: We aren't getting updates anymore, so this route is probably no longer valid.
+Якщо в мережі щось відмовляє, ми перестаємо отримувати періодичні оновлення. Зрештою TTL спливе. Якщо TTL спливає, ми видаляємо запис із таблиці. Інтуїтивно: ми більше не отримуємо оновлень, тож цей маршрут, імовірно, уже некоректний.
 
-Here's an example of the TTL in action. In this example, we are R3. At time t=0, we hear an announcement: "I'm R2, and A is 5 away from me." Our table doesn't have an entry for A, so we'll accept this path, and set its TTL to 11. Notice that this TTL is associated with the specific table entry. If we had multiple table entries, they would each have their own TTL. 
+Ось приклад роботи TTL. У цьому прикладі ми — R3. У момент t=0 ми отримуємо оголошення: «Я — R2, і A розташоване за 5 від мене». У нашій таблиці немає запису для A, тож ми приймаємо цей шлях і встановлюємо його TTL рівним 11. Зверніть увагу, що цей TTL пов'язаний із конкретним записом таблиці. Якби в нас було кілька записів таблиці, кожен мав би власний TTL.
 
 <img width="900px" src="/assets/routing/2-056-ttl1.png">
 
-The TTL of 11 tells us that R2 must send us another confirmation of this route in the next 11 seconds. Otherwise, this table entry will be deleted. (Note: The initial TTL of 11 was chosen arbitrarily. In practice, this number would be set by the protocol or the person operating the router.)
+TTL 11 означає, що R2 має надіслати нам ще одне підтвердження цього маршруту протягом наступних 11 секунд. Інакше цей запис таблиці буде видалено. (Примітка: початковий TTL 11 обрано довільно. На практиці це число встановлює протокол або людина, що обслуговує маршрутизатор.)
 
-Time passes. At t=1, the TTL is now 10. At t=2, the TTL is now 9. At t=3, the TTL is now 8. At t=4, the TTL is now 7.
+Минає час. У момент t=1 TTL уже 10. У момент t=2 TTL уже 9. У момент t=3 TTL уже 8. У момент t=4 TTL уже 7.
 
 <img width="900px" src="/assets/routing/2-057-ttl2.png">
 
-At t=5, R2 does its periodic re-sending of the announcement: "I'm R2, and A is 5 away from me." We look in our table and realize that R2 is the current next-hop to A, so we should accept this advertisement (per Rule 2) and update the table.
+У момент t=5 R2 виконує періодичне повторне надсилання оголошення: «Я — R2, і A розташоване за 5 від мене». Ми дивимося в таблицю й бачимо, що R2 — поточний наступний перехід до A, тож слід прийняти це оголошення (згідно з правилом 2) і оновити таблицю.
 
-Because we got a confirmation of this route still existing, the TTL can be reset back to its initial value of 11. We need to get another confirmation of this route from R2 in the next 11 seconds.
+Оскільки ми отримали підтвердження того, що маршрут досі існує, TTL можна скинути до початкового значення 11. Нам потрібно отримати від R2 ще одне підтвердження цього маршруту протягом наступних 11 секунд.
 
 <img width="900px" src="/assets/routing/2-058-ttl3.png">
 
-Suppose that a link goes down at t=6, and A is now unreachable. R2 removes its static route to A, and no longer sends any periodic updates.
+Припустімо, що в момент t=6 канал виходить з ладу і A тепер недосяжне. R2 видаляє свій статичний маршрут до A і більше не надсилає жодних періодичних оновлень.
 
-At t=16 (11 seconds after the last update at t=5), the TTL in our table entry has decreased all the way to 0, so we'll delete the entry from our table.
+У момент t=16 (через 11 секунд після останнього оновлення в t=5) TTL у нашому записі таблиці зменшився аж до 0, тож ми видаляємо запис із таблиці.
 
 <img width="900px" src="/assets/routing/2-059-ttl4.png">
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table **and reset the TTL** if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - The advertisement is from the current next-hop.
-> - Advertise to all your neighbors when the table updates, and periodically (advertisement interval).
-> - **If a table entry expires, delete it.**
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю **і скиньте TTL**, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - Оголошення надійшло від поточного наступного переходу.
+> - Оголошуйте всім своїм сусідам, коли таблиця оновлюється, а також періодично (інтервал оголошень).
+> - **Якщо термін дії запису таблиці спливає, видаліть його.**
 
-Be careful not to confuse the various timers that the router must maintain.
+Будьте уважні й не плутайте різні таймери, які має підтримувати маршрутизатор.
 
-The advertisement interval tells the router when to advertise routes to neighbors. This is usually a single timer for the entire table, so the router advertises all the routes in the table whenever the advertisement interval timer expires. In the example above, the advertisement interval timer was 5 seconds, since R2 sent advertisements at t=0 and t=5.
+Інтервал оголошень вказує маршрутизатору, коли оголошувати маршрути сусідам. Зазвичай це один таймер для всієї таблиці, тож маршрутизатор оголошує всі маршрути в таблиці щоразу, коли спливає таймер інтервалу оголошень. У прикладі вище таймер інтервалу оголошень становив 5 секунд, бо R2 надсилав оголошення в моменти t=0 і t=5.
 
-By contrast, the TTL tells the router when to delete a table entry. Each table entry has its own independent TTL, counting down for that specific entry. In the example above, the initial TTL was 11 seconds (reset to 11 when we accept an advertisement), and counted down for each table entry.
+Натомість TTL вказує маршрутизатору, коли видаляти запис таблиці. Кожен запис таблиці має власний незалежний TTL, що відлічується для цього конкретного запису. У прикладі вище початковий TTL становив 11 секунд (скидався до 11, коли ми приймали оголошення) і відлічувався для кожного запису таблиці.
 
-At this point, we have a mostly-functional routing protocol! Let's add some optimizations for faster convergence.
+На цьому етапі в нас є здебільшого працездатний протокол маршрутизації! Додаймо кілька оптимізацій для швидшої збіжності.
 
 
-## Rule 5: Poisoning Expired Routes
+## Правило 5: отруєння маршрутів, термін дії яких сплив
 
-Waiting for routes to expire is slow. To see why, let's rewatch the demo from earlier.
+Чекати, поки спливе термін дії маршрутів, — повільно. Щоб побачити чому, ще раз розгляньмо попередню демонстрацію.
 
-In this example, we are R3. Assume that by t=5, we've learned a route to A, via R2, and this route has 11 seconds of TTL remaining.
+У цьому прикладі ми — R3. Припустімо, що до моменту t=5 ми дізналися маршрут до A через R2, і цьому маршруту залишилося 11 секунд TTL.
 
 <img width="900px" src="/assets/routing/2-060-poison1.png">
 
-At t=6, the A-to-R2 link goes down! The table entry is now busted, because if we forwarded packets to R2, they wouldn't actually reach A. However, we don't know that this entry is busted yet. We have to wait another 10 seconds for this route to expire.
+У момент t=6 канал A–R2 виходить з ладу! Запис таблиці тепер зламаний: якби ми пересилали пакети до R2, вони насправді не дісталися б A. Однак ми ще не знаємо, що цей запис зламаний. Нам доводиться чекати ще 10 секунд, поки спливе термін дії цього маршруту.
 
-Also at t=6, we get a new announcement: "I'm R1, and A is 1 away from me." We look in our table, and we already have a way to reach A, so we reject this announcement. (Note: It's not important for this demo, but we're assuming we don't accept equal-cost paths here.)
+Також у момент t=6 ми отримуємо нове оголошення: «Я — R1, і A розташоване за 1 від мене». Ми дивимося в таблицю — у нас уже є спосіб дістатися A, тож ми відхиляємо це оголошення. (Примітка: для цієї демонстрації це неважливо, але ми вважаємо, що шляхи з однаковою вартістю тут не приймаються.)
 
-If only we knew that our existing route is busted, we could accept this new advertisement right now. But instead, we're doomed to wait another 10 seconds of using this busted path.
+Якби ж ми знали, що наш наявний маршрут зламаний, ми могли б прийняти це нове оголошення просто зараз. Натомість ми приречені ще 10 секунд використовувати цей зламаний шлях.
 
 <img width="900px" src="/assets/routing/2-061-poison2.png">
 
-Time passes. By t=11 (five seconds later), the busted route still has 5 seconds of TTL remaining.
+Минає час. До моменту t=11 (через п'ять секунд) зламаному маршруту досі залишається 5 секунд TTL.
 
-At t=11, we get another announcement: "I'm R1, and A is 1 away from me." R1 is re-sending its announcement from earlier. Again, we look in our table, and we still have an entry for A, so we reject this announcement again.
+У момент t=11 ми отримуємо ще одне оголошення: «Я — R1, і A розташоване за 1 від мене». R1 повторно надсилає своє попереднє оголошення. Знову ми дивимося в таблицю — у нас досі є запис для A, тож ми знову відхиляємо це оголошення.
 
-Again, if only we had some way to know that our existing route is busted...then we could accept this new advertisement. With our current approach, however, we're doomed to keep using the busted path for the remaining 5 seconds.
+І знову: якби ж у нас був спосіб дізнатися, що наш наявний маршрут зламаний… тоді ми могли б прийняти це нове оголошення. Однак за нашого поточного підходу ми приречені й далі використовувати зламаний шлях ще 5 секунд.
 
 <img width="900px" src="/assets/routing/2-062-poison3.png">
 
-Time passes. By t=16 (five seconds later), the busted route TTL finally reaches 0, and we can delete this entry from the table.
+Минає час. До моменту t=16 (через п'ять секунд) TTL зламаного маршруту нарешті досягає 0, і ми можемо видалити цей запис із таблиці.
 
-Also at t=16, R1 re-sends its announcement again: "I'm R1, and A is 1 away from me." Finally, our table doesn't have a route to A (the busted route just got deleted), so we can accept this announcement.
+Також у момент t=16 R1 знову повторно надсилає своє оголошення: «Я — R1, і A розташоване за 1 від мене». Нарешті в нашій таблиці немає маршруту до A (зламаний маршрут щойно видалено), тож ми можемо прийняти це оголошення.
 
 <img width="900px" src="/assets/routing/2-063-poison4.png">
 
-What just happened? At t=6, the failure occurred, and the entry in our table became busted. However, because there were 10 seconds of TTL remaining on the busted route, we were doomed to keep using the busted route for another 10 seconds. During this time, any packets to A will get lost, because we'll forward the packet along a busted path. Also, we might advertise this busted route to other people, causing them to lose packets as well. Finally, as we saw, we might reject new paths, thinking that the busted path is still valid.
+Що щойно сталося? У момент t=6 сталася відмова, і запис у нашій таблиці став зламаним. Однак оскільки зламаному маршруту залишалося 10 секунд TTL, ми були приречені використовувати зламаний маршрут ще 10 секунд. Протягом цього часу будь-які пакети до A губитимуться, бо ми пересилатимемо пакет зламаним шляхом. Крім того, ми можемо оголошувати цей зламаний маршрут іншим, через що вони теж губитимуть пакети. Нарешті, як ми бачили, ми можемо відхиляти нові шляхи, вважаючи зламаний шлях досі коректним.
 
-The key problem here is: When something fails, it's not being reported, so we're forced to rely on timeouts to delete busted paths. This is slow. Is there any way we can detect failures earlier?
+Ключова проблема тут така: коли щось відмовляє, про це не повідомляється, тож ми змушені покладатися на тайм-аути, щоб видаляти зламані шляхи. Це повільно. Чи можна якось виявляти відмови раніше?
 
-The solution is **poison**: When something fails, if possible, explicitly advertise that a path is busted.
+Розв'язок — **отруєння** (poison): коли щось відмовляє, за можливості явно оголошувати, що шлях зламаний.
 
-In English, the new poison announcement that R2 sends would say: "I'm R2, and I no longer have a way to reach A." In the protocol, we encode this message by advertising a path with cost infinity: "I'm R2, and A is infinity away from me." This infinite-cost path represents a busted path.
+Звичайною мовою нове отруйне оголошення, яке надсилає R2, звучало б так: «Я — R2, і я більше не маю способу дістатися A». У протоколі ми кодуємо це повідомлення, оголошуючи шлях із нескінченною вартістю: «Я — R2, і A розташоване за нескінченність від мене». Цей шлях із нескінченною вартістю позначає зламаний шлях.
 
-Poisoned paths propagate just like any other path. If we're forwarding packets to R2, and we get a poison message from R2, we update our forwarding table and replace the cost with infinity (per Rule 2). We can also advertise this infinite-cost poison to our neighbors, so they are also alerted of the busted path. This allows an invalid path to propagate through the network, which can be much faster than waiting for the path to time out.
+Отруєні шляхи поширюються так само, як будь-які інші шляхи. Якщо ми пересилаємо пакети до R2 і отримуємо від R2 отруйне повідомлення, ми оновлюємо таблицю пересилання й замінюємо вартість на нескінченність (згідно з правилом 2). Ми також можемо оголосити цю отруту з нескінченною вартістю своїм сусідам, щоб їх теж було сповіщено про зламаний шлях. Це дає змогу некоректному шляху поширюватися мережею, що може бути набагато швидше, ніж чекати тайм-ауту шляху.
 
-Let's rewatch the demo from earlier, but with poisoning on route expiry. As before, assume that by t=5, we've learned a route to A, via R2, and this route has 11 seconds of TTL remaining.
+Ще раз розгляньмо попередню демонстрацію, але тепер з отруєнням у разі закінчення терміну дії маршруту. Як і раніше, припустімо, що до моменту t=5 ми дізналися маршрут до A через R2, і цьому маршруту залишилося 11 секунд TTL.
 
 <img width="900px" src="/assets/routing/2-060-poison1.png">
 
-At t=6, the A-to-R2 link goes down! The table entry is now busted. However, we don't know that this entry is busted just yet.
+У момент t=6 канал A–R2 виходить з ладу! Запис таблиці тепер зламаний. Однак ми ще не знаємо, що цей запис зламаний.
 
-With our modification, instead of saying nothing, R2 sends us a poison announcement: "I'm R2, and A is infinity away from me." Per Rule 2 (accept from next-hop), we notice that R2 is our next hop, so we accept this announcement and update our table.
+З нашою модифікацією замість того, щоб мовчати, R2 надсилає нам отруйне оголошення: «Я — R2, і A розташоване за нескінченність від мене». Згідно з правилом 2 (приймати від наступного переходу) ми помічаємо, що R2 — наш наступний перехід, тож приймаємо це оголошення й оновлюємо таблицю.
 
 <img width="900px" src="/assets/routing/2-064-poison5.png">
 
-Our table entry now encodes the fact that A is actually unreachable via R2. This entry has a TTL, just like any other table entry. Also, we can advertise this infinite-cost path to our neighbors, just like any other entry. This tells our neighbors that we can no longer reach A either.
+Наш запис таблиці тепер кодує той факт, що A насправді недосяжне через R2. Цей запис має TTL, як і будь-який інший запис таблиці. Крім того, ми можемо оголосити цей шлях із нескінченною вартістю своїм сусідам, як і будь-який інший запис. Це повідомляє нашим сусідам, що ми теж більше не можемо дістатися A.
 
-Also at t=6, after our table update, we get a new announcement: "I'm R1, and A is 1 away from me." Using this route has distance 2 (1 from link, 1 from advertisement), which is better than infinity (from the table). We accept this advertisement and update the table. Now, packets for A are routed through R1 instead of R2.
+Також у момент t=6, після оновлення нашої таблиці, ми отримуємо нове оголошення: «Я — R1, і A розташоване за 1 від мене». Цей маршрут має відстань 2 (1 від каналу, 1 з оголошення), що краще за нескінченність (з таблиці). Ми приймаємо це оголошення й оновлюємо таблицю. Тепер пакети для A маршрутизуються через R1 замість R2.
 
 <img width="900px" src="/assets/routing/2-065-poison6.png">
 
-In our earlier demo, at t=6, we were forced to wait 10 seconds for the busted route to expire. Thanks to the poison announcement, we were able to immediately invalidate that busted route at t=6, and accept the new path.
+У нашій попередній демонстрації в момент t=6 ми були змушені чекати 10 секунд, поки спливе термін дії зламаного маршруту. Завдяки отруйному оголошенню ми змогли негайно анулювати цей зламаний маршрут у момент t=6 і прийняти новий шлях.
 
-With poison, we were able to converge on a valid path sooner. Between t=6 and t=16, packets will now correctly reach A (whereas in the no-poison approach, packets in this time period would get lost). Also, thanks to the poison, we've avoided propagating a busted route to others in that time period. Even better, we can propagate the poison to others and let them know that the path to A via us (and R2) is busted.
+З отруєнням ми змогли швидше збігтися до коректного шляху. Між t=6 і t=16 пакети тепер правильно доходитимуть до A (тоді як за підходу без отруєння пакети в цей проміжок часу губилися б). Крім того, завдяки отруті ми уникли поширення зламаного маршруту іншим у цей проміжок часу. Ба більше, ми можемо поширити отруту іншим і повідомити їм, що шлях до A через нас (і R2) зламаний.
 
-Let's formalize the rules of poison. Poison originates from one of two sources: One or your routes times out, or you notice a local failure (e.g. one of your links goes down). When one of these occurs, you can update the appropriate table entry with cost infinity, reset the TTL, and advertise this poison to your neighbors.
+Формалізуймо правила отруєння. Отрута походить з одного з двох джерел: спливає тайм-аут одного з ваших маршрутів або ви помічаєте локальну відмову (наприклад, один із ваших каналів виходить з ладу). Коли таке стається, ви можете оновити відповідний запис таблиці вартістю «нескінченність», скинути TTL і оголосити цю отруту своїм сусідам.
 
-How does poison propagate? When you receive a poison advertisement from your current next-hop, accept it. Your next-hop is telling you that the route no longer exists (similar to advertising worse paths in Rule 2), so you need to update your table. When you update the table, you reset the TTL, just like any other table update. You also advertise the poison to your neighbors, just like any other table update, so that your neighbors also know about the busted route.
+Як поширюється отрута? Коли ви отримуєте отруйне оголошення від свого поточного наступного переходу, прийміть його. Ваш наступний перехід повідомляє, що маршрут більше не існує (подібно до оголошення гірших шляхів у правилі 2), тож вам треба оновити таблицю. Оновлюючи таблицю, ви скидаєте TTL, як і за будь-якого іншого оновлення таблиці. Ви також оголошуєте отруту своїм сусідам, як і за будь-якого іншого оновлення таблиці, щоб ваші сусіди теж дізналися про зламаний маршрут.
 
-One final modification: Now that our tables contain poison, we have to be careful not to forward packets along a poisoned route. If a table entry says that A is reachable via R1 with cost infinity, this really means that A is unreachable via R1. If we get a packet destined for A, we cannot forward it to R1.
+Остання модифікація: тепер, коли наші таблиці містять отруту, треба стежити, щоб не пересилати пакети отруєним маршрутом. Якщо запис таблиці каже, що A досяжне через R1 з вартістю «нескінченність», це насправді означає, що A недосяжне через R1. Якщо ми отримуємо пакет, призначений для A, ми не можемо переслати його до R1.
 
 <img width="500px" src="/assets/routing/2-066-poison-route.png">
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table **and reset the TTL** if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - The advertisement is from the current next-hop. **Includes poison advertisements.**
-> - Advertise to all your neighbors when the table updates, and periodically (advertisement interval).
-> - If a table entry expires, **make the entry poison and advertise it**.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю **і скиньте TTL**, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - Оголошення надійшло від поточного наступного переходу. **Зокрема й отруйні оголошення.**
+> - Оголошуйте всім своїм сусідам, коли таблиця оновлюється, а також періодично (інтервал оголошень).
+> - Якщо термін дії запису таблиці спливає, **зробіть запис отруєним і оголосіть його**.
 
+## Правило 6A: розщеплений горизонт
 
-## Rule 6A: Split Horizon
-
-Let's go back to our favorite running example again to demonstrate another problem. Suppose we're in steady state, and the forwarding tables have the correct shortest routes to A. Announcements are being periodically re-sent, but all announcements are being rejected because we're in steady state.
+Знову повернімося до нашого улюбленого наскрізного прикладу, щоб продемонструвати ще одну проблему. Припустімо, ми в усталеному стані, і таблиці пересилання мають правильні найкоротші маршрути до A. Оголошення періодично надсилаються повторно, але всі оголошення відхиляються, бо ми в усталеному стані.
 
 <img width="900px" src="/assets/routing/2-067-splithorizon1.png">
 
-The R1-R2 link goes down, and R2's entry expires, because R1 stopped sending periodic announcements. R2 now has an empty forwarding table. What happens next?
+Канал R1–R2 виходить з ладу, і термін дії запису R2 спливає, бо R1 перестав надсилати періодичні оголошення. Тепер у R2 порожня таблиця пересилання. Що відбувається далі?
 
 <img width="900px" src="/assets/routing/2-068-splithorizon2.png">
 
-Eventually, R3 re-sends its announcement to R2, with destination (A), next hop (R3), and cost via next hop (3).
+Зрештою R3 повторно надсилає R2 своє оголошення з пунктом призначення (A), наступним переходом (R3) і вартістю через наступний перехід (3).
 
-R2's table is empty, so it accepts this announcement and adds destination (A), next hop (R3), and cost via next hop (3 + 1 = 4).
+Таблиця R2 порожня, тож він приймає це оголошення й додає пункт призначення (A), наступний перехід (R3) і вартість через наступний перехід (3 + 1 = 4).
 
 <img width="900px" src="/assets/routing/2-069-splithorizon3.png">
 
-We've created a routing loop! R2 will forward packets to R3, and R3 will forward packets to R2.
+Ми створили петлю маршрутизації! R2 пересилатиме пакети до R3, а R3 — до R2.
 
 <img width="900px" src="/assets/routing/2-070-splithorizon4.png">
 
-This problem can be tricky to spot at first, so let's restate it intuitively. Suppose I have accepted a route from Alice, which means that I'll be forwarding packets to Alice. What happens if I then offer this route back to Alice? If she accepts the route, she'll end up forwarding packets to me, and I'll forward the packet back to her.
+Цю проблему спершу може бути складно помітити, тож сформулюймо її інтуїтивно. Припустімо, я прийняв маршрут від Аліси, тобто пересилатиму пакети Алісі. Що станеться, якщо я потім запропоную цей маршрут назад Алісі? Якщо вона прийме маршрут, то пересилатиме пакети мені, а я пересилатиму пакет назад їй.
 
-If the network topology never changed, this advertisement is harmless. The path I'm offering to Alice goes from Alice, to me, back to Alice. This new path is definitely more expensive because it adds an unnecessary loop, so Alice will always reject this advertisement.
+Якби топологія мережі ніколи не змінювалася, це оголошення було б нешкідливим. Шлях, який я пропоную Алісі, веде від Аліси до мене й назад до Аліси. Цей новий шлях напевно дорожчий, бо додає зайву петлю, тож Аліса завжди відхилятиме це оголошення.
 
-However, this advertisement is dangerous if Alice loses her route. Now, my advertisement is fooling Alice into thinking that she can send packets to me. But, my path relies on Alice herself, so if she accepts this path, we would create a loop where she sends packets to me, only for me to send the packet right back to her. The key problem here is: Alice thinks that the path I'm advertising is independent and never goes through Alice. But in fact, my path does go through Alice, so if she accepts my path, she'll end up forwarding packets back to herself.
+Однак це оголошення небезпечне, якщо Аліса втрачає свій маршрут. Тепер моє оголошення вводить Алісу в оману, і вона думає, що може надсилати пакети мені. Але мій шлях залежить від самої Аліси, тож якщо вона прийме цей шлях, ми створимо петлю, де вона надсилає пакети мені, а я відразу надсилаю їх назад їй. Ключова проблема тут така: Аліса думає, що шлях, який я оголошую, незалежний і ніколи не проходить через Алісу. Але насправді мій шлях проходить через Алісу, тож якщо вона прийме мій шлях, то зрештою пересилатиме пакети самій собі.
 
-To solve this problem, we need to avoid offering Alice a route that already involves herself. We never want Alice to accept a route that sends packets back to herself.
+Щоб розв'язати цю проблему, нам треба не пропонувати Алісі маршрут, який уже включає її саму. Ми ніколи не хочемо, щоб Аліса приймала маршрут, який надсилає пакети назад їй самій.
 
-This leads us to a solution called **split horizon**, where we never advertise a route back to the person who gave us that route.
+Це приводить нас до розв'язку під назвою **розщеплений горизонт** (split horizon): ми ніколи не оголошуємо маршрут назад тому, хто нам цей маршрут надав.
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table **and reset the TTL** if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - The advertisement is from the current next-hop. Includes poison advertisements.
-> - Advertise to all your neighbors when the table updates, and periodically (advertisement interval).
->     - **But don't advertise back to the next-hop.**
-> - If a table entry expires, make the entry poison and advertise it.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю **і скиньте TTL**, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - Оголошення надійшло від поточного наступного переходу. Зокрема й отруйні оголошення.
+> - Оголошуйте всім своїм сусідам, коли таблиця оновлюється, а також періодично (інтервал оголошень).
+>     - **Але не оголошуйте назад наступному переходу.**
+> - Якщо термін дії запису таблиці спливає, зробіть запис отруєним і оголосіть його.
 
 
-## Rule 6B: Poison Reverse
+## Правило 6B: отруєння зворотного маршруту
 
-**Poison reverse** is an alternative way to avoid routing loops. We can use either split horizon or poison reverse to solve the problem from earlier (but not both).
+**Отруєння зворотного маршруту** (poison reverse) — альтернативний спосіб уникати петель маршрутизації. Для розв'язання попередньої проблеми можна використовувати або розщеплений горизонт, або отруєння зворотного маршруту (але не обидва).
 
-In split horizon, if someone gives me a route, I don't advertise the route back at them.
+За розщепленого горизонту, якщо хтось надає мені маршрут, я не оголошую цей маршрут назад йому.
 
-By contrast, in poison reverse, if someone gives me a route, I explicitly advertise poison back at them. In other words, I explicitly tell them, "Do not forward packets my way" (because I'd just forward them back to you).
+Натомість за отруєння зворотного маршруту, якщо хтось надає мені маршрут, я явно оголошую йому у відповідь отруту. Іншими словами, я явно кажу йому: «Не пересилай пакети в мій бік» (бо я просто переслав би їх назад тобі).
 
 <img width="900px" src="/assets/routing/2-071-poisonreverse1.png">
 
-Let's see the demo again, but using poison reverse instead of split horizon this time. As before, we reach steady state, then R1-R2 goes down, and R2 loses its table entry.
+Ще раз подивімося демонстрацію, але цього разу з отруєнням зворотного маршруту замість розщепленого горизонту. Як і раніше, ми досягаємо усталеного стану, потім канал R1–R2 виходить з ладу, і R2 втрачає свій запис таблиці.
 
 <img width="900px" src="/assets/routing/2-072-poisonreverse2.png">
 
-If we implemented neither fix, this is the point when R3 would advertise its route to R2, and R2 would accept a route going through itself.
+Якби ми не реалізували жодного з виправлень, саме в цей момент R3 оголосив би свій маршрут R2, і R2 прийняв би маршрут, що проходить через нього самого.
 
-If we implemented split horizon, R3 would not advertise its route back to R2 at this point.
+Якби ми реалізували розщеплений горизонт, R3 у цей момент не оголошував би свій маршрут назад R2.
 
-In the poison reverse approach, R3 explicitly sends an advertisement back to R2: "I'm R3, and A is infinity away from me."
+За підходу з отруєнням зворотного маршруту R3 явно надсилає R2 оголошення у відповідь: «Я — R3, і A розташоване за нескінченність від мене».
 
 <img width="900px" src="/assets/routing/2-073-poisonreverse3.png">
 
-R2 doesn't have an entry for A (its old one expired), so it accepts this new, poisoned route. Now, R2's table explicitly says that it cannot reach A via R3. We've avoided the routing loop with the help of poison reverse!
+R2 не має запису для A (термін дії старого сплив), тож приймає цей новий отруєний маршрут. Тепер таблиця R2 явно каже, що він не може дістатися A через R3. Ми уникли петлі маршрутизації завдяки отруєнню зворотного маршруту!
 
-In our model of the network, split horizon and poison reverse will both help avoid routing loops. More generally, poison reverse can help eliminate routing loops sooner if they ever arise.
+У нашій моделі мережі і розщеплений горизонт, і отруєння зворотного маршруту допоможуть уникнути петель маршрутизації. Загальніше, отруєння зворотного маршруту може допомогти швидше усувати петлі маршрутизації, якщо вони таки виникають.
 
-For example, suppose we end up with a routing loop somehow, where R2 and R3 are forwarding packets to each other.
+Наприклад, припустімо, що в нас якимось чином виникла петля маршрутизації, де R2 і R3 пересилають пакети один одному.
 
-In the split horizon approach, no poison gets sent. R2 got its route from R3, so it won't send anything to R3. Similarly, R3 got its route from R2, so it won't send anything to R2. The loop exists until the table entries expire. Until then, packets could get lost in the loop.
+За підходу з розщепленим горизонтом отрута не надсилається. R2 отримав свій маршрут від R3, тож нічого не надсилатиме R3. Аналогічно R3 отримав свій маршрут від R2, тож нічого не надсилатиме R2. Петля існує, доки не спливе термін дії записів таблиці. До того часу пакети можуть губитися в петлі.
 
 <img width="900px" src="/assets/routing/2-074-split-and-poison1.png">
 
-By contrast, if we used the poison reverse approach, R3 explicitly sends poison back to R2: "I'm R3, and A is infinity away from me." R2 accepts this advertisement (Rule 2, route from its next-hop), and updates its table to invalidate the path via R3. The poison reverse advertisement immediately eliminates the routing loop.
+Натомість якби ми використали підхід з отруєнням зворотного маршруту, R3 явно надсилає R2 отруту у відповідь: «Я — R3, і A розташоване за нескінченність від мене». R2 приймає це оголошення (правило 2, маршрут від наступного переходу) й оновлює таблицю, анулюючи шлях через R3. Оголошення з отруєнням зворотного маршруту негайно усуває петлю маршрутизації.
 
 <img width="900px" src="/assets/routing/2-075-split-and-poison2.png">
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table **and reset the TTL** if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - The advertisement is from the current next-hop. Includes poison advertisements.
-> - Advertise to all your neighbors when the table updates, and periodically (advertisement interval).
->     - But don't advertise back to the next-hop.
->     - **...Or, advertise poison back to the next-hop.**
-> - If a table entry expires, make the entry poison and advertise it.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю **і скиньте TTL**, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - Оголошення надійшло від поточного наступного переходу. Зокрема й отруйні оголошення.
+> - Оголошуйте всім своїм сусідам, коли таблиця оновлюється, а також періодично (інтервал оголошень).
+>     - Але не оголошуйте назад наступному переходу.
+>     - **…Або оголошуйте наступному переходу у відповідь отруту.**
+> - Якщо термін дії запису таблиці спливає, зробіть запис отруєним і оголосіть його.
 
-Note that split horizon and poison reverse are two choices, and you can pick exactly one to use (not both). Either you say nothing back to the next-hop, or you explicitly advertise poison back to the next-hop.
+Зауважте, що розщеплений горизонт і отруєння зворотного маршруту — це два варіанти, і використовувати можна рівно один (а не обидва). Або ви нічого не кажете у відповідь наступному переходу, або явно оголошуєте наступному переходу у відповідь отруту.
 
 
-## Rule 7: Count to Infinity
+## Правило 7: рахунок до нескінченності
 
-Split horizon or poison reverse helped us avoid length-2 loops, where R1 forwards to R2, and R2 forwards to R1. But we can still get routing loops involving 3 or more routers.
+Розщеплений горизонт чи отруєння зворотного маршруту допомогли нам уникати петель довжини 2, де R1 пересилає до R2, а R2 — до R1. Але петлі маршрутизації за участю 3 чи більше маршрутизаторів однаково можуть виникати.
 
 <img width="900px" src="/assets/routing/2-076-infinity1.png">
 
-To see why, consider this network. Suppose the tables reach steady-state. R1 and R2 both forward to R3, which forwards to A.
+Щоб побачити чому, розгляньте цю мережу. Припустімо, таблиці досягли усталеного стану. R1 і R2 обидва пересилають до R3, який пересилає до A.
 
-The A-R3 link goes down! A is now unreachable. Per Rule 5, R3 updates its table to show infinite cost to A, and sends this poison to both R2 and R1.
+Канал A–R3 виходить з ладу! Тепер A недосяжне. Згідно з правилом 5, R3 оновлює свою таблицю, вказуючи нескінченну вартість до A, і надсилає цю отруту і R2, і R1.
 
 <img width="900px" src="/assets/routing/2-077-infinity2.png">
 
-R2 gets the poison advertisement and updates its table (Rule 2, accept from next-hop). Now, both R2 and R3 know that A is unreachable.
+R2 отримує отруйне оголошення й оновлює свою таблицю (правило 2, приймати від наступного переходу). Тепер і R2, і R3 знають, що A недосяжне.
 
-The poison advertisement to R1 is dropped! R1 doesn't see the poison, so it still thinks it can reach A via R3. (The poison can get re-sent later, but for this demo, all the bad things that are about to happen will happen before the poison gets a chance to be re-sent.)
+Отруйне оголошення до R1 відкидається! R1 не бачить отрути, тож досі думає, що може дістатися A через R3. (Отруту пізніше може бути надіслано повторно, але в цій демонстрації всі погані речі, які зараз стануться, відбудуться раніше, ніж отрута матиме шанс бути надісланою повторно.)
 
-At this point, R2 and R3 can't reach A, but R1 thinks that it can still reach A.
+На цьому етапі R2 і R3 не можуть дістатися A, але R1 думає, що досі може.
 
 <img width="900px" src="/assets/routing/2-078-infinity3.png">
 
-Eventually, R1 sends out an advertisement. R1's path to A is via R3, so by split horizon, it won't advertise to R3. However, R1 will still advertise to R2: "I'm R1, and A is 2 away from me."
+Зрештою R1 надсилає оголошення. Шлях R1 до A проходить через R3, тож за розщепленим горизонтом він не оголошуватиме R3. Однак R1 однаково оголосить R2: «Я — R1, і A розташоване за 2 від мене».
 
 <img width="900px" src="/assets/routing/2-079-infinity4.png">
 
-R2 doesn't have a way to reach A, so it accepts this route. Now, R2 is fooled into thinking it can reach A with cost 3.
+R2 не має способу дістатися A, тож приймає цей маршрут. Тепер R2 введено в оману, і він думає, що може дістатися A з вартістю 3.
 
-R2 sends out an advertisement about its new route. Split horizon dictates that R2 won't advertise back to R1, but it will still advertise to R3: "I'm R2, and A is 3 away from me."
+R2 надсилає оголошення про свій новий маршрут. Розщеплений горизонт вимагає, щоб R2 не оголошував назад R1, але він однаково оголосить R3: «Я — R2, і A розташоване за 3 від мене».
 
 <img width="900px" src="/assets/routing/2-080-infinity5.png">
 
-R3 doesn't have a way to reach A, so it accepts this route. Now, R3 is fooled into thinking it can reach A with cost 4.
+R3 не має способу дістатися A, тож приймає цей маршрут. Тепер R3 введено в оману, і він думає, що може дістатися A з вартістю 4.
 
-Next, R3 sends out an advertisement to R1 (not R2, per split horizon): "I am R3, and A is 4 away from me."
+Далі R3 надсилає оголошення R1 (а не R2, за розщепленим горизонтом): «Я — R3, і A розташоване за 4 від мене».
 
 <img width="900px" src="/assets/routing/2-081-infinity6.png">
 
-R1 will accept this advertisement (Rule 2, advertisement from next-hop) and update its table. Now, R1 thinks its cost to A is 5.
+R1 прийме це оголошення (правило 2, оголошення від наступного переходу) й оновить свою таблицю. Тепер R1 думає, що його вартість до A дорівнює 5.
 
-Maybe you're seeing where this is going. R1 advertises to R2 (not R3, per split horizon): "I'm R1, and A is 5 away from me."
+Можливо, ви вже бачите, до чого все йде. R1 оголошує R2 (а не R3, за розщепленим горизонтом): «Я — R1, і A розташоване за 5 від мене».
 
 <img width="900px" src="/assets/routing/2-082-infinity7.png">
 
-R2 accepts this advertisement (Rule 2), and thinks it can reach A with cost 6.
+R2 приймає це оголошення (правило 2) і думає, що може дістатися A з вартістю 6.
 
 <img width="900px" src="/assets/routing/2-083-infinity8.png">
 
-R2 advertises a cost of 6 to R3, who now thinks it can reach A with cost 7.
+R2 оголошує вартість 6 маршрутизатору R3, який тепер думає, що може дістатися A з вартістю 7.
 
 <img width="900px" src="/assets/routing/2-084-infinity9.png">
 
-R3 advertises a cost of 7 to R1, who now thinks it can reach A with a cost of 8.
+R3 оголошує вартість 7 маршрутизатору R1, який тепер думає, що може дістатися A з вартістю 8.
 
 <img width="900px" src="/assets/routing/2-085-infinity10.png">
 
-R1, R2, and R3 will keep sending advertisements to each other in a cycle, with progressively higher costs (which will all be accepted by Rule 2). Also, packets for A will get stuck in a forwarding loop between these routers.
+R1, R2 і R3 і далі надсилатимуть оголошення один одному по колу з дедалі більшими вартостями (які всі прийматимуться за правилом 2). Крім того, пакети для A застрягнуть у петлі пересилання між цими маршрутизаторами.
 
-Let's restate the problem again. The poison didn't correctly propagate to all hosts, so one of the routers still had a busted path in its table. Then, that busted path got advertised in a loop, and Rule 2 caused the costs to keep increasing, with no end in sight.
+Ще раз сформулюймо проблему. Отрута не поширилася правильно до всіх хостів, тож один із маршрутизаторів досі мав у таблиці зламаний шлях. Потім цей зламаний шлях оголошувався по колу, і правило 2 змушувало вартості зростати без кінця-краю.
 
-Why didn't split horizon rescue us? Remember, split horizon only stops a router from advertising back to its next-hop. But in this case, the loop is of length 3, and we were never advertising back to the next-hop.
+Чому розщеплений горизонт нас не врятував? Пам'ятайте: розщеплений горизонт лише не дає маршрутизатору оголошувати назад своєму наступному переходу. Але в цьому випадку петля має довжину 3, і ми ніколи не оголошували назад наступному переходу.
 
-(Note: Poison reverse wouldn't rescue us either. If R3 advertises poison back to R2, then R2 would ignore that poison, because R2's next hop is R1, not R3.)
+(Примітка: отруєння зворотного маршруту теж нас не врятувало б. Якщо R3 оголошує отруту назад R2, то R2 проігнорує цю отруту, бо наступним переходом R2 є R1, а не R3.)
 
-This is called the **count-to-infinity** problem, and none of our fixes so far (poison expired routes, split horizon, poison reverse) can solve it.
+Це називається проблемою **рахунку до нескінченності** (count-to-infinity), і жодне з наших досі запроваджених виправлень (отруєння маршрутів, термін дії яких сплив, розщеплений горизонт, отруєння зворотного маршруту) не може її розв'язати.
 
-To solve this problem, we will enforce a maximum cost. In RIP, this value is 15. All costs greater than this maximum (i.e. 16 or above) are considered infinity.
+Щоб розв'язати цю проблему, ми запровадимо максимальну вартість. У RIP це значення дорівнює 15. Усі вартості, більші за цей максимум (тобто 16 і вище), вважаються нескінченністю.
 
-With this fix, the loop will still exist for some time, but eventually, all the costs will reach 16 (infinity). Let's watch this in action.
+З цим виправленням петля однаково існуватиме певний час, але зрештою всі вартості досягнуть 16 (нескінченності). Подивімося на це в дії.
 
-The costs are increasing with every advertisement. Eventually, R1 advertises to R2: "I'm R1, and A is 14 away from me." R2 accepts (per Rule 2) and updates its cost to 15.
+Вартості зростають із кожним оголошенням. Зрештою R1 оголошує R2: «Я — R1, і A розташоване за 14 від мене». R2 приймає (згідно з правилом 2) і оновлює свою вартість до 15.
 
 <img width="900px" src="/assets/routing/2-086-infinity11.png">
 
-R2 advertises to R3: "I'm R2, and A is 15 away from me." R3 accepts (per Rule 2), but instead of updating its cost to 16, the cost is updated to infinity.
+R2 оголошує R3: «Я — R2, і A розташоване за 15 від мене». R3 приймає (згідно з правилом 2), але замість оновлення вартості до 16 вартість оновлюється до нескінченності.
 
 <img width="900px" src="/assets/routing/2-087-infinity12.png">
 
-Next, R3 advertises to R1: "I'm R3, and A is infinity away from me." R1 accepts (per Rule 2), and now R1 also has a cost of infinity. (Note: This advertisement looks just like poison, though the infinity originated from counting to infinity instead of detecting a failure.)
+Далі R3 оголошує R1: «Я — R3, і A розташоване за нескінченність від мене». R1 приймає (згідно з правилом 2), і тепер R1 теж має вартість «нескінченність». (Примітка: це оголошення виглядає точнісінько як отрута, хоча нескінченність виникла внаслідок рахунку до нескінченності, а не виявлення відмови.)
 
 <img width="900px" src="/assets/routing/2-088-infinity13.png">
 
-Finally, R1 advertises to R2: "I'm R1, and A is infinity away from me." R2 accepts (per Rule 2), and now all the routers have a cost of infinity.
+Нарешті R1 оголошує R2: «Я — R1, і A розташоване за нескінченність від мене». R2 приймає (згідно з правилом 2), і тепер усі маршрутизатори мають вартість «нескінченність».
 
 <img width="900px" src="/assets/routing/2-089-infinity14.png">
 
-We've reached steady-state again! Any future advertisements would all be advertising infinite cost, and they won't change the tables. Eventually, the infinite-cost entries would all expire. Or, if another route to A appears, it would replace the infinite-cost entry.
+Ми знову досягли усталеного стану! Будь-які майбутні оголошення оголошуватимуть нескінченну вартість і не змінюватимуть таблиць. Зрештою термін дії всіх записів із нескінченною вартістю спливе. Або, якщо з'явиться інший маршрут до A, він замінить запис із нескінченною вартістю.
 
 
 {: .blue}
-> Let's review our protocol so far.
+> Підсумуймо наш протокол на цей момент.
 > 
-> For each destination:
-> - If you hear an advertisement for that destination, update the table **and reset the TTL** if:
->     - The destination isn't in the table.
->     - The advertised cost, plus the link cost to the neighbor, is better than the best-known cost.
->     - The advertisement is from the current next-hop. Includes poison advertisements.
-> - Advertise to all your neighbors when the table updates, and periodically (advertisement interval).
->     - But don't advertise back to the next-hop.
->     - ...Or, advertise poison back to the next-hop.
->     - **Any cost greater than or equal to 16 is advertised as infinity.**
-> - If a table entry expires, make the entry poison and advertise it.
+> Для кожного пункту призначення:
+> - Якщо ви отримали оголошення для цього пункту призначення, оновіть таблицю **і скиньте TTL**, якщо:
+>     - Пункту призначення немає в таблиці.
+>     - Оголошена вартість плюс вартість каналу до сусіда краща за найкращу відому вартість.
+>     - Оголошення надійшло від поточного наступного переходу. Зокрема й отруйні оголошення.
+> - Оголошуйте всім своїм сусідам, коли таблиця оновлюється, а також періодично (інтервал оголошень).
+>     - Але не оголошуйте назад наступному переходу.
+>     - …Або оголошуйте наступному переходу у відповідь отруту.
+>     - **Будь-яка вартість, більша або рівна 16, оголошується як нескінченність.**
+> - Якщо термін дії запису таблиці спливає, зробіть запис отруєним і оголосіть його.
 
 
-## Eventful Updates
+## Оновлення за подіями
 
-There are three occasions where a router might want to send advertisements:
+Є три випадки, коли маршрутизатор може захотіти надіслати оголошення:
 
-1. Send advertisements when the table changes. These are called **triggered updates**. The table might change when we accept a new advertisement, or when a new link is added (e.g. new static route), or when a link goes down (e.g. route gets poisoned).
+1. Надсилати оголошення, коли змінюється таблиця. Вони називаються **ініційованими оновленнями** (triggered updates). Таблиця може змінитися, коли ми приймаємо нове оголошення, коли додається новий канал (наприклад, новий статичний маршрут) або коли канал виходить з ладу (наприклад, маршрут отруюється).
 
-2. Send advertisements periodically, once every advertisement interval.
+2. Надсилати оголошення періодично, раз на інтервал оголошень.
 
-3. Send advertisements when a table entry expires (and gets replaced by poison).
+3. Надсилати оголошення, коли спливає термін дії запису таблиці (і його замінює отрута).
 
-Note that triggered updates are an optimization. Instead of advertising every time the table changes, we could just wait for the next advertisement interval to advertise the changes. This protocol would still be correct. However, triggered updates, in addition to the periodic updates, help our protocol converge on correct routes faster, because we propagate new information the instant we learn about it.
+Зауважте, що ініційовані оновлення — це оптимізація. Замість того щоб оголошувати щоразу, коли змінюється таблиця, ми могли б просто чекати наступного інтервалу оголошень, щоб оголосити зміни. Такий протокол однаково був би коректним. Однак ініційовані оновлення на додачу до періодичних допомагають нашому протоколу швидше збігатися до правильних маршрутів, бо ми поширюємо нову інформацію тієї ж миті, коли дізнаємося про неї.

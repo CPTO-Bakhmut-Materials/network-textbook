@@ -1,10 +1,10 @@
 ---
-title: Wireless
+title: Бездротові мережі
 nav_exclude: true
 has_toc: false
 layout: page
 ---
 
-# Wireless
+# Бездротові мережі
 
-[This page has been moved.](/wireless/wireless-links)
+[Цю сторінку переміщено.](/wireless/wireless-links)

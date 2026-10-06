@@ -1,130 +1,130 @@
 ---
-title: Congestion Control Principles
-parent: Transport
+title: Принципи керування перевантаженням
+parent: Транспортний рівень
 nav_order: 4
 layout: page-with-toc
 ---
 
-# Congestion Control Principles
+# Принципи керування перевантаженням
 
-## Congestion is Harmful
+## Перевантаження шкідливе
 
-Recall that if many packets arrive at a router at the same time (e.g. bursty traffic), and the router needs to send both packets over the same link, then the router will send one packet and put the other packets in a queue (to be sent later).
+Пригадайте: якщо до маршрутизатора одночасно надходить багато пакетів (наприклад, пульсуючий трафік), і маршрутизатор має надіслати ці пакети тим самим каналом, то маршрутизатор надішле один пакет, а інші поставить у чергу (щоб надіслати пізніше).
 
 <img width="800px" src="/assets/transport/3-051-congestion1.png">
 
-More generally, if the input rate of packets exceeds the output rate that the link can sustain, the router will be unable to keep up with the pace of incoming packets. This router is **congested**, and needs to keep packets in a queue while they wait their turn to be sent. The queue can cause packets to be delayed. If the queue itself gets too full and packets are still incoming, then packets can get dropped.
+Загальніше, якщо швидкість надходження пакетів перевищує вихідну швидкість, яку може підтримувати канал, маршрутизатор не встигатиме за темпом вхідних пакетів. Такий маршрутизатор **перевантажений** (congested), і йому доводиться тримати пакети в черзі, поки ті чекають своєї черги на надсилання. Черга може спричиняти затримку пакетів. Якщо сама черга надто заповнюється, а пакети й далі надходять, пакети можуть відкидатися.
 
 <img width="500px" src="/assets/transport/3-052-congestion2.png">
 
-This graph shows the performance of a queueing system with bursty arrivals. The dotted line represents the link's capacity (maximum load). As we increase the load, packets get more delayed.
+Цей графік показує продуктивність системи черг із пульсуючим надходженням. Пунктирна лінія позначає пропускну здатність каналу (максимальне навантаження). Що більше ми збільшуємо навантаження, то більше затримуються пакети.
 
-When arrivals are bursty, we can't realistically use the maximum capacity of the link. We have to find an appropriate performance trade-off between load and packet delay.
+Коли надходження пульсуюче, ми не можемо реалістично використовувати максимальну пропускну здатність каналу. Нам доводиться шукати відповідний компроміс продуктивності між навантаженням і затримкою пакетів.
 
-Notice that the graph starts sloping upwards even before we reach the dotted line. This means that the queueing is already delaying packets, even if nothing is dropped. By the time we reach maximum utilization and start losing packets, we are already incurring very large packet delays from the queue.
-
-
-## Brief History of Congestion
-
-In the 1980s, TCP did not implement any congestion control. The sending rate was only limited by flow control (recipient buffer capacity).
-
-If packets were dropped, the sender would re-send copies of the packet repeatedly, at the same fast rate, until the packet arrived. A smarter approach would be to slow down to avoid packets being dropped and reduce the copies clogging up the network, but early TCP implementations did not do this.
-
-In October 1986, the Internet started to suffer from a series of congestion collapses, where the capacity of the Internet significantly decreased. One link between UC Berkeley to Lawrence Berkeley Lab (two sites roughly 400 yards away) had its throughput drop from 32 Kbps = 32,000 bps to 40 bps. 
-
-Michael Karels (UC Berkeley undergraduate) and Van Jacobson (Lawrence Berkeley Lab researcher) were working on the networking stack in the Berkeley Unix system (influential early operating system), and they realized that the network had thousands of copies of the same packet, because everybody was trying to re-send packets that were being dropped.
-
-Karels and Jacobson developed an algorithm for fixing the problem, which evolved into the modern TCP congestion control algorithm. Their fix was a modification to TCP itself, where the window size (which dictates the rate of sending packets) is dynamically adjusted in response to packet loss.
-
-Because their solution was a modification to the logic of TCP (recall, TCP is implemented in the operating system), no upgrades to routers or applications were needed.
-
-TCP congestion control is one of many examples of Internet design being ad-hoc. Karels and Jacobson's patch was only several lines of extra code in the BSD operating system's implementation of TCP. The patch worked, so it was quickly adopted. Since then, the topic of congestion control has been extensively researched and several improvements have been made, but ultimately, the core ideas in the original patch persist to this day. The Internet has not had a congestion collapse since then, so the original fix has withstood the test of time.
+Зверніть увагу, що графік починає йти вгору ще до того, як ми досягаємо пунктирної лінії. Це означає, що черга вже затримує пакети, навіть якщо нічого не відкидається. На момент, коли ми досягаємо максимального використання й починаємо втрачати пакети, ми вже маємо дуже великі затримки пакетів через чергу.
 
 
-## Why is Congestion Control Hard?
+## Коротка історія перевантажень
 
-To get a sense of why congestion control is a difficult problem, consider the following network graph. At what rate should host A send traffic?
+У 1980-х роках TCP не реалізовував жодного керування перевантаженням. Швидкість надсилання обмежувалася лише керуванням потоком (місткістю буфера отримувача).
+
+Якщо пакети відкидалися, відправник раз у раз повторно надсилав копії пакета з тією самою високою швидкістю, доки пакет не доходив. Розумнішим підходом було б сповільнитися, щоб уникнути відкидання пакетів і зменшити кількість копій, що засмічують мережу, але ранні реалізації TCP так не робили.
+
+У жовтні 1986 року Інтернет почав страждати від низки колапсів через перевантаження (congestion collapses), коли пропускна здатність Інтернету суттєво знижувалася. Пропускна спроможність одного каналу між UC Berkeley і Lawrence Berkeley Lab (два об'єкти приблизно за 400 ярдів один від одного) впала з 32 Кбіт/с = 32 000 біт/с до 40 біт/с.
+
+Майкл Карелс (Michael Karels; студент бакалаврату UC Berkeley) і Ван Джейкобсон (Van Jacobson; дослідник Lawrence Berkeley Lab) працювали над мережевим стеком системи Berkeley Unix (впливової ранньої операційної системи) і зрозуміли, що в мережі тисячі копій того самого пакета, бо всі намагалися повторно надсилати пакети, які відкидалися.
+
+Карелс і Джейкобсон розробили алгоритм для виправлення проблеми, який еволюціонував у сучасний алгоритм керування перевантаженням TCP. Їхнє виправлення було модифікацією самого TCP, де розмір вікна (який визначає швидкість надсилання пакетів) динамічно коригується у відповідь на втрату пакетів.
+
+Оскільки їхнє рішення було модифікацією логіки TCP (пригадайте, TCP реалізовано в операційній системі), жодних оновлень маршрутизаторів чи застосунків не знадобилося.
+
+Керування перевантаженням TCP — один із багатьох прикладів стихійності в проєктуванні Інтернету. Латка Карелса й Джейкобсона складалася лише з кількох рядків додаткового коду в реалізації TCP операційної системи BSD. Латка спрацювала, тож її швидко прийняли. Відтоді тема керування перевантаженням ґрунтовно досліджувалася й було зроблено кілька вдосконалень, але зрештою ключові ідеї початкової латки збереглися досі. Відтоді в Інтернеті не траплялося колапсів через перевантаження, тож початкове виправлення витримало перевірку часом.
+
+
+## Чому керування перевантаженням складне?
+
+Щоб відчути, чому керування перевантаженням — складна задача, розгляньте такий граф мережі. З якою швидкістю хост A має надсилати трафік?
 
 <img width="700px" src="/assets/transport/3-053-congestion3.png">
 
-It depends on the destination, so A can't just come up with one fixed rate for all destinations. For example, if A is communicating with C, then A could send packets at 10 Gbps.
+Це залежить від пункту призначення, тож A не може просто вигадати одну фіксовану швидкість для всіх пунктів призначення. Наприклад, якщо A спілкується з C, то A міг би надсилати пакети зі швидкістю 10 Гбіт/с.
 
-What if A is communicating with F instead? The bottleneck link (least capacity) along this path is 2Gbps, so A should probably send packets at 2 Gbps.
+А що, як A натомість спілкується з F? Канал — вузьке місце (з найменшою пропускною здатністю) на цьому шляху має 2 Гбіт/с, тож A, найімовірніше, має надсилати пакети зі швидкістю 2 Гбіт/с.
 
 <img width="700px" src="/assets/transport/3-054-congestion4.png">
 
-What if A is communicating with E?
+А що, як A спілкується з E?
 
-It depends on what path the traffic is taking between A and E. If the traffic is taking the bottom path through R3, then A could send packets at 10 Gbps. But if the traffic is taking the top path through R2, then A can now only send packets at 1 Gbps.
+Це залежить від того, яким шляхом іде трафік між A і E. Якщо трафік іде нижнім шляхом через R3, то A міг би надсилати пакети зі швидкістю 10 Гбіт/с. Але якщо трафік іде верхнім шляхом через R2, то A тепер може надсилати пакети лише зі швидкістю 1 Гбіт/с.
 
 <img width="700px" src="/assets/transport/3-055-congestion5.png">
 
-One takeaway so far is that our congestion control algorithm will need to somehow learn about the bandwidths and bottlenecks along the path that the packet is taking.
+Один висновок на цей момент: наш алгоритм керування перевантаженням має якось дізнаватися про пропускну здатність і вузькі місця на шляху, яким іде пакет.
 
-Also, recall that the network graph changes over time as new links are added or links go down. This means that it's not enough to learn about paths a single time. Our algorithm will need to be adaptive to changes in network topology.
+Крім того, пригадайте, що граф мережі змінюється з часом, коли додаються нові канали чи канали виходять з ладу. Це означає, що недостатньо дізнатися про шляхи один раз. Наш алгоритм має пристосовуватися до змін топології мережі.
 
-So far, we've assumed that A is the only host sending traffic on the network, and A can use the full capacity of every link. But what if other connections are also using bandwidth?
+Досі ми вважали, що A — єдиний хост, що надсилає трафік мережею, і A може використовувати повну пропускну здатність кожного каналу. А що, як пропускну здатність використовують й інші з'єднання?
 
 <img width="700px" src="/assets/transport/3-056-congestion6.png">
 
-In this example, A and F have a connection, and B and E have a connection. The two connections seem like they should be totally separate (different senders, different recipients), but in fact, their paths share a link in the network.
+У цьому прикладі A і F мають з'єднання, і B і E мають з'єднання. Здається, що ці два з'єднання мають бути цілком окремими (різні відправники, різні отримувачі), але насправді їхні шляхи мають спільний канал у мережі.
 
-If we want the two connections to share the capacity on this link fairly, maybe A and B should each send at 1 Gbps.
+Якщо ми хочемо, щоб два з'єднання справедливо ділили пропускну здатність цього каналу, можливо, A і B мають надсилати кожен по 1 Гбіт/с.
 
-What if a new connection starts between G and D? Should A change its rate of 1 Gbps? (No formal algorithm yet, just think about using bandwidth in a way that seems reasonable.)
+А що, як між G і D розпочинається нове з'єднання? Чи має A змінити свою швидкість 1 Гбіт/с? (Формального алгоритму поки немає, просто подумайте, як використовувати пропускну здатність у спосіб, що здається розумним.)
 
 <img width="700px" src="/assets/transport/3-057-congestion7.png">
 
-First, notice that the G-D and B-E connections are sharing a link. This means that these two connections have to slow their rate down to 0.5 Gbps.
+По-перше, зверніть увагу, що з'єднання G–D і B–E ділять канал. Це означає, що ці два з'єднання мають сповільнитися до 0,5 Гбіт/с.
 
-Now, if we look back at the 2 Gbps link that A-F and B-E had in common, B-E is only using 0.5 Gbps on this link. This means that A could increase its rate to 1.5 Gbps.
+Тепер, якщо повернутися до каналу на 2 Гбіт/с, спільного для A–F і B–E, то B–E використовує на цьому каналі лише 0,5 Гбіт/с. Це означає, що A може збільшити свою швидкість до 1,5 Гбіт/с.
 
-What happened here? The G-D connection was created, and its path has no links in common with the A-F connection. And yet, this seemingly unrelated connection caused the A-F connection's rate to increase. Connections can indirectly affect other connections, even if those two connections don't share any links in common!
+Що тут сталося? Було створено з'єднання G–D, і його шлях не має жодних спільних каналів із з'єднанням A–F. І все ж це, здавалося б, непов'язане з'єднання спричинило збільшення швидкості з'єднання A–F. З'єднання можуть опосередковано впливати на інші з'єднання, навіть якщо ці два з'єднання не мають жодних спільних каналів!
 
-In summary: When the sender is trying to determine a rate for sending packets, it has to consider: The destination, the path to that destination, the connections sharing links along that path, and the connections sharing links with those connections (indirect competition), and so on. Congestion control is a hard problem because all the connections in the network are dependent on each other to determine their optimal sending rate.
+Підсумуємо: коли відправник намагається визначити швидкість надсилання пакетів, він має враховувати пункт призначення, шлях до цього пункту, з'єднання, що ділять канали на цьому шляху, і з'єднання, що ділять канали з тими з'єднаннями (опосередкована конкуренція), і так далі. Керування перевантаженням — складна задача, бо всі з'єднання в мережі залежать одне від одного у визначенні своєї оптимальної швидкості надсилання.
 
-More fundamentally, congestion control is a resource allocation problem. Bandwidth is a limited resource, each connection wants a certain amount of that resource, and we need to decide how much bandwidth to allocate to each connection.
+Фундаментальніше, керування перевантаженням — це задача розподілу ресурсів. Пропускна здатність — обмежений ресурс, кожне з'єднання хоче певну кількість цього ресурсу, і нам треба вирішити, скільки пропускної здатності виділити кожному з'єднанню.
 
-Resource allocation is a classic problem in computer science. (Examples include CPU scheduling and memory allocation algorithms.) However, unlike some resource allocation problems, a change in one connection's allocation can have a global impact across all other connections. Also, allocations have to change every time a connection is created or destroyed. As a result, congestion control is more complex than the traditional resource allocation problem, and in fact, we don't even have a formal model to define the problem.
+Розподіл ресурсів — класична задача комп'ютерних наук. (Приклади — алгоритми планування процесора й розподілу пам'яті.) Однак, на відміну від деяких задач розподілу ресурсів, зміна розподілу для одного з'єднання може мати глобальний вплив на всі інші з'єднання. Крім того, розподіли мають змінюватися щоразу, коли з'єднання створюється чи знищується. Як наслідок, керування перевантаженням складніше за традиційну задачу розподілу ресурсів, і насправді в нас навіть немає формальної моделі для визначення задачі.
 
-Unlike a traditional resource allocation problem, where the algorithm knows about the resource (e.g. CPU time) and the jobs (e.g. processes) ahead of time, there is no global mastermind that can see the entire network to allocate resources. Our solution has to be decentralized, where every sender decides its own allocation (even though everyone's decisions are highly inter-dependent).
-
-
-## Goals for a Good Congestion Control Algorithm
-
-From a resource allocation perspective, there are three goals we want out of a good congestion control algorithm.
-
-We'd like the resource allocation to be efficient. Links should not be overloaded, and there should be minimal packet delay and loss. Also, links should be utilized as much as possible.
-
-We'd also like the resource allocation to be fair between connections. We'll formalize the definition of fair later, but roughly speaking, every connection should share an equal portion of the available capacity.
-
-We want a solution that achieves a good trade-off between these goals. It would be possible to optimize one goal at the expense of the others, but that leads to bad solutions. For example, we could ensure maximal link utilization by having everyone send packets extremely quickly (bad solution, causes congestion). Or, we could ensure minimal packet loss by making everybody send packets extremely slowly (bad solution, not utilizing capacity).
-
-From a more practical systems perspective, the solution we come up with needs to be scalable and decentralized. Our solution should also be able to adapt to changes in the network (e.g. changing topology, connections being created and destroyed).
+На відміну від традиційної задачі розподілу ресурсів, де алгоритм заздалегідь знає про ресурс (наприклад, процесорний час) і завдання (наприклад, процеси), немає глобального «мозку», що бачить усю мережу й може розподіляти ресурси. Наше рішення має бути децентралізованим: кожен відправник визначає власний розподіл (хоча рішення всіх дуже взаємозалежні).
 
 
-## Design Space of Solutions
+## Цілі доброго алгоритму керування перевантаженням
 
-As we saw earlier, Karels and Jacobson fixed TCP congestion control by patching the TCP implementation in the operating system. But, if we could go back and re-design the Internet from scratch, what other possible designs for congestion control exist?
+З погляду розподілу ресурсів, є три цілі, яких ми хочемо від доброго алгоритму керування перевантаженням.
 
-One possible alternate design is based on reservations. The sender could request bandwidth ahead of time, and then free up that bandwidth after the connection is over. As discussed earlier, maintaining a reservation across the entire network comes with many technical difficulties. This approach is also problematic because it assumes that the sender knows what bandwidth it needs ahead of time, which isn't necessarily true.
+Ми хотіли б, щоб розподіл ресурсів був ефективним. Канали не мають бути перевантажені, а затримки й втрати пакетів мають бути мінімальними. Крім того, канали мають використовуватися якомога повніше.
 
-Another alternate design is based on pricing. As an analogy, consider express toll lanes on the highway (dedicated lanes only available to drivers who pay). The price to use the express toll lane depends on how congested the highway is. When the highway has very few cars, using the toll lane is very cheap, and when there is heavy traffic, using the toll lane is more expensive. Another form of congestion pricing occurs in airplane tickets, which cost more during busier times (e.g. holidays).
+Ми також хотіли б, щоб розподіл ресурсів був справедливим між з'єднаннями. Ми формалізуємо визначення справедливості пізніше, але грубо кажучи, кожне з'єднання має отримувати рівну частку доступної пропускної здатності.
 
-To apply congestion pricing to the Internet, your ISP could add a button in your web browser that enables higher Internet speeds for an extra fee, and the fee could change depending on how congested the Internet is. Then, routers can prioritize sending packets from users who are paying more, and drop packets from users who are not paying. Research exists on congestion pricing on the Internet, and economists sometimes claim that if bandwidth is a scarce commodity, then a market structure will lead to an optimal solution. Congestion pricing has not been widely deployed, because it requires some form of business model connecting payments to congestion.
+Ми хочемо рішення, що досягає доброго компромісу між цими цілями. Можна оптимізувати одну ціль коштом інших, але це призводить до поганих рішень. Наприклад, ми могли б забезпечити максимальне використання каналів, змусивши всіх надсилати пакети надзвичайно швидко (погане рішення, спричиняє перевантаження). Або ми могли б забезпечити мінімальні втрати пакетів, змусивши всіх надсилати пакети надзвичайно повільно (погане рішення, пропускна здатність не використовується).
 
-All modern congestion control algorithms (including the ones we'll study) are based on dynamic adjustment. Hosts dynamically learn the current level of congestion, and adjust their sending rate accordingly. In practice, dynamic adjustment is a practical solution because it can be easily generalized. This approach doesn't assume any business model (needed for pricing), and doesn't assume anything about users knowing the bandwidth they need ahead of time (needed for reservations).
+З практичнішого погляду систем, рішення, яке ми вигадаємо, має бути масштабованим і децентралізованим. Наше рішення також має вміти пристосовуватися до змін у мережі (наприклад, зміна топології, створення й знищення з'єднань).
 
-Dynamic adjustment does require good citizenship. TCP needs everybody on the network to work together to share the resources fairly. For example, when a new connection starts using links, other connections need to slow down and share the bandwidth. 
 
-Within the dynamic adjustment approach, there are two broad classes of solutions. In **host-based** congestion control algorithms, the sender is monitoring the performance and adjusting its rate accordingly. These algorithms are implemented entirely at the sender, and there is no special support from routers. The modification to TCP is a host-based algorithm, and is widely deployed today.
+## Простір можливих рішень
 
-In **router-assisted** congested control algorithms, routers will explicitly send information about congestion back to the sender, to help the sender adjust its rate. Congestion happens at routers, so routers are in a good position to offer information about congestion. Router-assisted algorithms have been deployed in recent years, especially in datacenters.
+Як ми бачили раніше, Карелс і Джейкобсон виправили керування перевантаженням TCP, залатавши реалізацію TCP в операційній системі. Але якби ми могли повернутися назад і перепроєктувати Інтернет з нуля, які інші можливі підходи до керування перевантаженням існують?
 
-Some router-assisted algorithms send very little information, e.g. a single bit indicating congestion, while other algorithms send more detailed information, e.g. the exact rate the sender should use.
+Один можливий альтернативний підхід ґрунтується на бронюванні. Відправник міг би заздалегідь запитувати пропускну здатність, а потім звільняти її після завершення з'єднання. Як обговорювалося раніше, підтримка бронювання в усій мережі пов'язана з багатьма технічними труднощами. Цей підхід також проблемний, бо припускає, що відправник заздалегідь знає, яка пропускна здатність йому потрібна, що не обов'язково так.
 
-Note that in both cases, routers are signaling congestion back to the sender. In router-assisted algorithms, the router is explicitly sending a message about its level of congestion. By contrast, in host-based algorithms, the sender does not receive explicit feedback from the routers. Instead, the sender uses implicit clues from the router (e.g. packets getting dropped or delayed) to deduce that the router is congested.
+Інший альтернативний підхід ґрунтується на ціноутворенні. Як аналогію розгляньте платні швидкісні смуги на шосе (виділені смуги, доступні лише водіям, які платять). Ціна користування платною смугою залежить від того, наскільки завантажене шосе. Коли на шосе дуже мало машин, користування платною смугою дуже дешеве, а коли трафік щільний — дорожче. Ще одна форма ціноутворення залежно від завантаженості трапляється з авіаквитками, які дорожчають у пікові періоди (наприклад, на свята).
+
+Щоб застосувати ціноутворення залежно від перевантаження до Інтернету, ваш провайдер міг би додати у ваш веббраузер кнопку, що вмикає вищу швидкість Інтернету за додаткову плату, і плата могла б змінюватися залежно від того, наскільки перевантажений Інтернет. Тоді маршрутизатори можуть пріоритезувати надсилання пакетів від користувачів, які платять більше, і відкидати пакети від користувачів, які не платять. Існують дослідження ціноутворення залежно від перевантаження в Інтернеті, і економісти іноді стверджують, що якщо пропускна здатність — дефіцитний товар, то ринкова структура приведе до оптимального рішення. Ціноутворення залежно від перевантаження не набуло широкого розгортання, бо воно потребує певної бізнес-моделі, що пов'язує платежі з перевантаженням.
+
+Усі сучасні алгоритми керування перевантаженням (включно з тими, які ми вивчатимемо) ґрунтуються на динамічному коригуванні. Хости динамічно дізнаються поточний рівень перевантаження й відповідно коригують свою швидкість надсилання. На практиці динамічне коригування — практичне рішення, бо його легко узагальнити. Цей підхід не передбачає жодної бізнес-моделі (потрібної для ціноутворення) і нічого не припускає про те, що користувачі заздалегідь знають потрібну їм пропускну здатність (потрібно для бронювання).
+
+Динамічне коригування таки вимагає сумлінної поведінки. TCP потребує, щоб усі в мережі працювали разом і справедливо ділили ресурси. Наприклад, коли нове з'єднання починає використовувати канали, інші з'єднання мають сповільнитися й поділитися пропускною здатністю.
+
+У межах підходу динамічного коригування є два загальні класи рішень. В алгоритмах керування перевантаженням **на основі хоста** (host-based) відправник стежить за продуктивністю й відповідно коригує свою швидкість. Ці алгоритми повністю реалізовано на відправнику, без жодної спеціальної підтримки з боку маршрутизаторів. Модифікація TCP — алгоритм на основі хоста, і нині він широко розгорнутий.
+
+В алгоритмах керування перевантаженням **за участю маршрутизаторів** (router-assisted) маршрутизатори явно надсилають відправникові інформацію про перевантаження, щоб допомогти йому скоригувати швидкість. Перевантаження виникає на маршрутизаторах, тож маршрутизатори добре підходять для надання інформації про перевантаження. Алгоритми за участю маршрутизаторів розгортаються останніми роками, особливо в дата-центрах.
+
+Деякі алгоритми за участю маршрутизаторів надсилають дуже мало інформації, наприклад один біт, що вказує на перевантаження, тоді як інші надсилають детальнішу інформацію, наприклад точну швидкість, яку має використовувати відправник.
+
+Зауважте, що в обох випадках маршрутизатори сигналізують відправникові про перевантаження. В алгоритмах за участю маршрутизаторів маршрутизатор явно надсилає повідомлення про рівень свого перевантаження. Натомість в алгоритмах на основі хоста відправник не отримує явного зворотного зв'язку від маршрутизаторів. Натомість відправник використовує неявні підказки від маршрутизатора (наприклад, відкидання чи затримку пакетів), щоб зробити висновок, що маршрутизатор перевантажений.
 
 <img width="600px" src="/assets/transport/3-058-taxonomy.png">
 
-In this taxonomy of congestion control approaches, we'll focus on the dynamic adjustment approach, and within the space of dynamic adjustment solutions, we'll focus on host-based solutions.
+У цій таксономії підходів до керування перевантаженням ми зосередимося на підході динамічного коригування, а в просторі рішень динамічного коригування — на рішеннях на основі хоста.

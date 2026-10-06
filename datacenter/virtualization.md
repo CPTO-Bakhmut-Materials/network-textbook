@@ -1,115 +1,115 @@
 ---
-title: Virtualization
-parent: Datacenters
+title: Віртуалізація
+parent: Дата-центри
 nav_order: 5
 layout: page-with-toc
 ---
 
-# Virtualization and Encapsulation
+# Віртуалізація та інкапсуляція
 
-## Physical Datacenter Limitations
+## Фізичні обмеження дата-центрів
 
-Datacenters are organized in a fixed and structured way. Identical servers are organized into racks, and racks arranged in some fixed topology. This approach has some benefits. For example, it gives us a natural way to assign hierarchical addresses.
+Дата-центри впорядковані фіксовано й структуровано. Ідентичні сервери впорядковано в стійки, а стійки розташовано в певній фіксованій топології. Такий підхід має певні переваги. Наприклад, він дає нам природний спосіб призначати ієрархічні адреси.
 
-However, when we consider how applications are hosted on datacenters, the fixed organization of datacenters has some downsides. Suppose Google introduced a new service that they want to host in an existing datacenter. If we placed that application directly on a physical server, someone would have to physically install a new server, with its own IP address, for this application. If the service expands, more servers might need to be installed. If the server goes down, we'd have to wait for somebody to fix it. The key problem here is that changing physical infrastructure is hard, but we often want to add new hosts, scale up existing hosts, and move hosts quickly and frequently.
+Однак коли ми розглядаємо, як застосунки розміщуються в дата-центрах, фіксована організація дата-центрів має певні недоліки. Припустімо, Google запровадила новий сервіс, який хоче розмістити в наявному дата-центрі. Якби ми розмістили цей застосунок безпосередньо на фізичному сервері, комусь довелося б фізично встановити для цього застосунку новий сервер із власною IP-адресою. Якщо сервіс розширюється, можуть знадобитися нові сервери. Якщо сервер виходить з ладу, нам довелося б чекати, поки хтось його полагодить. Ключова проблема тут у тому, що змінювати фізичну інфраструктуру складно, а ми часто хочемо швидко й часто додавати нові хости, масштабувати наявні й переміщувати хости.
 
-Placing applications on physical servers also introduces scaling issues. Suppose Google's new service is very lightweight, but needs a dedicated server (e.g. for security reasons). We'd have to assign an entire physical server to this lightweight service, and most of the server's computing capacity would be unused.
+Розміщення застосунків на фізичних серверах також створює проблеми з масштабуванням. Припустімо, новий сервіс Google дуже легкий, але потребує виділеного сервера (наприклад, з міркувань безпеки). Нам довелося б віддати цьому легкому сервісу цілий фізичний сервер, і більша частина обчислювальної потужності сервера не використовувалася б.
 
-This approach also has routing issues. Suppose we wanted to move the service to a different part of the datacenter building (e.g. because part of the building is undergoing maintenance). First, someone would have to physically move the server in the building. Also, in our hierarchical address model, we would need to assign this service a new IP address corresponding to its new physical location. Ideally, the application would prefer to keep the same address, regardless of its datacenter location.
+Цей підхід також має проблеми з маршрутизацією. Припустімо, ми хочемо перемістити сервіс в іншу частину будівлі дата-центру (наприклад, бо в частині будівлі тривають технічні роботи). По-перше, комусь довелося б фізично перемістити сервер у будівлі. Крім того, у нашій моделі ієрархічних адрес нам довелося б призначити цьому сервісу нову IP-адресу, що відповідає його новому фізичному розташуванню. В ідеалі застосунок волів би зберегти ту саму адресу незалежно від свого розташування в дата-центрі.
 
 <img width="900px" src="/assets/datacenter/6-043-dc-address-scaling.png">
 
 
-## Virtualization
+## Віртуалізація
 
-We can use virtualization to solve these problems and give applications more flexibility, while maintaining the rigid physical structure of the datacenter. **Virtualization** allows us to run one or more virtual servers inside a physical server.
+Ми можемо використати віртуалізацію, щоб розв'язати ці проблеми й дати застосункам більше гнучкості, зберігаючи жорстку фізичну структуру дата-центру. **Віртуалізація** (virtualization) дає змогу запускати один чи кілька віртуальних серверів усередині фізичного сервера.
 
-The virtual server gives applications the illusion that they are running on a dedicated physical machine. However, in reality, multiple virtual servers might be running on the same machine. When the application tries to interact with hardware (e.g. disk, network card), it is actually interacting with a **hypervisor** in software. The hypervisor presents each virtual application with the same interface that real hardware would. The hypervisor itself runs on actual physical hardware, and can forward application requests (e.g. disk write, network packet send) to the hardware level.
+Віртуальний сервер створює для застосунків ілюзію, що вони працюють на виділеній фізичній машині. Однак насправді на тій самій машині може працювати кілька віртуальних серверів. Коли застосунок намагається взаємодіяти з обладнанням (наприклад, диском, мережевою картою), він насправді взаємодіє з програмним **гіпервізором** (hypervisor). Гіпервізор надає кожному віртуальному застосунку той самий інтерфейс, що й справжнє обладнання. Сам гіпервізор працює на справжньому фізичному обладнанні й може пересилати запити застосунків (наприклад, запис на диск, надсилання мережевого пакета) на рівень обладнання.
 
-With virtualization, if we have a new application, we can ask a hypervisor to start up a new virtual machine for this application. The hypervisor runs in software, so there's no need to install any new server in the physical datacenter. Similarly, we can move hosts to a different physical machine, entirely in software.
+З віртуалізацією, якщо в нас новий застосунок, ми можемо попросити гіпервізор запустити для нього нову віртуальну машину. Гіпервізор працює програмно, тож немає потреби встановлювати жодного нового сервера у фізичному дата-центрі. Аналогічно ми можемо переміщувати хости на іншу фізичну машину повністю програмно.
 
 <img width="900px" src="/assets/datacenter/6-044-vm.png">
 
-Virtualization allows multiple applications to share a physical server. The applications can be separated from each other, and can be managed by different people. This lets us use the compute resources in the datacenter more efficiently. This also allows us to have more hosts in the datacenter. For example, a single rack with 40 servers could have more than 40 end hosts.
+Віртуалізація дає змогу кільком застосункам ділити фізичний сервер. Застосунки можуть бути відокремлені один від одного й керуватися різними людьми. Це дає змогу ефективніше використовувати обчислювальні ресурси дата-центру. Це також дає змогу мати більше хостів у дата-центрі. Наприклад, одна стійка з 40 серверами може мати понад 40 кінцевих хостів.
 
 
-## Virtual Switches
+## Віртуальні комутатори
 
-The physical server has a single network card and a single IP address, but we need to give each virtual machine the illusion that it has its own dedicated network card and address. Also, switches might now have multiple virtual machines connected to a single physical port.
+Фізичний сервер має одну мережеву карту й одну IP-адресу, але нам треба створити для кожної віртуальної машини ілюзію, що вона має власну виділену мережеву карту й адресу. Крім того, до одного фізичного порту комутатора тепер може бути під'єднано кілька віртуальних машин.
 
-In order to manage multiple network connections on the same physical machine, the server needs a **virtual switch**. This virtual switch runs in software on the server (it's not a physical router), and performs the same operations as a real switch (e.g. forwarding packets). Each virtual machine is connected to the virtual switch, and the virtual switch is connected to the rest of the network.
+Щоб керувати кількома мережевими з'єднаннями на тій самій фізичній машині, серверу потрібен **віртуальний комутатор** (virtual switch). Цей віртуальний комутатор працює програмно на сервері (це не фізичний маршрутизатор) і виконує ті самі операції, що й справжній комутатор (наприклад, пересилання пакетів). Кожна віртуальна машина під'єднана до віртуального комутатора, а віртуальний комутатор під'єднаний до решти мережі.
 
 <img width="500px" src="/assets/datacenter/6-045-virtual-switch.png">
 
-Note: Switches usually run on dedicated hardware to maximize efficiency. Virtual switches can be run in software on a general-purpose CPU because they only need to support a few virtual machines (lower capacity than what switches usually handle).
+Примітка: комутатори зазвичай працюють на виділеному обладнанні, щоб максимізувати ефективність. Віртуальні комутатори можуть працювати програмно на процесорі загального призначення, бо їм треба підтримувати лише кілька віртуальних машин (менша потужність, ніж зазвичай обробляють комутатори).
 
 
-## Underlay and Overlay Network
+## Базова та накладена мережі
 
-With virtualization, we now have virtual hosts running on top of physical servers. Unlike physical servers, virtual hosts can be created, shut down, and changed rapidly.
+З віртуалізацією в нас тепер є віртуальні хости, що працюють поверх фізичних серверів. На відміну від фізичних серверів, віртуальні хости можна швидко створювати, вимикати й змінювати.
 
-Virtual machines don't necessarily use the same addressing scheme as the physical servers. Physical server IP addresses are defined by the physical datacenter topology (e.g. pods, racks). By contrast, virtual machine IP addresses are usually defined by some real-life hierarchy (e.g. countries, organizations). In particular, the virtual hosts on a single physical server don't necessarily all have the same IP prefixes, so we can't use the same aggregation tricks to scale up.
+Віртуальні машини не обов'язково використовують ту саму схему адресації, що й фізичні сервери. IP-адреси фізичних серверів визначаються фізичною топологією дата-центру (наприклад, поди, стійки). Натомість IP-адреси віртуальних машин зазвичай визначаються певною реальною ієрархією (наприклад, країни, організації). Зокрема, віртуальні хости на одному фізичному сервері не обов'язково всі мають однакові IP-префікси, тож ми не можемо використовувати ті самі прийоми агрегації для масштабування.
 
-If we tried to naively extend our routing schemes to support virtual machines, our forwarding tables would become very large, very quickly. Previously, we could aggregate by saying: "all servers in the blue pod have the same IP prefix, and they all have a next hop of R2." Now, the servers in that blue pod could contain hundreds of virtual hosts, all with different IP addresses (no common prefix). We would need a separate forwarding entry for every virtual host. Also, if a virtual host moves to a different physical machine (keeping the same IP address), the routing protocol would have to re-discover paths to this virtual host. Can we find a way to avoid scaling the datacenter to support every VM address?
+Якби ми спробували наївно поширити наші схеми маршрутизації на підтримку віртуальних машин, наші таблиці пересилання дуже швидко стали б дуже великими. Раніше ми могли агрегувати, кажучи: «усі сервери в синьому поді мають однаковий IP-префікс і однаковий наступний перехід R2». Тепер сервери в цьому синьому поді можуть містити сотні віртуальних хостів з різними IP-адресами (без спільного префікса). Нам знадобився б окремий запис пересилання для кожного віртуального хоста. Крім того, якщо віртуальний хост переміщується на іншу фізичну машину (зберігаючи ту саму IP-адресу), протоколу маршрутизації довелося б заново виявляти шляхи до цього віртуального хоста. Чи можна знайти спосіб не масштабувати дата-центр так, щоб він підтримував кожну адресу ВМ?
 
-The key problem here is that we now have two different addressing systems, one for virtual hosts, and one for physical hosts. Both addressing schemes work at the IP layer, but within the IP layer, there are now two sub-layers of abstraction that we need to think about.
+Ключова проблема тут у тому, що тепер у нас дві різні системи адресації: одна для віртуальних хостів, інша для фізичних. Обидві схеми адресації працюють на рівні IP, але в межах рівня IP тепер є два підрівні абстракції, про які нам треба думати.
 
-The **underlay network** handles routing between physical machines. The underlay network contains datacenter infrastructure like top-of-rack switches and spine switches. The underlay network scales well because we define hierarchical addresses using the physical datacenter topology.
+**Базова мережа** (underlay network) відповідає за маршрутизацію між фізичними машинами. Базова мережа містить інфраструктуру дата-центру на кшталт комутаторів верхнього рівня стійки й хребтових комутаторів. Базова мережа добре масштабується, бо ми визначаємо ієрархічні адреси за фізичною топологією дата-центру.
 
-The **overlay network** exists on top of the physical topology (underlay), and it only thinks about routing between virtual machines. In practice, each virtual machine usually only needs to communicate with a few other virtual machines in the network. As a result, the overlay network scales well because a virtual machine does not need to know about every single other virtual machine.
+**Накладена мережа** (overlay network) існує поверх фізичної топології (базової мережі) і думає лише про маршрутизацію між віртуальними машинами. На практиці кожній віртуальній машині зазвичай треба спілкуватися лише з кількома іншими віртуальними машинами в мережі. Як наслідок, накладена мережа добре масштабується, бо віртуальній машині не потрібно знати про кожну іншу віртуальну машину.
 
 <img width="900px" src="/assets/datacenter/6-046-virtual1.png">
 
-Ideally, we'd like the two layers to think about addressing separately. The underlay network should not need to know about virtual host addresses (otherwise, it would scale poorly). Similarly, the overlay network should not need to know about every physical server in the datacenter (each VM only needs to know about a few other VMs).
+В ідеалі ми хотіли б, щоб два рівні думали про адресацію окремо. Базовій мережі не повинно бути потрібно знати про адреси віртуальних хостів (інакше вона погано масштабувалася б). Аналогічно накладеній мережі не повинно бути потрібно знати про кожен фізичний сервер у дата-центрі (кожній ВМ треба знати лише про кілька інших ВМ).
 
-If we didn't tell the underlay network about virtual host addresses, then if a datacenter switch gets a packet with a virtual IP as the destination, it would look in its forwarding table, not find any virtual IPs, and drop this packet. We need some way to bridge the gap between the overlay (thinking virtually) and the underlay (thinking physically).
+Якби ми не повідомляли базовій мережі про адреси віртуальних хостів, то, отримавши пакет із віртуальною IP-адресою як пунктом призначення, комутатор дата-центру подивився б у свою таблицю пересилання, не знайшов би жодних віртуальних IP-адрес і відкинув би цей пакет. Нам потрібен певний спосіб подолати розрив між накладеною мережею (що мислить віртуально) і базовою (що мислить фізично).
 
 
-## Encapsulation
+## Інкапсуляція
 
-To unify the overlay and underlay layers, we can use the same strategies with layering and headers that we used when we designed the Internet!
+Щоб об'єднати накладений і базовий рівні, ми можемо використати ті самі стратегії з рівнями й заголовками, які використовували, проєктуючи Інтернет!
 
-So far, we've treated IP as a single layer, and every packet has a single IP header, which understands the IP addressing system.
+Досі ми розглядали IP як один рівень, і кожен пакет мав один заголовок IP, що розуміє систему IP-адресації.
 
-Now that we have two IP sub-layers with two different IP addressing systems, we could introduce an additional header into the packet. For example, we could have two IP headers, where one header understands the overlay network, and the other header understands the underlay network. Or, we could use the original IP header for the underlay network, and introduce a new type of header (different from IP) for the overlay network.
+Тепер, коли в нас два підрівні IP з двома різними системами IP-адресації, ми можемо додати до пакета додатковий заголовок. Наприклад, у нас можуть бути два заголовки IP, де один заголовок розуміє накладену мережу, а інший — базову. Або ми можемо використовувати початковий заголовок IP для базової мережі й запровадити новий тип заголовка (відмінний від IP) для накладеної.
 
 <img width="700px" src="/assets/datacenter/6-047-virtual2.png">
 
-Now, our strategy for routing packets can combine the overlay and underlay networks. Suppose VM A wants to send a packet to VM B.
+Тепер наша стратегія маршрутизації пакетів може поєднувати накладену й базову мережі. Припустімо, ВМ A хоче надіслати пакет ВМ B.
 
 <img width="900px" src="/assets/datacenter/6-048-virtual3.png">
 
-1. VM A creates a packet with a single IP header, which contains the virtual IP address of B. (Remember, A is thinking in terms of overlay, and does not know about underlay physical IP addresses.) VM A forwards this packet to the virtual switch (on A's physical server).
+1. ВМ A створює пакет з одним заголовком IP, що містить віртуальну IP-адресу B. (Пам'ятайте, A мислить у термінах накладеної мережі й не знає про фізичні IP-адреси базової.) ВМ A пересилає цей пакет віртуальному комутатору (на фізичному сервері A).
 
     <img width="900px" src="/assets/datacenter/6-049-virtual4.png">
 
-2. The virtual switch reads the header to learn B's virtual IP address. Then, the virtual switch looks up the physical server address corresponding to B's virtual IP address. (We haven't described how to do this yet.)
+2. Віртуальний комутатор читає заголовок, щоб дізнатися віртуальну IP-адресу B. Потім віртуальний комутатор шукає адресу фізичного сервера, що відповідає віртуальній IP-адресі B. (Ми ще не описали, як це робиться.)
 
-    The virtual switch adds an additional outer header containing B's physical server address. Adding the header is sometimes called **encapsulation**.
+    Віртуальний комутатор додає додатковий зовнішній заголовок, що містить адресу фізичного сервера B. Додавання заголовка іноді називають **інкапсуляцією** (encapsulation).
 
-    At this point, the packet has two headers. The inner header (higher layer, overlay, added by VM A) contains B's virtual IP address, and the outer header (lower layer, underlay, added by virtual switch) contains B's physical server address.
+    На цьому етапі пакет має два заголовки. Внутрішній заголовок (вищий рівень, накладена мережа, доданий ВМ A) містить віртуальну IP-адресу B, а зовнішній заголовок (нижчий рівень, базова мережа, доданий віртуальним комутатором) — адресу фізичного сервера B.
 
-    The virtual switch forwards this packet to the next hop switch, based on the physical server address.
+    Віртуальний комутатор пересилає цей пакет комутатору наступного переходу на основі адреси фізичного сервера.
 
     <img width="900px" src="/assets/datacenter/6-050-virtual5.png">
 
-3. The packet is sent through the underlay network. Each switch in the datacenter only looks at the outer header (underlay, physical server address) to decide how to forward the packet. (Remember, the datacenter switches think in terms of underlay, and do not know about the overlay virtual IP address.)
+3. Пакет надсилається базовою мережею. Кожен комутатор у дата-центрі дивиться лише на зовнішній заголовок (базова мережа, адреса фізичного сервера), щоб вирішити, як переслати пакет. (Пам'ятайте, комутатори дата-центру мислять у термінах базової мережі й не знають про віртуальну IP-адресу накладеної.)
 
     <img width="900px" src="/assets/datacenter/6-051-virtual6.png">
 
     <img width="900px" src="/assets/datacenter/6-052-virtual7.png">
 
-4. Eventually, the packet reaches the destination physical server's virtual switch. The virtual switch looks at the outer header (underlay) and notices that the destination physical server address is itself.
+4. Зрештою пакет дістається віртуального комутатора фізичного сервера-адресата. Віртуальний комутатор дивиться на зовнішній заголовок (базова мережа) і помічає, що адреса фізичного сервера-адресата — це він сам.
 
-    The virtual switch removes the outer header, exposing the inner header inside. Removing the outer header is sometimes called **decapsulation**.
+    Віртуальний комутатор знімає зовнішній заголовок, відкриваючи внутрішній заголовок. Зняття зовнішнього заголовка іноді називають **декапсуляцією** (decapsulation).
 
     <img width="900px" src="/assets/datacenter/6-053-virtual8.png">
 
-Finally, the virtual switch reads the inner header (overlay). This tells the virtual switch which of the VMs on the physical server the packet should be forwarded to.
+Нарешті віртуальний комутатор читає внутрішній заголовок (накладена мережа). Це підказує віртуальному комутатору, якій із ВМ на фізичному сервері слід переслати пакет.
 
 <img width="900px" src="/assets/datacenter/6-054-virtual9.png">
 
-In this process, **encapsulation** allowed us to think about routing at two different layers. The underlay was able to route packets using physical server addresses, without thinking about the overlay. Similarly, the VM in the overlay was able to send and receive packets without thinking about how to forward packets in the underlay. The virtual switches bridged the two layers by translating the virtual machine address into a physical server address, and adding and removing the extra underlay header.
+У цьому процесі **інкапсуляція** дала нам змогу думати про маршрутизацію на двох різних рівнях. Базова мережа змогла маршрутизувати пакети за адресами фізичних серверів, не думаючи про накладену. Аналогічно ВМ у накладеній мережі змогла надсилати й отримувати пакети, не думаючи про те, як пересилати пакети в базовій мережі. Віртуальні комутатори з'єднали два рівні, перетворюючи адресу віртуальної машини на адресу фізичного сервера й додаючи та знімаючи додатковий заголовок базової мережі.
 
 <img width="900px" src="/assets/datacenter/6-055-virtual10.png">
 
@@ -118,77 +118,77 @@ In this process, **encapsulation** allowed us to think about routing at two diff
 <img width="900px" src="/assets/datacenter/6-057-virtual12.png">
 
 
-## Forwarding Tables with Encapsulation
+## Таблиці пересилання з інкапсуляцією
 
-What entries should we install in the forwarding tables to support routing with encapsulation?
+Які записи слід встановити в таблиці пересилання, щоб підтримувати маршрутизацію з інкапсуляцією?
 
-The virtual machines should install a default route that forwards every packet to the virtual switch on the physical machine.
+Віртуальні машини мають встановити маршрут за замовчуванням, що пересилає кожен пакет віртуальному комутатору на фізичній машині.
 
-The virtual switches need to implement some extra functionality to bridge the two layers. In particular, when you see a virtual address, you should apply encapsulation (add an outer layer) with the corresponding physical address. The forwarding table has entries for every destination VM that any of the VMs on this server might want to talk to. We can support this scale because we assume the VMs won't need to talk to every other VM in the datacenter. Unlike standard routing algorithms, we don't need any-to-any routing (we don't need paths to every other VM).
+Віртуальні комутатори мають реалізувати певну додаткову функціональність, щоб з'єднати два рівні. Зокрема, коли ви бачите віртуальну адресу, слід застосувати інкапсуляцію (додати зовнішній шар) із відповідною фізичною адресою. Таблиця пересилання має записи для кожної ВМ-адресата, з якою може захотіти спілкуватися будь-яка з ВМ на цьому сервері. Ми можемо підтримувати такий масштаб, бо вважаємо, що ВМ не потрібно спілкуватися з кожною іншою ВМ у дата-центрі. На відміну від стандартних алгоритмів маршрутизації, нам не потрібна маршрутизація «будь-хто — будь-кому» (нам не потрібні шляхи до кожної іншої ВМ).
 
-Virtual switches also need an extra rule for decapsulating packets. If the outer (underlay) packet destination is the switch itself, you should decapsulate (remove the outer header) and pass the packet to the VM address in the inner header. This rule scales with the number of VMs on the server, which is usually small enough to be manageable.
+Віртуальним комутаторам також потрібне додаткове правило для декапсуляції пакетів. Якщо пункт призначення зовнішнього пакета (базової мережі) — сам комутатор, слід декапсулювати (зняти зовнішній заголовок) і передати пакет на адресу ВМ із внутрішнього заголовка. Це правило масштабується з кількістю ВМ на сервері, яка зазвичай досить мала, щоб бути керованою.
 
-Is it hard to add this functionality? Fortunately, virtual switches are implemented in software, so adding this functionality just requires writing code (no extra hardware needed). In practice, though, encapsulation is so common that it's sometimes implemented in hardware anyway.
+Чи складно додати цю функціональність? На щастя, віртуальні комутатори реалізовано програмно, тож додавання цієї функціональності вимагає лише написання коду (додаткове обладнання не потрібне). Утім, на практиці інкапсуляція настільки поширена, що її іноді однаково реалізують апаратно.
 
-The switches in the datacenter work exactly the same as they did before we introduced virtualization. The forwarding tables only contain physical server addresses, and we know that these can be scaled with aggregation tricks based on physical topology.
+Комутатори в дата-центрі працюють точнісінько так само, як до запровадження віртуалізації. Таблиці пересилання містять лише адреси фізичних серверів, і ми знаємо, що їх можна масштабувати прийомами агрегації на основі фізичної топології.
 
 
-## Multi-Tenancy and Private Networks
+## Багатокористувацькість і приватні мережі
 
-Datacenters are managed by a single operator, but different organizations might be running applications inside that datacenter. For example, a datacenter run by Google might have some virtual servers run by Gmail, and others run by Google Maps. This approach of hosting multiple services in one datacenter is called **multi-tenancy**.
+Дата-центрами керує один оператор, але всередині дата-центру можуть працювати застосунки різних організацій. Наприклад, у дата-центрі, який обслуговує Google, можуть бути одні віртуальні сервери, які обслуговує Gmail, і інші, які обслуговує Google Maps. Такий підхід розміщення кількох сервісів в одному дата-центрі називається **багатокористувацькістю** (multi-tenancy).
 
-Cloud providers also use datacenters to supply virtual machines for customers. For example, Amazon Web Services (AWS) and Google Cloud Platform (GCP) allow users to start up a virtual machine in a datacenter, do whatever they want, and destroy the virtual machine when they're done.
+Хмарні провайдери також використовують дата-центри, щоб надавати клієнтам віртуальні машини. Наприклад, Amazon Web Services (AWS) і Google Cloud Platform (GCP) дають користувачам змогу запустити віртуальну машину в дата-центрі, робити що завгодно й знищити віртуальну машину, коли закінчать.
 
-One problem with multi-tenancy is, we don't always want the different tenants to be able to communicate with each other. For example, if a customer requests a VM, they probably shouldn't be able to connect to every other VM in the datacenter.
+Одна проблема багатокористувацькості полягає в тому, що ми не завжди хочемо, щоб різні орендарі (tenants) могли спілкуватися між собою. Наприклад, якщо клієнт запитує ВМ, він, найімовірніше, не повинен мати змоги під'єднуватися до кожної іншої ВМ у дата-центрі.
 
-Another problem is, tenants in a datacenter don't coordinate with each other when choosing addresses. For example, suppose our datacenter had two tenants, Pepsi and Coke. Each tenant creates their own private network, where they assign internal IP addresses to virtual machines. The private network is only for hosts inside the datacenter to communicate with each other, and these hosts will never be contacted from the public Internet. Because the networks are private, the two tenants can both use addresses in the same specially-allocated private ranges (RFC 1918 addresses). Pepsi's private network might have a VM with IP address 192.0.2.2, and Coke's private network might have a different VM with IP address 192.0.2.2. (In practice, we use private ranges in order to reuse IPv4 addresses, since we're running out of them.)
+Ще одна проблема в тому, що орендарі в дата-центрі не координуються між собою, обираючи адреси. Наприклад, припустімо, що в нашому дата-центрі два орендарі — Pepsi і Coke. Кожен орендар створює власну приватну мережу, де призначає віртуальним машинам внутрішні IP-адреси. Приватна мережа призначена лише для спілкування хостів усередині дата-центру між собою, і до цих хостів ніколи не звертатимуться з публічного Інтернету. Оскільки мережі приватні, обидва орендарі можуть використовувати адреси з тих самих спеціально виділених приватних діапазонів (адреси RFC 1918). Приватна мережа Pepsi може мати ВМ з IP-адресою 192.0.2.2, а приватна мережа Coke — іншу ВМ з IP-адресою 192.0.2.2. (На практиці ми використовуємо приватні діапазони, щоб повторно використовувати адреси IPv4, бо вони закінчуються.)
 
 <img width="900px" src="/assets/datacenter/6-058-tenancy1.png">
 
-From the perspective of each tenant, this is not a problem. Pepsi's 192.0.2.2 will never communicate with Coke's 192.0.2.2, and neither host is accessible to the global Internet. However, this is a problem for the datacenter. If we use destination-based forwarding, and we see a packet with destination 192.0.2.2, we have no idea which VM this address is referring to.
+З погляду кожного орендаря це не проблема. 192.0.2.2 Pepsi ніколи не спілкуватиметься з 192.0.2.2 Coke, і жоден із хостів не доступний з глобального Інтернету. Однак це проблема для дата-центру. Якщо ми використовуємо пересилання на основі адреси призначення і бачимо пакет із пунктом призначення 192.0.2.2, ми гадки не маємо, на яку ВМ вказує ця адреса.
 
-Duplicate IP addresses occur in practice for two reasons. First, datacenters usually don't have control over what addresses the tenants are assigning to their VMs. Second, in IP, it's standard practice to use specific ranges for private networks, which often leads to duplicate addresses.
+Дублікати IP-адрес трапляються на практиці з двох причин. По-перше, дата-центри зазвичай не контролюють, які адреси орендарі призначають своїм ВМ. По-друге, в IP стандартною практикою є використання певних діапазонів для приватних мереж, що часто призводить до дублікатів адрес.
 
 
-## Encapsulation For Multi-Tenancy
+## Інкапсуляція для багатокористувацькості
 
-We can use the idea of encapsulation again to solve this problem. We can add a new header that contains a **virtual network ID** for identifying a specific tenant (e.g. Pepsi has ID 1, Coke has ID 2). This new header doesn't contain information for forwarding and routing, but it provides additional context. Now, if a physical server has VMs for multiple tenants, it can pass the packet up to the correct virtual network.
+Щоб розв'язати цю проблему, можна знову використати ідею інкапсуляції. Ми можемо додати новий заголовок, що містить **ідентифікатор віртуальної мережі** (virtual network ID) для ідентифікації конкретного орендаря (наприклад, Pepsi має ID 1, Coke — ID 2). Цей новий заголовок не містить інформації для пересилання й маршрутизації, але надає додатковий контекст. Тепер, якщо фізичний сервер має ВМ кількох орендарів, він може передати пакет нагору правильній віртуальній мережі.
 
 <img width="900px" src="/assets/datacenter/6-059-tenancy2.png">
 
 <img width="900px" src="/assets/datacenter/6-060-tenancy3.png">
 
-When a virtual switch receives a packet and unwraps the outer (underlay) header, it looks at our new header to decide which tenant the packet is meant for. Then, it looks at the overlay header to forward the packet to a specific VM belonging to the correct tenant.
+Коли віртуальний комутатор отримує пакет і знімає зовнішній заголовок (базової мережі), він дивиться на наш новий заголовок, щоб вирішити, якому орендарю призначено пакет. Потім він дивиться на заголовок накладеної мережі, щоб переслати пакет конкретній ВМ, що належить правильному орендарю.
 
 
-## Stacking Encapsulations
+## Накладання інкапсуляцій
 
-We can use the idea of encapsulation multiple times, adding multiple new headers to support both virtualization and multi-tenancy.
+Ідею інкапсуляції можна використовувати кілька разів, додаючи кілька нових заголовків, щоб підтримувати і віртуалізацію, і багатокористувацькість.
 
-To start, the virtual machine creates a standard TCP/IP packet, with a virtual IP destination.
+Для початку віртуальна машина створює стандартний пакет TCP/IP з віртуальною IP-адресою призначення.
 
-In the first encapsulation step, we add a virtual network header, which tells us which tenant sent this packet. This helps us disambiguate two tenants using the same address, and also prevents packets from being sent to a different tenant.
+На першому кроці інкапсуляції ми додаємо заголовок віртуальної мережі, що вказує, який орендар надіслав цей пакет. Це допомагає розрізняти двох орендарів, що використовують ту саму адресу, а також не дає пакетам надсилатися іншому орендарю.
 
-In the second encapsulation step, we add an underlay network header, which tells us the physical server address corresponding to the virtual IP destination.
+На другому кроці інкапсуляції ми додаємо заголовок базової мережі, що вказує адресу фізичного сервера, яка відповідає віртуальній IP-адресі призначення.
 
 <img width="900px" src="/assets/datacenter/6-061-stack1.png">
 
-The layers of abstraction still hold when we stack encapsulations. The underlay network doesn't need to know that multiple tenants are in the same datacenter. The underlay network just looks at the outermost header for a physical server address, and forwards the packet accordingly.
+Рівні абстракції зберігаються, коли ми накладаємо інкапсуляції. Базовій мережі не потрібно знати, що в тому самому дата-центрі кілька орендарів. Базова мережа просто дивиться на найзовнішніший заголовок, щоб знайти адресу фізичного сервера, і відповідно пересилає пакет.
 
-The decapsulation step works in reverse order. The virtual switch on the destination server receives a packet with two extra headers.
+Крок декапсуляції працює у зворотному порядку. Віртуальний комутатор на сервері-адресаті отримує пакет із двома додатковими заголовками.
 
-In the first decapsulation step, we remove the outer underlay header. This is no longer necessary since the packet has reached the destination physical server.
+На першому кроці декапсуляції ми знімаємо зовнішній заголовок базової мережі. Він більше не потрібен, бо пакет дістався фізичного сервера-адресата.
 
-In the second decapsulation step, we use the virtual network header to decide which set of VMs we should think about. The physical server might have VMs for multiple tenants, and this helps narrows down to a single tenant.
+На другому кроці декапсуляції ми використовуємо заголовок віртуальної мережі, щоб вирішити, про яку множину ВМ нам слід думати. Фізичний сервер може мати ВМ кількох орендарів, і це допомагає звузити вибір до одного орендаря.
 
-Finally, we use the innermost IP header to send the packet to the correct VM in the correct virtual network.
+Нарешті ми використовуємо найвнутрішніший заголовок IP, щоб надіслати пакет правильній ВМ у правильній віртуальній мережі.
 
 <img width="900px" src="/assets/datacenter/6-062-stack2.png">
 
-Note: With encapsulation, we have to be careful when reading the 5-tuple (IPs, ports, and protocol) for load-balancing packets across multiple paths. Fortunately, modern router hardware is good at parsing packets to understand where the relevant headers are located in the packet, even if additional headers are inserted.
+Примітка: з інкапсуляцією треба бути обережним, читаючи п'ятірку (IP-адреси, порти й протокол) для балансування навантаження пакетів між кількома шляхами. На щастя, сучасне обладнання маршрутизаторів добре розбирає пакети й розуміє, де в пакеті розташовані відповідні заголовки, навіть якщо вставлено додаткові заголовки.
 
-In practice, many different protocols exist for encapsulation. We could use IP-in-IP to support two IP headers (one for overlay, one for underlay).
+На практиці існує багато різних протоколів інкапсуляції. Ми можемо використати IP-in-IP, щоб підтримувати два заголовки IP (один для накладеної мережі, один для базової).
 
-MPLS is a simple header for adding a label that identifies a service (e.g. a virtual network, a tenant). This can be used to add encapsulation for multi-tenancy.
+MPLS — простий заголовок для додавання мітки, що ідентифікує сервіс (наприклад, віртуальну мережу, орендаря). Його можна використати для інкапсуляції заради багатокористувацькості.
 
-As datacenters have become more popular, many other protocols like GRE, VXLAN, and GENEVE have been developed. Most of these work over IP, so these custom protocols are the inner overlay header, and regular IP is the outer underlay header.
+Зі зростанням популярності дата-центрів було розроблено багато інших протоколів, як-от GRE, VXLAN і GENEVE. Більшість із них працюють поверх IP, тож ці спеціальні протоколи є внутрішнім заголовком накладеної мережі, а звичайний IP — зовнішнім заголовком базової.

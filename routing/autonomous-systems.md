@@ -1,246 +1,246 @@
 ---
-title: Model for Inter-Domain Routing
-parent: Routing
+title: Модель міждоменної маршрутизації
+parent: Маршрутизація
 nav_order: 8
 layout: page-with-toc
 ---
 
-# Model for Inter-Domain Routing
+# Модель міждоменної маршрутизації
 
-## Inter-Domain Routing
+## Міждоменна маршрутизація
 
-Recall from earlier that routing is performed in a network of networks. We've seen distance-vector and link-state protocols that can be used to implement intra-domain routing, which allows packets to be sent within a local network.
+Пригадайте, що маршрутизація виконується в мережі мереж. Ми розглянули дистанційно-векторні протоколи та протоколи стану каналів, за допомогою яких можна реалізувати внутрішньодоменну маршрутизацію, що дає змогу надсилати пакети в межах локальної мережі.
 
-In this section, we'll build a model that will allow us to define inter-domain routing protocols, which can send packets between different local networks. We'll also see how inter-domain and intra-domain routing protocols combine to allow packets to be sent to any host in any network.
+У цьому розділі ми побудуємо модель, яка дасть змогу визначити протоколи міждоменної маршрутизації, здатні надсилати пакети між різними локальними мережами. Ми також побачимо, як поєднуються протоколи міждоменної та внутрішньодоменної маршрутизації, щоб пакети можна було надсилати будь-якому хосту в будь-якій мережі.
 
 
-## Defining Autonomous Systems
+## Визначення автономних систем
 
-We can formalize the notion of a local network by defining an **autonomous system (AS)**, which is one or more local network(s) all run by the same operator. For example, within a company like Google, there might be a local network for employee computers, and another local network for data centers, but both networks are controlled by the same company. The operator can deploy a single intra-domain routing protocol to send messages between machines on any of those local networks. Sometimes, the term **domain** is used to informally refer to an AS, though this term is also used in other protocols, so we will say AS when possible.
+Поняття локальної мережі можна формалізувати, визначивши **автономну систему** (autonomous system, AS) — одну чи кілька локальних мереж, якими керує той самий оператор. Наприклад, у компанії на кшталт Google може бути локальна мережа для комп'ютерів працівників та інша локальна мережа для дата-центрів, але обидві мережі контролює та сама компанія. Оператор може розгорнути один протокол внутрішньодоменної маршрутизації, щоб надсилати повідомлення між машинами в будь-якій із цих локальних мереж. Іноді для неформального позначення AS вживають термін **домен** (domain), але цей термін використовується і в інших протоколах, тож ми за можливості казатимемо AS.
 
-To think about routing packets between autonomous systems, we can abstract away all of the individual routers and hosts within the AS, and treat the AS as a single entity. Then, we can draw a graph where each node represents an AS, and edges between two ASes represents a connection between them. This graph is sometimes called the **inter-domain topology** or an **AS graph**.
+Щоб міркувати про маршрутизацію пакетів між автономними системами, можна абстрагуватися від усіх окремих маршрутизаторів і хостів усередині AS і розглядати AS як єдину сутність. Тоді можна намалювати граф, де кожна вершина відповідає AS, а ребра між двома AS — з'єднанню між ними. Такий граф іноді називають **міждоменною топологією** (inter-domain topology) або **графом AS** (AS graph).
 
 <img width="900px" src="/assets/routing/2-134-interdomain.png">
 
-## Brief History of Autonomous Systems
+## Коротка історія автономних систем
 
-In real life, an organization called the Internet Assigned Numbers Authority (IANA) manages a global list of all autonomous systems that exist in the Internet. In order to be an AS, you must register with this organization and receive a unique autonomous system number (ASN).
+У реальному житті організація під назвою Internet Assigned Numbers Authority (IANA) веде глобальний перелік усіх автономних систем, що існують в Інтернеті. Щоб бути AS, треба зареєструватися в цій організації й отримати унікальний номер автономної системи (autonomous system number, ASN).
 
-Fun fact: In the early days, the IANA was administered manually by a single person, Jon Postel. This meant that anybody in the world who wanted to register a new AS would have to ask for his approval.
+Цікавий факт: у перші роки IANA вручну адмініструвала одна людина — Джон Постел (Jon Postel). Це означало, що будь-хто у світі, хто хотів зареєструвати нову AS, мав просити його схвалення.
 
-Today, there are over 90,000 autonomous systems, with the United States having the most ASes of any country.
+Сьогодні існує понад 90 000 автономних систем, і найбільше AS серед усіх країн мають Сполучені Штати.
 
 <img width="600px" src="/assets/routing/2-135-as-history1.png">
 
 <img width="600px" src="/assets/routing/2-136-as-history2.png">
 
-Fun fact: UC Berkeley has ASN 25, which is a remarkably low number given that there are so many ASNs. This reflects the fact that UC Berkeley received its ASN very early in the Internet's history (in the 1980s).
+Цікавий факт: UC Berkeley має ASN 25 — разюче малий номер, зважаючи на те, як багато існує ASN. Це відображає той факт, що UC Berkeley отримав свій ASN дуже рано в історії Інтернету (у 1980-х роках).
 
-## Types of ASes
+## Типи AS
 
-Recall that when modeling the network for intra-domain routing, we made a distinction between end hosts and routers. We'll make a similar distinction for inter-domain routing by defining two types of ASes.
+Пригадайте, що, моделюючи мережу для внутрішньодоменної маршрутизації, ми розрізняли кінцеві хости й маршрутизатори. Для міждоменної маршрутизації ми зробимо схоже розрізнення, визначивши два типи AS.
 
-A **stub autonomous system** only exists to provide Internet connectivity to the hosts in its local networks. A stub AS only sends and receives packets on behalf of hosts that are inside the AS, and does not forward packets between different ASes. These are analogous to the end hosts in our intra-domain routing model, which only sent and received their own packets and did not forward other people's packets.
+**Тупикова автономна система** (stub autonomous system) існує лише для того, щоб надавати доступ до Інтернету хостам у своїх локальних мережах. Тупикова AS лише надсилає й отримує пакети від імені хостів усередині AS і не пересилає пакети між різними AS. Вони аналогічні кінцевим хостам у нашій моделі внутрішньодоменної маршрутизації, які лише надсилали й отримували власні пакети й не пересилали чужих.
 
-Real-life examples of stub ASes include non-Internet companies (e.g. a bank offering connectivity to its employees) or universities (e.g. UC Berkeley offering connectivity to its students and employees). These organizations are not responsible for carrying Internet traffic from other organizations. The vast majority of ASes in the world are stub ASes.
+Реальні приклади тупикових AS — неінтернетові компанії (наприклад, банк, що забезпечує доступ своїм працівникам) або університети (наприклад, UC Berkeley, що забезпечує доступ своїм студентам і працівникам). Ці організації не відповідають за перенесення інтернет-трафіку інших організацій. Переважна більшість AS у світі — тупикові.
 
-By contrast, a **transit autonomous system** forwards packets on behalf of other ASes. A transit AS could carry a packet between two different ASes by receiving and forwarding that packet.
+Натомість **транзитна автономна система** (transit autonomous system) пересилає пакети від імені інших AS. Транзитна AS може переносити пакет між двома різними AS, отримуючи й пересилаючи його.
 
-Transit ASes correspond to real-life companies whose business includes selling Internet connectivity to other organizations. Real-life examples of transit ASes include AT&T and Verizon, which are companies that you can pay to offer you Internet connectivity. Some transit ASes like AT&T are global, with infrastructure around the world. Others might be specific to a region, like Sonic, an Internet service provider that only forwards traffic to and from California.
+Транзитні AS відповідають реальним компаніям, бізнес яких включає продаж доступу до Інтернету іншим організаціям. Реальні приклади транзитних AS — AT&T і Verizon: це компанії, яким можна заплатити, щоб вони надали вам доступ до Інтернету. Деякі транзитні AS, як-от AT&T, глобальні, з інфраструктурою по всьому світу. Інші можуть обслуговувати певний регіон, як-от Sonic — інтернет-провайдер, що пересилає трафік лише до Каліфорнії та з неї.
 
-Note that a transit AS can still contain end hosts that send and receive packets of their own. Nevertheless, a transit AS is similar to the routers in our intra-domain routing model, which received other users' packets and forwarded them on behalf of users.
+Зауважте, що транзитна AS однаково може містити кінцеві хости, які надсилають і отримують власні пакети. Попри це, транзитна AS схожа на маршрутизатори в нашій моделі внутрішньодоменної маршрутизації, які отримували пакети інших користувачів і пересилали їх від їхнього імені.
 
-This model of stub and transit ASes is what we'll use in these notes, though sometimes, the classification in real life can be less well-defined. For example, major tech companies like Google, Microsoft, and Amazon control massive ASes that carry as much traffic as transit ASes (and maybe even more). Because their primary role is to carry traffic to and from their services (e.g. receive Google search requests and send search results), they could be classifed as stub ASes. In recent years, though, these companies have also offered to carry traffic between ASes, so they could arguably be classified as transit ASes as well.
+Саме цю модель тупикових і транзитних AS ми використовуватимемо в цих матеріалах, хоча в реальному житті класифікація іноді буває менш чіткою. Наприклад, великі технологічні компанії на кшталт Google, Microsoft і Amazon контролюють величезні AS, що переносять стільки ж трафіку, скільки транзитні AS (а може, й більше). Оскільки їхня основна роль — переносити трафік до своїх сервісів і з них (наприклад, отримувати пошукові запити Google і надсилати результати пошуку), їх можна класифікувати як тупикові AS. Утім, останніми роками ці компанії також пропонують переносити трафік між AS, тож їх, можливо, можна класифікувати й як транзитні AS.
 
-## Inter-Domain Topology Is Defined by Business Relationships
+## Міждоменну топологію визначають бізнес-відносини
 
-In our inter-domain topology, we draw an edge between two ASes if they exchange traffic. What causes two real-life organizations, such as a local bank and Verizon, to agree to exchange traffic? The edges in the AS are defined by real-world business relationships between ASes.
+У нашій міждоменній топології ми проводимо ребро між двома AS, якщо вони обмінюються трафіком. Що змушує дві реальні організації, як-от місцевий банк і Verizon, погодитися обмінюватися трафіком? Ребра в графі AS визначаються реальними бізнес-відносинами між AS.
 
-There are two possible ways that a pair of ASes could be related.
+Є два можливі типи відносин між парою AS.
 
-A pair of ASes could be involved in a customer-provider relationship. In real life, the **customer** is paying for service, and the **provider** is offering connectivity in exchange for money. For example, the local bank AS could be the customer, paying the provider, Verizon, for Internet services.
+Пара AS може перебувати у відносинах «клієнт–провайдер». У реальному житті **клієнт** (customer) платить за послугу, а **провайдер** (provider) надає доступ в обмін на гроші. Наприклад, AS місцевого банку може бути клієнтом, що платить провайдерові Verizon за інтернет-послуги.
 
-A pair of ASes could also be involved in a **peer** relationship. Two peer ASes usually send each other a roughly equal amount of traffic. In real life, two ASes could agree to become peers by signing a legal contract between companies. Usually, the two peers agree to not pay each other for connectivity services, as long as the traffic sent in either direction is roughly equal.
+Пара AS також може перебувати в **пірингових** відносинах (peer). Дві AS-піри зазвичай надсилають одна одній приблизно однаковий обсяг трафіку. У реальному житті дві AS можуть домовитися стати пірами, підписавши юридичний договір між компаніями. Зазвичай два піри домовляються не платити одне одному за послуги доступу, доки трафік, що надсилається в кожному напрямку, приблизно однаковий.
 
-## AS Graph with Business Relationships
+## Граф AS із бізнес-відносинами
 
-We can draw these relationships into the AS graph by adding arrows to the graph. A directed edge points from the provider to the customer. An undirected edge connects two peers. Note that the graph can contain both directed and undirected edges (not all edges need to have arrows).
+Ці відносини можна відобразити на графі AS, додавши до нього стрілки. Орієнтоване ребро вказує від провайдера до клієнта. Неорієнтоване ребро з'єднує двох пірів. Зауважте, що граф може містити і орієнтовані, і неорієнтовані ребра (не всі ребра мусять мати стрілки).
 
 <img width="500px" src="/assets/routing/2-137-as-graph.png">
 
-Stub ASes in the graph are only customers. They have incoming edges, showing who provides them with connectivity. However, they don't have any outgoing edges, because they don't provide connectivity to others.
+Тупикові AS у графі є лише клієнтами. Вони мають вхідні ребра, що показують, хто надає їм доступ. Однак вони не мають вихідних ребер, бо не надають доступу іншим.
 
-By contrast, transit ASes in the graph are the providers. Their outgoing arrows show that they are selling connectivity to other organizations.
+Натомість транзитні AS у графі є провайдерами. Їхні вихідні стрілки показують, що вони продають доступ іншим організаціям.
 
-Note that the direction of the arrow does not tell us anything about what direction the packets are being sent. In fact, packets can be sent in both directions even along a directed edge. The customer often pays the provider for the ability to send packets to and receive packets from the rest of the Internet.
+Зауважте, що напрямок стрілки нічого не каже про напрямок, у якому надсилаються пакети. Насправді пакети можуть надсилатися в обох напрямках навіть уздовж орієнтованого ребра. Клієнт часто платить провайдерові за можливість надсилати пакети решті Інтернету й отримувати пакети від неї.
 
-## AS Graphs are Acyclic
+## Графи AS ациклічні
 
-The graph of customer-provider relationships is acyclic. The graph does not contain any cycles consisting of directed edges.
+Граф відносин «клієнт–провайдер» ациклічний. Граф не містить жодних циклів з орієнтованих ребер.
 
-This acyclic property exists because of the real-world implications of having a cycle. In real life, a cycle would mean that A pays B, B pays C, and then C pays A, and it doesn't make sense for money to flow from somebody back to themselves. Also, this cycle would mean that A provides service to C, which provides service to B, which provides service to A. It also doesn't make sense for somebody to provide connectivity to themselves.
+Ця властивість ациклічності існує через те, що означав би цикл у реальному світі. У реальному житті цикл означав би, що A платить B, B платить C, а потім C платить A, і немає сенсу в тому, щоб гроші текли від когось назад до нього самого. Крім того, такий цикл означав би, що A надає послуги C, який надає послуги B, який надає послуги A. Немає сенсу й у тому, щоб хтось надавав доступ сам собі.
 
-To use an analogy, imagine if you paid UC Berkeley tuition for classes, then UC Berkeley paid the UC system for classes, and then the UC system paid you for classes. This business relationship doesn't make any sense!
+Як аналогію уявіть, що ви платите UC Berkeley за навчання, потім UC Berkeley платить системі UC за навчання, а потім система UC платить вам за навчання. Такі бізнес-відносини не мають жодного сенсу!
 
 <img width="700px" src="/assets/routing/2-138-acyclic.png">
 
-Note that the acyclic property only applies to customer-provider relationships. It is okay if peering relationships form a cycle. For example, it's okay if A-B, B-C, and C-A are all peers. None of them are sending each other money, so we don't have an ill-defined business relationship.
+Зауважте, що властивість ациклічності стосується лише відносин «клієнт–провайдер». Пірингові відносини можуть утворювати цикл. Наприклад, цілком нормально, якщо A–B, B–C і C–A — усі піри. Ніхто з них не платить іншим, тож у нас немає погано визначених бізнес-відносин.
 
-## Provider Hierarchy and Tier 1 ASes
+## Ієрархія провайдерів і AS рівня 1
 
-A consequence of the graph being acyclic is, we can form a hierarchy of providers. In other words, we can arrange the nodes such that all the arrows point downward. The stub ASes are at the bottom, the providers are at the top. Service flows from higher to lower nodes. The lower nodes pay money up to higher nodes.
+Наслідок ациклічності графа полягає в тому, що можна утворити ієрархію провайдерів. Іншими словами, вершини можна розташувати так, щоб усі стрілки вказували донизу. Тупикові AS унизу, провайдери вгорі. Послуги течуть від вищих вершин до нижчих. Нижчі вершини платять гроші вгору вищим вершинам.
 
-At the very top of the hierarchy, there are **Tier 1 autonomous systems**, which have no providers (no incoming edges). Every Tier 1 AS has a peering relationship with every other Tier 1 AS.
+На самій верхівці ієрархії розташовані **автономні системи рівня 1** (Tier 1), які не мають провайдерів (не мають вхідних ребер). Кожна AS рівня 1 має пірингові відносини з кожною іншою AS рівня 1.
 
 <img width="600px" src="/assets/routing/2-139-tier1.png">
 
-A consequence of this hierarchy is: Every non-Tier 1 AS has at least one provider (incoming edge). This makes sense in real life, since you have to pay somebody to offer you connectivity.
+Наслідок цієї ієрархії такий: кожна AS, що не належить до рівня 1, має щонайменше одного провайдера (вхідне ребро). Це має сенс у реальному житті, адже доводиться комусь платити, щоб він надав вам доступ.
 
-In this hierarchy, starting from any AS, and following the uphill chain of providers, always leads to a Tier 1 AS. This also makes sense in real life. The Tier 1 ASes all peering with each other is why the entire Internet is connected (as opposed to, say, two disconnected subgraphs representing two separate Internets where you can only talk to hosts in your own half). In order to guarantee having a path to every other AS in the graph, every AS must have a path upwards that eventually leads to a Tier 1 AS.
+У цій ієрархії, починаючи з будь-якої AS і рухаючись угору ланцюжком провайдерів, ми завжди доходимо до AS рівня 1. Це теж має сенс у реальному житті. Саме тому, що всі AS рівня 1 мають піринг між собою, увесь Інтернет зв'язний (на відміну, скажімо, від двох незв'язних підграфів, що представляють два окремі Інтернети, де можна спілкуватися лише з хостами своєї половини). Щоб гарантувати наявність шляху до кожної іншої AS у графі, кожна AS мусить мати шлях угору, що зрештою веде до AS рівня 1.
 
 TODO-diagram
 
-Some real-world examples of Tier 1 ASes in the AT&T and Verizon (US-based), France Telecom and Telecom Italia (Europe-based), and NTT Communications (Japan-based). There are around 20 ASes that are Tier 1 or nearly Tier 1 in real life. These Tier 1 ASes usually own infrastructure spanning multiple continents (e.g. undersea cables).
+Реальні приклади AS рівня 1 — AT&T і Verizon (зі США), France Telecom і Telecom Italia (з Європи) та NTT Communications (з Японії). У реальному житті існує близько 20 AS, що належать до рівня 1 або майже до нього. Ці AS рівня 1 зазвичай володіють інфраструктурою, що охоплює кілька континентів (наприклад, підводними кабелями).
 
-The hierarchy structure of the AS graph is defined by real-world business and political motivations. In theory, it would be possible to draw an AS graph that looks like a tree, with a single Tier 1 AS at the root providing services to every stub AS. However, this means that a single real-life entity controls the entire world's Internet access, which may be undesirable for political reasons.
+Ієрархічну структуру графа AS визначають реальні бізнесові та політичні мотиви. Теоретично можна було б намалювати граф AS у вигляді дерева з однією AS рівня 1 у корені, що надає послуги кожній тупиковій AS. Однак це означало б, що одна реальна сутність контролює доступ до Інтернету в усьому світі, що може бути небажаним із політичних причин.
 
-## Policy-Based Routing
+## Маршрутизація на основі політик
 
-Recall that in intra-domain routing, our goal was to find paths that are valid (no loops and no dead-ends) and good (least cost).
+Пригадайте, що у внутрішньодоменній маршрутизації наша мета полягала в пошуку шляхів, які є коректними (без петель і глухих кутів) і добрими (з найменшою вартістю).
 
-In inter-domain routing, we still want paths to be valid. However, unlike in intra-domain routing, where there was nothing special about one router over another, each autonomous system has its own business goals and relationships with other ASes (e.g. customer, provider, peer). Therefore, we will need to re-define "good" to reflect the real-world business goals and preferences of ASes.
+У міждоменній маршрутизації ми й далі хочемо, щоб шляхи були коректними. Однак, на відміну від внутрішньодоменної маршрутизації, де жоден маршрутизатор нічим особливим не відрізнявся від інших, кожна автономна система має власні бізнес-цілі та відносини з іншими AS (наприклад, клієнт, провайдер, пір). Тому нам доведеться перевизначити «добрий», щоб відобразити реальні бізнес-цілі та вподобання AS.
 
-In order to allow each AS to carry traffic in a way that's compatible with its real-world goals, our routing protocol will allow each AS to set its own policy. Then, the paths computed by the protocol should properly respect each AS's policy.
+Щоб кожна AS могла переносити трафік у спосіб, сумісний з її реальними цілями, наш протокол маршрутизації дозволить кожній AS встановлювати власну політику (policy). Тоді шляхи, обчислені протоколом, мають належно поважати політику кожної AS.
 
-In theory, ASes can set any sort of policy that they like, although standard conventions do exist (which we'll discuss next). Here are some examples of policies that an AS could set:
+Теоретично AS можуть встановлювати будь-які політики, хоча стандартні домовленості існують (їх ми обговоримо далі). Ось кілька прикладів політик, які може встановити AS:
 
-- "I don't want to carry AS#2046's traffic through my network." (Defining how I will handle traffic from other ASes.)
-- "I prefer if my traffic was carried by AS#10 instead of AS#4." (Defining how other ASes should handle my traffic.)
-- "Don't send my traffic through AS#54 unless absolutely necessary."
-- "I prefer AS#12 on weekdays, and AS#13 on weekends." (Policies can change over time!)
+- «Я не хочу переносити трафік AS#2046 через свою мережу». (Визначає, як я оброблятиму трафік інших AS.)
+- «Я надаю перевагу тому, щоб мій трафік переносила AS#10, а не AS#4». (Визначає, як інші AS мають обробляти мій трафік.)
+- «Не надсилайте мій трафік через AS#54, якщо в цьому немає крайньої потреби».
+- «У будні я надаю перевагу AS#12, а у вихідні — AS#13». (Політики можуть змінюватися з часом!)
 
-The routing protocol doesn't care why the AS has these preferences. Perhaps I'm refusing to carry traffic from AS#2046 because it's a rival company, but the protocol doesn't need to know that.
+Протоколу маршрутизації байдуже, чому AS має такі вподобання. Можливо, я відмовляюся переносити трафік AS#2046, бо це компанія-конкурент, але протоколу не потрібно цього знати.
 
-Our least-cost routing protocols so far have no way of supporting these policies. Least-cost was a global minimization problem, where every router was trying to solve the same problem. By contrast, in policy-based routing, each AS only cares about its own policy, and there isn't a global problem that everybody is cooperating to solve.
+Наші досі розглянуті протоколи маршрутизації з найменшою вартістю ніяк не можуть підтримувати такі політики. Найменша вартість була задачею глобальної мінімізації, де кожен маршрутизатор намагався розв'язати ту саму задачу. Натомість у маршрутизації на основі політик кожну AS цікавить лише власна політика, і немає глобальної задачі, яку всі спільно розв'язують.
 
 
-## Gao-Rexford Rules for Routing Policies
+## Правила Гао–Рексфорда для політик маршрутизації
 
-Although our routing protocol allows each AS to set any arbitrary policy they like, in practice, most ASes set their policies according to some standard conventions, known as the **Gao-Rexford rules**. These conventions are based in the assumption that real-world organizations like making money, and dislike losing money.
+Хоча наш протокол маршрутизації дозволяє кожній AS встановлювати будь-яку довільну політику, на практиці більшість AS встановлюють свої політики відповідно до певних стандартних домовленостей, відомих як **правила Гао–Рексфорда** (Gao-Rexford rules). Ці домовленості ґрунтуються на припущенні, що реальні організації люблять заробляти гроші й не люблять їх втрачати.
 
-There are two broad rules that ASes typically follow. First, when an AS has a choice of multiple routes, the AS prefers to forward packets to the most profitable next hop. Specifically, the AS prefers a route with a next hop that is a customer. If there are no such routes, the AS prefers a route with a next hop that is a peer. The AS will only select a route with a next hop that is a provider if it's forced to do so, because there are no better routes.
+Є два загальні правила, яких зазвичай дотримуються AS. По-перше, коли AS має вибір із кількох маршрутів, вона надає перевагу пересиланню пакетів найприбутковішому наступному переходу. Конкретно, AS віддає перевагу маршруту, наступним переходом якого є клієнт. Якщо таких маршрутів немає, AS віддає перевагу маршруту, наступним переходом якого є пір. AS обере маршрут, наступним переходом якого є провайдер, лише якщо змушена це зробити, бо кращих маршрутів немає.
 
 <img width="900px" src="/assets/routing/2-140-gaorexford1.png">
 
-This principle dictates the routes that the AS selects. You can think of this principle as a preference-based version of selecting paths in the distance-vector protocol. Instead of selecting the shortest route I know about, I select the route where the next hop makes me money (customer best), or saves me money (if no customers, then peer), and avoids losing money (if no customers or peers, then provider).
+Цей принцип визначає маршрути, які обирає AS. Його можна уявляти як версію вибору шляхів у дистанційно-векторному протоколі, засновану на вподобаннях. Замість обирати найкоротший відомий мені маршрут, я обираю маршрут, де наступний перехід приносить мені гроші (найкраще — клієнт), заощаджує мені гроші (якщо клієнтів немає — пір) і дає змогу уникнути втрат (якщо немає ні клієнтів, ні пірів — провайдер).
 
 <img width="900px" src="/assets/routing/2-141-gaorexford2.png">
 
-Second, ASes only carry traffic if they're getting paid for it. There's no incentive for ASes to perform free labor. This principle dictates the paths that the AS is willing to participate in. You can think of this principle as a more restrictive version of announcing paths in the distance-vector protocol. Instead of advertising a route to every neighbor, allowing anybody to forward packets through me, I only advertise routes in which I'm paid to forward packets.
+По-друге, AS переносять трафік, лише якщо їм за це платять. AS не мають стимулу виконувати безкоштовну роботу. Цей принцип визначає шляхи, у яких AS готова брати участь. Його можна уявляти як суворішу версію оголошення шляхів у дистанційно-векторному протоколі. Замість оголошувати маршрут кожному сусідові, дозволяючи будь-кому пересилати пакети через мене, я оголошую лише ті маршрути, за пересилання пакетів якими мені платять.
 
-A consequence of this second principle is: As an AS, the traffic I carry should come from a customer, or go to a customer. In other words, for any route going through me, one of my neighbors must be a customer.
+Наслідок цього другого принципу такий: як AS, трафік, який я переношу, має надходити від клієнта або йти до клієнта. Іншими словами, для будь-якого маршруту через мене один із моїх сусідів має бути клієнтом.
 
-Let's go through all the specific cases.
+Розгляньмо всі конкретні випадки.
 
-Routes where both of my neighbors are customers are good, because I am getting paid by the two customers to forward packets.
+Маршрути, де обидва мої сусіди — клієнти, добрі, бо мені платять обидва клієнти за пересилання пакетів.
 
 <img width="900px" src="/assets/routing/2-142-gaorexford3.png">
 
-Similarly, routes where one of my neighbors is a customer, and one of my neighbors is a peer are good, because even though the peer doesn't pay me, the customer does.
+Аналогічно маршрути, де один із моїх сусідів — клієнт, а інший — пір, добрі, бо хоча пір мені не платить, клієнт платить.
 
 <img width="900px" src="/assets/routing/2-143-gaorexford4.png">
 
-Routes where one of my neighbors is a customer, and the other is a provider are good. At first, it might seem like this path is bad, because the customer is paying me, and then I'm paying the provider. Isn't it possible that I make no money, or lose money from this transaction? That may be true, but if we didn't participate in these routes, we would be a useless AS with no customers. An AS's job is to give connectivity to its users, and participating in these customer-AS-provider routes unlocks more routes to the rest of the Internet.
+Маршрути, де один із моїх сусідів — клієнт, а інший — провайдер, добрі. Спершу може здатися, що такий шлях поганий, бо клієнт платить мені, а потім я плачу провайдерові. Хіба не може статися, що на цій операції я нічого не заробляю чи навіть втрачаю гроші? Можливо, це так, але якби ми не брали участі в таких маршрутах, то були б марною AS без клієнтів. Завдання AS — надавати доступ своїм користувачам, а участь у маршрутах «клієнт–AS–провайдер» відкриває більше маршрутів до решти Інтернету.
 
 <img width="900px" src="/assets/routing/2-144-gaorexford5.png">
 
-Routes where both of my neighbors are peers are bad, because neither side is paying me to forward packets.
+Маршрути, де обидва мої сусіди — піри, погані, бо жодна сторона не платить мені за пересилання пакетів.
 
-More generally, peers do not provide transit between other peers. Thinking in terms of the hierarchy structure, a path should not stay at a given level for multiple hops.
+Загальніше, піри не надають транзиту між іншими пірами. Мислячи в термінах ієрархічної структури, шлях не повинен залишатися на тому самому рівні кілька переходів поспіль.
 
 <img width="900px" src="/assets/routing/2-145-gaorexford6.png">
 
-Routes where one of my neighbors is a peer, and the other is a provider are also bad, because again, neither side is paying me to forward packets.
+Маршрути, де один із моїх сусідів — пір, а інший — провайдер, теж погані, бо знову ж таки жодна сторона не платить мені за пересилання пакетів.
 
-More generally, if an AS has a peering link, that link will only carry traffic to/from its own customers. In other words, when packets arrive at B via that peering link, B's only profitable option is to forward the packet to a customer (not a provider, and not another peer). Similarly, packets from customers can be forwarded through the peering link (customer pays), but packets from providers and peers cannot be forwarded through the peering link (nobody is paying).
+Загальніше, якщо AS має піринговий канал, цей канал переноситиме трафік лише до власних клієнтів AS і від них. Іншими словами, коли пакети надходять до B цим піринговим каналом, єдиний прибутковий варіант для B — переслати пакет клієнтові (не провайдерові й не іншому пірові). Аналогічно пакети від клієнтів можна пересилати піринговим каналом (клієнт платить), але пакети від провайдерів і пірів не можна пересилати піринговим каналом (ніхто не платить).
 
 <img width="900px" src="/assets/routing/2-146-gaorexford7.png">
 
-Similarly, routes where both of my neighbors are providers are bad, because I have to pay both sides to forward the packet, and nobody is paying me to do this.
+Аналогічно маршрути, де обидва мої сусіди — провайдери, погані, бо мені доводиться платити обом сторонам за пересилання пакета, а мені за це ніхто не платить.
 
 <img width="900px" src="/assets/routing/2-147-gaorexford8.png">
 
 
-## Examples of Gao-Rexford Rules
+## Приклади правил Гао–Рексфорда
 
-The policy for selecting routes (customer best, provider worst), and the policy for announcing routes (only announce and participate in routes where one of my neighbors is a customer) will be used in our modified protocol to compute routes that respect each AS's policy. We haven't said how to compute routes yet, but given a route, we can check if it satisfies these two policies.
+Політика вибору маршрутів (найкраще — клієнт, найгірше — провайдер) і політика оголошення маршрутів (оголошувати маршрути й брати участь лише в тих, де один із моїх сусідів — клієнт) використовуватимуться в нашому зміненому протоколі для обчислення маршрутів, що поважають політику кожної AS. Ми ще не казали, як обчислювати маршрути, але маючи маршрут, ми можемо перевірити, чи задовольняє він ці дві політики.
 
 <img width="300px" src="/assets/routing/2-148-gaorexford9.png">
 
-In this example, suppose that a computer in D (a stub AS) wants to talk to a computer in E (another stub AS). D and E might want to exchange messages (remember, arrows represent customer/provider relationships, not direction of packets).
+У цьому прикладі припустімо, що комп'ютер у D (тупикова AS) хоче спілкуватися з комп'ютером в E (інша тупикова AS). D і E можуть захотіти обмінюватися повідомленнями (пам'ятайте, стрілки позначають відносини «клієнт–провайдер», а не напрямок пакетів).
 
-One possible path for the traffic is D, B, A, C, E (and reverse for messages from E to D).
+Один можливий шлях для трафіку — D, B, A, C, E (і у зворотному порядку для повідомлень від E до D).
 
-Who is paying whom in this path? Since traffic is being sent along the D-B link, the customer (D) must pay the provider (B). Similarly, E must pay C, and B and C must both pay A.
+Хто кому платить на цьому шляху? Оскільки трафік надсилається каналом D–B, клієнт (D) має платити провайдерові (B). Аналогічно E має платити C, а B і C обидві мають платити A.
 
-Will the transit ASes A, B, and C agree to announce and participate in this route? Let's check each of their neighbors.
+Чи погодяться транзитні AS A, B і C оголошувати цей маршрут і брати в ньому участь? Перевірмо сусідів кожної з них.
 
-A's neighbors along this path are both customers, so A is making money, and thinks this path is good.
+Обидва сусіди A на цьому шляху — клієнти, тож A заробляє гроші й вважає цей шлях добрим.
 
-B's neighbors are a customer (D) and a provider (A). B is making money from the customer (D), and thinks this path is good. (Remember, paths with one customer neighbor and one provider neighbor are good, even if the AS has net profit of 0, because they enable greater connectivity.)
+Сусіди B — клієнт (D) і провайдер (A). B заробляє гроші на клієнті (D) і вважає цей шлях добрим. (Пам'ятайте: шляхи з одним сусідом-клієнтом і одним сусідом-провайдером добрі, навіть якщо чистий прибуток AS дорівнює 0, бо вони забезпечують ширшу зв'язність.)
 
-Similarly, C has at least one customer neighbor (E), so it also thinks this route is good.
+Аналогічно C має щонайменше одного сусіда-клієнта (E), тож теж вважає цей маршрут добрим.
 
 <img width="600px" src="/assets/routing/2-149-gaorexford10.png">
 
-Instead of B and C both paying A, perhaps they choose to establish a peer relationship, which causes the AS graph to change:
+Замість того щоб B і C обидві платили A, вони, можливо, вирішать встановити пірингові відносини, що змінить граф AS:
 
 <img width="300px" src="/assets/routing/2-150-gaorexford11.png">
 
-Now, another possible path for the traffic is D, B, C, E. Now, D still needs to pay B, and E still has to pay C. However, B and C no longer need to pay A, and they don't pay each other (peering relationship).
+Тепер інший можливий шлях для трафіку — D, B, C, E. Тепер D і далі має платити B, а E і далі має платити C. Однак B і C більше не мусять платити A і не платять одна одній (пірингові відносини).
 
-Again, we can check if the transit ASes on this path, namely B and C, will agree to announce and participate in this route. B's neighbors are a customer (D) and a provider (C). B is making money from the customer (D), and thinks this path is good. Similarly, C has at least one customer neighbor (E), so C also thinks this path is good.
+Знову можна перевірити, чи погодяться транзитні AS на цьому шляху, а саме B і C, оголошувати цей маршрут і брати в ньому участь. Сусіди B — клієнт (D) і провайдер (C). B заробляє гроші на клієнті (D) і вважає цей шлях добрим. Аналогічно C має щонайменше одного сусіда-клієнта (E), тож C теж вважає цей шлях добрим.
 
 <img width="600px" src="/assets/routing/2-151-gaorexford12.png">
 
-We've just reasoned that there are two good paths that can be used to send messages from D to E. Now, B must decide to forward through either path B-A-C-E, or path B-C-E. Which path should B choose? According to our first principle, B prefers the most profitable path (not the shortest path). In B-A-C-E, the next hop is provider A (who we'd have to pay), and in B-C-E, the next hop is peer C (no payment needed). Therefore, B will select the path through C, giving final path D-B-C-E.
+Ми щойно з'ясували, що є два добрі шляхи, якими можна надсилати повідомлення від D до E. Тепер B має вирішити, пересилати шляхом B–A–C–E чи шляхом B–C–E. Який шлях має обрати B? Згідно з нашим першим принципом B віддає перевагу найприбутковішому шляху (а не найкоротшому). У B–A–C–E наступний перехід — провайдер A (якому довелося б платити), а в B–C–E наступний перехід — пір C (платити не треба). Тому B обере шлях через C, що дає остаточний шлях D–B–C–E.
 
-Note: It seems like B and C are saving money with the additional peering relationship, so why wouldn't every AS establish peer relationships to save money? In real life, establishing a link also requires installing physical infrastructure (e.g. laying cables underground), so there's a cost trade-off to establishing new relationships between ASes, in exchange for cheaper routes.
+Примітка: схоже, що B і C заощаджують гроші завдяки додатковим піринговим відносинам, тож чому б кожній AS не встановлювати пірингові відносини, щоб заощадити? У реальному житті встановлення каналу також потребує фізичної інфраструктури (наприклад, прокладання підземних кабелів), тож встановлення нових відносин між AS в обмін на дешевші маршрути — це компроміс із певною вартістю.
 
 
-## Routes are Valley-Free
+## Маршрути без долин
 
-More generally, paths in the AS graph are always **valley-free**.
+Загальніше, шляхи в графі AS завжди **без долин** (valley-free).
 
-Thinking in terms of the hierarchy structure, if a path includes a lateral hop via a peering link, the immediate next hop needs to go downhill to a customer. The next hop cannot be lateral again (both neighbors peers), and the next hop cannot be uphill to a provider (peer and provider neighbors).
+Мислячи в термінах ієрархічної структури: якщо шлях містить бічний перехід піринговим каналом, наступний перехід одразу має йти вниз до клієнта. Наступний перехід не може знову бути бічним (обидва сусіди — піри) і не може йти вгору до провайдера (сусіди — пір і провайдер).
 
-Thinking in terms of the hierarchy structure, if a path includes a downward hop from provider to customer, the immediate next hop must continue to go downhill to one of its customers. The next hop cannot be lateral again (neighbors are provider and peer), and the next hop cannot be uphill (neighbors are both providers).
+Мислячи в термінах ієрархічної структури: якщо шлях містить перехід униз від провайдера до клієнта, наступний перехід одразу має й далі йти вниз до одного з клієнтів. Наступний перехід не може бути бічним (сусіди — провайдер і пір) і не може йти вгору (обидва сусіди — провайдери).
 
-If a downhill link must be followed by another downhill link, then we can conclude that as soon as you have a downhill link in a path, all subsequent links must also be downhill. A valley is a path that goes downhill, and then turns around to start going uphill. Paths cannot contain valleys, because once you start going downhill, you must continue downhill all the way to the destination.
+Якщо за каналом униз мусить іти ще один канал униз, то можна зробити висновок, що щойно в шляху з'являється канал униз, усі подальші канали теж мають іти вниз. Долина — це шлях, що йде вниз, а потім розвертається й починає йти вгору. Шляхи не можуть містити долин, бо щойно ви почали спускатися, ви мусите спускатися аж до пункту призначення.
 
 <img width="900px" src="/assets/routing/2-152-singlepeak.png">
 
-In summary, here are the rules we've derived (though it's better to understand them in terms of respecting AS money preferences, instead of memorizing them):
+Підсумуємо правила, які ми вивели (хоча краще розуміти їх з погляду поваги до грошових уподобань AS, ніж завчати):
 
-- An uphill link can be followed by peering link, a downhill link, or another uphill link. (If the previous hop pays me money, I'm happy to forward the packet to anybody.)
-- A peering link can only be followed by a downhill link. (If the previous hop isn't paying me, I need the next hop to be a customer that pays me.)
-- A downhill link can only be followed by a downhill link. (If the previous hop is a provider I'm paying, I need the next hop to be a customer that pays me.)
-
-
-These rules mean that routes are always valley-free and single-peaked. A route can start 0 or more climbing uphill links. Eventually, it will reach a single peak, and traverse 0 or 1 peering links. Then, the route must start going downhill all the way to the destination (no more lateral or uphill moves).
-
-Paths cannot have valleys (going downhill and then turning to go back uphill). Also, paths cannot have lateral moves anywhere except the peak. As soon as you make a lateral move, you must turn around and go back down. You cannot continue traveling laterally or uphill.
+- За каналом угору може йти піринговий канал, канал униз або ще один канал угору. (Якщо попередній перехід платить мені гроші, я радо перешлю пакет будь-кому.)
+- За піринговим каналом може йти лише канал униз. (Якщо попередній перехід мені не платить, мені потрібно, щоб наступним переходом був клієнт, який мені платить.)
+- За каналом униз може йти лише канал униз. (Якщо попередній перехід — провайдер, якому я плачу, мені потрібно, щоб наступним переходом був клієнт, який мені платить.)
 
 
-## ASes Want Autonomy and Privacy
+Ці правила означають, що маршрути завжди без долин і з однією вершиною. Маршрут може починатися з 0 або більше каналів угору. Зрештою він досягне єдиної вершини й пройде 0 або 1 піринговий канал. Потім маршрут мусить почати спускатися аж до пункту призначення (більше жодних бічних переходів чи переходів угору).
 
-When designing a protocol for computing inter-domain routes, our protocol should respect the autonomy and privacy of each AS.
+Шляхи не можуть мати долин (спуск, а потім розворот і підйом). Крім того, шляхи не можуть мати бічних переходів ніде, окрім вершини. Щойно ви зробили бічний перехід, ви мусите розвернутися й піти вниз. Не можна продовжувати рух убік чи вгору.
 
-ASes want **autonomy**, the freedom to choose their own arbitrary policies, without coordinating with other ASes, or worrying about what policies the protocol allows. In practice, the policies usually follow the money-based principles we described, but the protocol shouldn't force the AS to follow any specific policy.
 
-ASes also want **privacy**. ASes don't want to have to explicitly tell others in the network about their preferences and policies. For example, an AS shouldn't need to explicitly tell everybody about whether its neighbors are peers, customers, or providers. This reflects real-world business strategies. As a company, you might not want to reveal information about your customers and providers to your rivals.
+## AS прагнуть автономії та приватності
 
-Note that our definition of privacy says that ASes shouldn't need to *explicitly* reveal their policies. In practice, ASes still need to coordinate with the rest of the network to agree on paths through the network, so some amount of information leakage is inevitable. Reverse-engineering techniques exist to trace the routes packets are taking through the network.
+Проєктуючи протокол для обчислення міждоменних маршрутів, ми маємо поважати автономію та приватність кожної AS.
 
-For example, it's unavoidable that others on the network can discover what route a packet is taking. However, our protocol shouldn't force an AS to tell the world "I liked this path more than this other path." We also shouldn't force an AS to disclose who their providers, peers, and customers are.
+AS прагнуть **автономії** (autonomy) — свободи обирати власні довільні політики, не координуючи дії з іншими AS і не переймаючись тим, які політики дозволяє протокол. На практиці політики зазвичай дотримуються описаних нами грошових принципів, але протокол не повинен змушувати AS дотримуватися якоїсь конкретної політики.
+
+AS також прагнуть **приватності** (privacy). AS не хочуть бути змушеними явно повідомляти іншим у мережі про свої вподобання й політики. Наприклад, AS не повинна мусити явно повідомляти всім, чи її сусіди — піри, клієнти чи провайдери. Це відображає реальні бізнес-стратегії. Як компанія, ви можете не хотіти розкривати конкурентам інформацію про своїх клієнтів і провайдерів.
+
+Зауважте, що наше визначення приватності каже, що AS не повинні мусити *явно* розкривати свої політики. На практиці AS однаково мають координувати дії з рештою мережі, щоб погодити шляхи через мережу, тож певний витік інформації неминучий. Існують методи зворотної розробки, що дають змогу відстежувати маршрути, якими пакети проходять мережею.
+
+Наприклад, неминуче, що інші в мережі можуть дізнатися, яким маршрутом іде пакет. Однак наш протокол не повинен змушувати AS повідомляти світові: «Цей шлях мені сподобався більше, ніж той». Ми також не повинні змушувати AS розкривати, хто їхні провайдери, піри та клієнти.
 

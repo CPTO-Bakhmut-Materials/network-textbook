@@ -1,87 +1,87 @@
 ---
-title: IP Multicast Challenges
-parent: Beyond Client-Server
+title: Проблеми багатоадресної розсилки IP
+parent: За межами клієнт-сервер
 nav_order: 5
 layout: page-with-toc
 ---
 
-# IP Multicast Challenges
+# Проблеми багатоадресної розсилки IP
 
-## Inter-Domain Routing
+## Міждоменна маршрутизація
 
-The protocols we've described so far (IGMP, DVMRP, CBT) can be used for intra-domain multicast routing. However, they cannot easily be extended to inter-domain multicast routing.
+Протоколи, які ми досі описали (IGMP, DVMRP, CBT), можна використовувати для внутрішньодоменної маршрутизації багатоадресної розсилки. Однак їх не можна легко поширити на міждоменну маршрутизацію багатоадресної розсилки.
 
-One major problem here is scalability. For example, if we used DVMRP at a global scale, then periodically, when the pruning state is deleted, packets will get flooded to the entire Internet, which isn't practical.
+Одна з головних проблем тут — масштабованість. Наприклад, якби ми використовували DVMRP у глобальному масштабі, то періодично, коли стан обрізання видаляється, пакети лавинно розсилалися б усьому Інтернету, що непрактично.
 
-Also, recall that inter-domain routing introduces the additional challenge of AS autonomy and privacy. For example, if we used CBT at a global scale, then the core router might be in a different network, and this requires you to trust somebody else to control the core router.
+Крім того, пригадайте, що міждоменна маршрутизація створює додатковий виклик — автономію й приватність AS. Наприклад, якби ми використовували CBT у глобальному масштабі, то маршрутизатор-ядро міг би бути в іншій мережі, і це вимагає довіряти комусь іншому контроль над маршрутизатором-ядром.
 
-Inter-domain multicast routing is a hard problem, and much work has been done to develop solutions. For example, the CBT core selection problem could be solved by having multiple cores (one per network) that communicate. However, in practice, there has been very little adoption of inter-domain multicast routing.
+Міждоменна маршрутизація багатоадресної розсилки — складна задача, і для розробки рішень виконано багато роботи. Наприклад, проблему вибору ядра CBT можна розв'язати, маючи кілька ядер (по одному на мережу), що спілкуються між собою. Однак на практиці міждоменну маршрутизацію багатоадресної розсилки впроваджено дуже мало.
 
 
-## Charging
+## Тарифікація
 
-The IP multicast service model is fundamentally at odds with the business model that modern ISPs use. For example, consider this AS graph, where AS A and AS B are peers:
+Модель обслуговування багатоадресної розсилки IP принципово суперечить бізнес-моделі, яку використовують сучасні провайдери. Наприклад, розгляньте цей граф AS, де AS A і AS B — піри:
 
 <img width="400px" src="/assets/beyond-client-server/7-048-multicast-charging-1.png">
 
-As peers, AS A and AS B should be able to exchange equivalent amounts of traffic, but multicast makes it difficult to define what counts as equivalent traffic. As an example, suppose AS A sends a multicast packet to AS B. It's possible that AS B has many children who are part of the group. This means that AS B received one packet, but had to send out many packets. AS B used much more bandwidth here than AS A did. Does AS A need to pay some extra to AS B because of this? (It's an open question, with no clear answer.)
+Як піри, AS A і AS B мають мати змогу обмінюватися рівноцінними обсягами трафіку, але багатоадресна розсилка ускладнює визначення того, що вважати рівноцінним трафіком. Як приклад, припустімо, AS A надсилає AS B пакет багатоадресної розсилки. Можливо, AS B має багато дітей, що входять до групи. Це означає, що AS B отримала один пакет, але мусила надіслати багато пакетів. AS B тут використала набагато більше пропускної здатності, ніж AS A. Чи має AS A через це доплатити AS B? (Це відкрите питання без чіткої відповіді.)
 
-As another example, consider this AS graph, where AS A is the provider and AS B is the customer:
+Як інший приклад, розгляньте цей граф AS, де AS A — провайдер, а AS B — клієнт:
 
 <img width="200px" src="/assets/beyond-client-server/7-049-multicast-charging-2.png">
 
-AS B is paying AS A for service. What if AS B sends a multicast packet, and AS A has to forward copies of that packet to many other destinations? Should AS A charge more for this packet compared to a unicast packet, and if so, how much more should AS A charge? (It's an open question, with no clear answer.)
+AS B платить AS A за обслуговування. Що, як AS B надсилає пакет багатоадресної розсилки, і AS A доводиться пересилати копії цього пакета багатьом іншим адресатам? Чи має AS A брати за цей пакет більше, ніж за одноадресний, і якщо так, то наскільки більше? (Це відкрите питання без чіткої відповіді.)
 
-Designing a business model is made more difficult by the fact that the IP multicast model does not explicitly keep track of group size. If you wanted to charge users based on the size of the destination group, there's no clear way to determine the size of any given destination group. Your forwarding tables tell you about your parent and your children on different delivery trees, but the tables do not tell you how many end hosts will be receiving this packet in total.
+Проєктування бізнес-моделі ускладнюється тим, що модель багатоадресної розсилки IP явно не відстежує розмір групи. Якби ви хотіли тарифікувати користувачів залежно від розміру групи-адресата, немає очевидного способу визначити розмір будь-якої конкретної групи-адресата. Ваші таблиці пересилання повідомляють про вашого батька й дітей у різних деревах доставки, але не кажуть, скільки кінцевих хостів загалом отримає цей пакет.
 
 
-## Congestion Control
+## Керування перевантаженням
 
-Consider a source sending a multicast packet down the delivery tree, to many recipients. The source needs to pick a good sending rate to avoid overloading the network. What rate should the source pick?
+Розгляньте джерело, що надсилає пакет багатоадресної розсилки вниз деревом доставки багатьом отримувачам. Джерело має обрати добру швидкість надсилання, щоб не перевантажити мережу. Яку швидкість має обрати джерело?
 
 <img width="800px" src="/assets/beyond-client-server/7-050-multicast-congestion.png">
 
-The traffic will travel along many different paths, and each path could have a different capacity. The source could send at 1 Mbps to avoid overloading any of the links, but this leave unused capacity along the other paths. On the other hand, the source could send at 100 Mbps to maximize performance, but this causes some links to be overloaded. There's no clear answer for what rate the source should pick.
+Трафік ітиме багатьма різними шляхами, і кожен шлях може мати різну пропускну здатність. Джерело може надсилати зі швидкістю 1 Мбіт/с, щоб не перевантажити жоден із каналів, але це залишає невикористану пропускну здатність на інших шляхах. З іншого боку, джерело може надсилати зі швидкістю 100 Мбіт/с, щоб максимізувати продуктивність, але це перевантажує деякі канали. Чіткої відповіді, яку швидкість має обрати джерело, немає.
 
-In practice, one possible solution is to define different groups depending on performance. For example, we could define four different multicast groups, where each group receives the same video feed, but with different video qualities. Then, any interested recipients can try joining different groups to see which one gives them the best performance.
-
-
-## Reliability
-
-Just like IP unicast, IP multicast is best-effort, which introduces some additional complexity. For example, you might send a packet, and it might reach some, but not all, group members.
-
-We could try to add acks to solve this, but this is also potentially problematic. If the group has millions of members, a single sender won't be able to process millions of acks for every packet.
-
-Another possible approach is to use negative acknowledgements (nacks), where a group member sends nothing if they receive a packet, and sends a nack if they don't receive a packet (e.g. their timer expires). Again, if the group has millions of members, a single sender could get overwhelmed.
-
-In the nack approach, it's also not clear how to recover from failure. If someone didn't receive the packet, do we multicast the packet to the entire group again? This wastes bandwidth because some group members already received the packet and will be receiving a duplicate copy.
-
-Another approach is to unicast the packet to just the group members who sent nacks. If many group members didn't receive the packet, this could be wasteful because we have to unicast many copies of the same packet. For example, consider the case where the very first link drops the packet, which means that none of the group members received the packet.
-
-Which retransmission approach is better? It's not immediately clear, and it can depend on how many group members received the packet.
-
-In practice, some modern IP multicast applications don't implement reliability at all. Or, they implement reliability by encoding some redundancy into the data stream (think: error-correcting codes) so that losses and corruptions can be corrected from the data itself, without the network's help.
-
-Encoding redundancy does mean you need more bits to encode the same data. For example, if you want to send 5 packets' worth of data, you might send 10 packets, and encode the bits in such a way that any 5 of the packets can be used to reconstruct the original data.
+На практиці одне можливе рішення — визначати різні групи залежно від продуктивності. Наприклад, ми можемо визначити чотири різні групи багатоадресної розсилки, кожна з яких отримує той самий відеопотік, але з різною якістю відео. Тоді будь-які зацікавлені отримувачі можуть пробувати приєднуватися до різних груп, щоб побачити, яка дає їм найкращу продуктивність.
 
 
-## Security
+## Надійність
 
-Another limitation of IP multicast is the lack of access control. Anybody can join a group, and anybody can send messages to any group. If you want to enforce access control (e.g. only paid users can watch the sports game), you have to build that functionality separately.
+Як і одноадресна передача IP, багатоадресна розсилка IP працює без гарантій, що створює певну додаткову складність. Наприклад, ви можете надіслати пакет, і він може дістатися деяких, але не всіх членів групи.
 
-The lack of access control leads to security vulnerabilities. A malicious sender could flood packets to a specific multicast group, causing all members of that group to be overwhelmed. Note that this is more effective than the unicast alternative, where the malicious sender would have to flood packets to every member separately.
+Можна спробувати додати підтвердження, щоб розв'язати це, але це теж потенційно проблематично. Якщо група має мільйони членів, один відправник не зможе обробляти мільйони підтверджень для кожного пакета.
 
-Additional security measures like encryption are also difficult to implement. Suppose you encrypt multicast messages by giving every group member a shared secret key. What if someone leaves the group? If you keep using the same key, that user still knows the secret key and can read your messages. One approach is to switch to using a new key, but now you need a way to securely distribute this new key to the remaining group members.
+Ще один можливий підхід — використовувати негативні підтвердження (nacks), коли член групи нічого не надсилає, якщо отримав пакет, і надсилає nack, якщо пакет не отримав (наприклад, сплив його таймер). Знову ж таки, якщо група має мільйони членів, один відправник може бути перевантажений.
+
+У підході з nack також незрозуміло, як відновлюватися після збою. Якщо хтось не отримав пакет, чи розсилаємо ми пакет усій групі знову? Це марнує пропускну здатність, бо деякі члени групи вже отримали пакет і отримають дублікат.
+
+Інший підхід — надіслати пакет одноадресно лише тим членам групи, які надіслали nack. Якщо пакет не отримало багато членів групи, це може бути марнотратно, бо нам доведеться одноадресно надіслати багато копій того самого пакета. Наприклад, розгляньте випадок, коли найперший канал відкидає пакет, тобто жоден член групи не отримав пакета.
+
+Який підхід до повторної передачі кращий? Це не одразу зрозуміло, і може залежати від того, скільки членів групи отримали пакет.
+
+На практиці деякі сучасні застосунки багатоадресної розсилки IP узагалі не реалізують надійності. Або вони реалізують надійність, кодуючи певну надлишковість у потоці даних (згадайте коди з виправленням помилок), щоб втрати й пошкодження можна було виправити з самих даних, без допомоги мережі.
+
+Кодування надлишковості таки означає, що для кодування тих самих даних вам потрібно більше бітів. Наприклад, якщо ви хочете надіслати дані обсягом 5 пакетів, ви можете надіслати 10 пакетів і закодувати біти так, щоб будь-які 5 пакетів можна було використати для відновлення початкових даних.
 
 
-## IP Multicast in Practice
+## Безпека
 
-Because of all these challenges, IP multicast is mostly used today within a single domain, and not across different domains.
+Ще одне обмеження багатоадресної розсилки IP — відсутність контролю доступу. Будь-хто може приєднатися до групи, і будь-хто може надсилати повідомлення будь-якій групі. Якщо ви хочете запровадити контроль доступу (наприклад, лише платні користувачі можуть дивитися спортивний матч), вам доведеться будувати цю функціональність окремо.
 
-Some applications might still want group communication across multiple networks (e.g. multi-player gaming, video-conferencing). Instead of relying on IP multicasting, which doesn't support inter-network communication, many applications have implemented their own custom solutions for group communication.
+Відсутність контролю доступу призводить до вразливостей безпеки. Зловмисний відправник може засипати пакетами конкретну групу багатоадресної розсилки, перевантаживши всіх членів цієї групи. Зауважте, що це ефективніше за одноадресну альтернативу, де зловмисному відправникові довелося б засипати пакетами кожного члена окремо.
 
-For example, if the group is small enough, the application could implement a central relay server. Group communications are unicast to the central relay server, which then unicasts the message to the other group members.
+Додаткові заходи безпеки, як-от шифрування, теж складно реалізувати. Припустімо, ви шифруєте повідомлення багатоадресної розсилки, давши кожному члену групи спільний секретний ключ. Що, як хтось покидає групу? Якщо ви й далі використовуватимете той самий ключ, цей користувач досі знає секретний ключ і може читати ваші повідомлення. Один підхід — перейти на новий ключ, але тепер вам потрібен спосіб безпечно розповсюдити цей новий ключ решті членів групи.
 
-Or, if the group is small enough, the naive unicast-based solution (send separate unicast packets to each group member) might work just fine.
 
-If IP multicasting doesn't work across domains, and custom solutions require extra work to implement and scale up, how do modern applications handle group communications? One solution is to use overlay multicast, which is an alternative to IP multicast that implements network functionality at Layer 7 instead of Layer 3. We'll look at overlay multicasts next.
+## Багатоадресна розсилка IP на практиці
+
+Через усі ці виклики багатоадресна розсилка IP сьогодні використовується здебільшого в межах одного домену, а не між різними доменами.
+
+Деяким застосункам однаково може знадобитися групове спілкування між кількома мережами (наприклад, багатокористувацькі ігри, відеоконференції). Замість покладатися на багатоадресну розсилку IP, яка не підтримує міжмережевого спілкування, багато застосунків реалізували власні рішення для групового спілкування.
+
+Наприклад, якщо група досить мала, застосунок може реалізувати центральний сервер-ретранслятор. Групові повідомлення одноадресно надсилаються центральному серверу-ретранслятору, який потім одноадресно надсилає повідомлення іншим членам групи.
+
+Або, якщо група досить мала, наївне рішення на основі одноадресної передачі (надсилати окремі одноадресні пакети кожному члену групи) може цілком добре спрацювати.
+
+Якщо багатоадресна розсилка IP не працює між доменами, а власні рішення потребують додаткової роботи для реалізації й масштабування, як сучасні застосунки організовують групове спілкування? Одне рішення — використовувати накладену багатоадресну розсилку, альтернативу багатоадресній розсилці IP, що реалізує мережеву функціональність на рівні 7, а не на рівні 3. Далі ми розглянемо накладену багатоадресну розсилку.

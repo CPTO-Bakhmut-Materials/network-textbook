@@ -1,52 +1,54 @@
 ---
-title: Home
+title: Головна
 nav_order: 0
 ---
 
-# Introduction to the Internet: Architecture and Protocols
+# Вступ до Інтернету: архітектура та протоколи
 
-_By [Peyrin Kao](https://peyrin.github.io), based on lectures by [Sylvia Ratnasamy](https://www2.eecs.berkeley.edu/Faculty/Homepages/ratnasamy.html), [Rob Shakir](https://rob.sh/), and others._
+_Автор — [Peyrin Kao](https://peyrin.github.io), на основі лекцій [Sylvia Ratnasamy](https://www2.eecs.berkeley.edu/Faculty/Homepages/ratnasamy.html), [Rob Shakir](https://rob.sh/) та інших._
 
-These are the course notes for [CS 168: Introduction to the Internet](https://cs168.io/) at [UC Berkeley](https://eecs.berkeley.edu/).
+Це конспект курсу [CS 168: Introduction to the Internet](https://cs168.io/) в [UC Berkeley](https://eecs.berkeley.edu/).
 
-Here is the official course description:
+Ось офіційний опис курсу:
 
 <p class="blue">
-	This course is an introduction to the Internet architecture. We will focus on the concepts and fundamental design principles that have contributed to the Internet's scalability and robustness and survey the various protocols and algorithms used within this architecture. Topics include layering, addressing, intradomain routing, interdomain routing, reliable delivery, congestion control, and the core protocols (e.g., TCP, UDP, IP, DNS, and HTTP) and network technologies (e.g., Ethernet, wireless).
+	Цей курс є вступом до архітектури Інтернету. Ми зосередимося на концепціях і фундаментальних принципах проєктування, які забезпечили масштабованість і надійність Інтернету, а також оглянемо різні протоколи та алгоритми, що використовуються в межах цієї архітектури. Теми охоплюють розбиття на рівні, адресацію, внутрішньодоменну маршрутизацію, міждоменну маршрутизацію, надійну доставку, керування перевантаженням, основні протоколи (наприклад, TCP, UDP, IP, DNS і HTTP) та мережеві технології (наприклад, Ethernet, бездротові мережі).
 </p>
 
 
-## Disclaimer: Beta
+## Застереження: бета-версія
 
-These notes have not been proofread. They likely contain errors.
+Ці матеріали не проходили вичитку. Імовірно, вони містять помилки.
 
-If you're a CS 168 student at Berkeley, in any case of dispute, the official course lectures are the correct source of truth.
-
-
-## Diagrams
-
-[Slideshow versions of these notes with diagrams are available here.](https://drive.google.com/drive/folders/13RnAGH1OrsOVvXdmQC73WkmoVD9r5lzd)
+Якщо ви студент CS 168 у Берклі, то в разі будь-яких розбіжностей правильним джерелом істини є офіційні лекції курсу.
 
 
-## PDF Version
+## Діаграми
 
-[These notes are available as a PDF here.](https://drive.google.com/file/d/1PPSkHOnFsOI9noWWMuJnaxmsOzM6RIKX/view?usp=sharing)
+У цьому українському перекладі текст на діаграмах залишено англійською мовою.
 
-The PDF version is not always up-to-date. It was last updated in November 2024.
-
-
-## Corrections
-
-As of the Fall 2024 semester, this textbook is still being actively maintained and updated.
-
-If you see any parts that needs to be corrected, please open a Github issue [here](https://github.com/berkeley-cs168/textbook/issues).
+[Версії цих матеріалів у вигляді слайдів із діаграмами доступні тут.](https://drive.google.com/drive/folders/13RnAGH1OrsOVvXdmQC73WkmoVD9r5lzd)
 
 
-## Source and Changelog
+## PDF-версія
 
-The source for the textbook and a log of all changes is [available on Github](https://github.com/berkeley-cs168/textbook).
+[Ці матеріали доступні у форматі PDF тут.](https://drive.google.com/file/d/1PPSkHOnFsOI9noWWMuJnaxmsOzM6RIKX/view?usp=sharing)
+
+PDF-версія не завжди актуальна. Востаннє її оновлювали в листопаді 2024 року.
 
 
-## License
+## Виправлення
 
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" rel="dct:type">work</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+Станом на осінній семестр 2024 року цей підручник активно підтримується та оновлюється.
+
+Якщо ви помітили частини, які потребують виправлення, будь ласка, створіть issue на GitHub [тут](https://github.com/berkeley-cs168/textbook/issues).
+
+
+## Вихідний код і журнал змін
+
+Вихідний код підручника та журнал усіх змін [доступні на GitHub](https://github.com/berkeley-cs168/textbook).
+
+
+## Ліцензія
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Ліцензія Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />Цей <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" rel="dct:type">твір</span> ліцензовано за ліцензією <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.

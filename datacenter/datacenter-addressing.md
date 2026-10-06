@@ -1,33 +1,33 @@
 ---
-title: Addressing
-parent: Datacenters
+title: Адресація
+parent: Дата-центри
 nav_order: 4
 layout: page-with-toc
 ---
 
-# Datacenter Addressing
+# Адресація в дата-центрах
 
-## Why are Datacenters Different?
+## Чим відрізняються дата-центри?
 
-In the previous section, we saw that we can modify distance-vector and link-state routing protocols to compute all paths through the datacenter network.
+У попередньому розділі ми побачили, що дистанційно-векторні протоколи й протоколи стану каналів можна змінити так, щоб обчислювати всі шляхи через мережу дата-центру.
 
-However, these protocols might scale poorly in datacenters. In distance-vector protocols, we have to make an announcement for every destination, which means that 100,000+ destinations have to be advertised. In link-state protocols, we have to flood advertisements along every link, which scales poorly in Clos networks with a huge number of links. Also, recall that datacenter topologies often use cheap commodity switches, which have limited memory and CPU resources (e.g. the forwarding table can't be too large).
+Однак ці протоколи можуть погано масштабуватися в дата-центрах. У дистанційно-векторних протоколах треба робити оголошення для кожного пункту призначення, тобто треба оголосити понад 100 000 пунктів призначення. У протоколах стану каналів треба лавинно розсилати оголошення кожним каналом, що погано масштабується в мережах Клоза з величезною кількістю каналів. Крім того, пригадайте, що топології дата-центрів часто використовують дешеві серійні комутатори, які мають обмежені ресурси пам'яті й процесора (наприклад, таблиця пересилання не може бути надто великою).
 
-In general-purpose networks, we solved these scaling problems by introducing hierarchical IP addressing. Higher-level organizations (e.g. country-level) could allocate ranges of addresses to smaller organizations (e.g. universities). Datacenters don't have geographic and organizational hierarchies that we can use to organize addresses.
+У мережах загального призначення ми розв'язували ці проблеми масштабування, запроваджуючи ієрархічну IP-адресацію. Організації вищого рівня (наприклад, на рівні країни) могли виділяти діапазони адрес меншим організаціям (наприклад, університетам). Дата-центри не мають географічних і організаційних ієрархій, які можна було б використати для впорядкування адрес.
 
-However, in datacenters, we can exploit the fact that the operator controls the physical topology of the network, and assign addresses to servers based on where they're located in the building. We can also exploit the fact that the topology has some regular structure (e.g. we're probably organizing servers in rows, instead of randomly stuffing them in the building).
+Однак у дата-центрах можна скористатися тим, що оператор контролює фізичну топологію мережі, і призначати серверам адреси залежно від того, де в будівлі вони розташовані. Можна також скористатися тим, що топологія має певну регулярну структуру (наприклад, ми, найімовірніше, впорядковуємо сервери в ряди, а не розпихаємо їх по будівлі випадково).
 
 
-## Topology-Aware Addressing
+## Адресація з урахуванням топології
 
 <img width="900px" src="/assets/datacenter/6-042-dc-addressing.png">
 
-In this particular topology, the racks are physically organized into separate pods in the building. One natural approach would be to allocate a range of addresses to each pod. Then, each pod can allocate sub-ranges to each rack in the pod. Finally, each rack can allocate an individual IP address to each server.
+У цій конкретній топології стійки фізично впорядковано в будівлі в окремі поди. Один природний підхід — виділити діапазон адрес кожному поду. Потім кожен под може виділити піддіапазони кожній стійці в поді. Нарешті, кожна стійка може виділити окрему IP-адресу кожному серверу.
 
-The operator knows how many servers are in each rack, and how many racks are in each pod, so we can use that information to allocate ranges of the appropriate size. For example, a rack could receive a /24 range, which gives that rack 256 addresses for its servers.
+Оператор знає, скільки серверів у кожній стійці і скільки стійок у кожному поді, тож цю інформацію можна використати, щоб виділяти діапазони відповідного розміру. Наприклад, стійка може отримати діапазон /24, що дає цій стійці 256 адрес для її серверів.
 
-This allocation approach lets aggregate routes and store fewer entries in our forwarding table. For example, consider one of the spine routers at the top of the diagram. This router doesn't need to remember a path for every single server. Instead, the forwarding table only needs four entries, one for each pod. When a packet arrives, the router checks the first 16 bits to forward the packet to the appropriate pod.
+Такий підхід до виділення дає змогу агрегувати маршрути й зберігати менше записів у таблиці пересилання. Наприклад, розгляньте один зі хребтових (spine) маршрутизаторів угорі діаграми. Цьому маршрутизатору не треба пам'ятати шлях до кожного окремого сервера. Натомість таблиця пересилання потребує лише чотирьох записів, по одному для кожного пода. Коли надходить пакет, маршрутизатор перевіряє перші 16 бітів, щоб переслати пакет до відповідного пода.
 
-Route aggregation also results in more stability. If a host is added or removed inside a specific rack, the spine router doesn't need to know. As long as we maintain the same addressing scheme, the existing forwarding table is still correct without any changes. As a result, routing updates usually occur when links and switches fail, but not when hosts fail.
+Агрегація маршрутів також дає більшу стабільність. Якщо хост додається чи видаляється в конкретній стійці, хребтовому маршрутизатору не потрібно про це знати. Доки ми зберігаємо ту саму схему адресації, наявна таблиця пересилання залишається правильною без жодних змін. Як наслідок, оновлення маршрутизації зазвичай відбуваються, коли відмовляють канали й комутатори, але не коли відмовляють хости.
 
-Assigning addresses based on datacenter topology is good for scaling, but there are some limitations. In particular, if we move a server to a different location, we'd have to change its address.
+Призначення адрес на основі топології дата-центру добре для масштабування, але має певні обмеження. Зокрема, якщо ми переміщуємо сервер в інше місце, нам доведеться змінити його адресу.

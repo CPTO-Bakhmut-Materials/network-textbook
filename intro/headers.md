@@ -1,173 +1,173 @@
 ---
-title: Headers
-parent: Introduction
+title: Заголовки
+parent: Вступ
 nav_order: 3
 layout: page-with-toc
 ---
 
-# Headers
+# Заголовки
 
-## Why Do We Need Headers?
+## Навіщо потрібні заголовки?
 
-In the previous section, we saw that at Layer 3, data travels across the Internet in packets. Suppose an application wants to send a file over the Internet. We can take some bits of the image, put them in a packet, and send them over the Internet. When a switch receives this sequence of 1s and 0s, it has no idea what to do with these bits.
+У попередньому розділі ми побачили, що на рівні 3 дані мандрують Інтернетом у пакетах. Припустімо, застосунок хоче надіслати файл через Інтернет. Ми можемо взяти кілька бітів зображення, покласти їх у пакет і надіслати через Інтернет. Коли комутатор отримує цю послідовність одиниць і нулів, він гадки не має, що робити з цими бітами.
 
 <img width="700px" src="/assets/intro/1-08-no-headers.png">
 
-In the analogy, if I write a letter to my friend, and hand it to the post office, the post office has no idea what to do with it. Instead, we should put the letter inside an envelope, and write some information on the envelope (e.g. my friend's address) that tells the post office what to do with the letter.
+В аналогії: якщо я напишу листа своєму другові й віддам його на пошту, пошта не знатиме, що з ним робити. Натомість нам слід покласти лист у конверт і написати на конверті певну інформацію (наприклад, адресу друга), яка підкаже пошті, що робити з листом.
 
-Just like the envelope, when we send a packet, we need to attach additional metadata that tells the network infrastructure what to do with that packet. This additional metadata is called a **header**. The rest of the bits (e.g. the file being sent, the letter inside the envelope) is called the **payload**.
+Так само як із конвертом, надсилаючи пакет, ми маємо додати до нього додаткові метадані, які підкажуть мережевій інфраструктурі, що робити з цим пакетом. Ці додаткові метадані називаються **заголовком** (header). Решта бітів (наприклад, файл, що надсилається, чи лист у конверті) називається **корисним навантаженням** (payload).
 
 <img width="700px" src="/assets/intro/1-09-header.png">
 
-In the analogy, the post office shouldn't be reading the contents of my letter. It should only read what's on the envelope to decide how to send my letter. Similarly, the network infrastructure should only read the header to decide how to deliver the data.
+В аналогії пошта не повинна читати вміст мого листа. Вона має читати лише те, що написано на конверті, щоб вирішити, як надіслати мій лист. Аналогічно мережева інфраструктура має читати лише заголовок, щоб вирішити, як доставити дані.
 
-The recipient cares about the inside of the letter, not the envelope. Similarly, the application at the end host cares about the payload, not the header. That said, the end hosts still need to know about headers, in order to add headers to packets before sending them.
-
-
-## Headers are Standardized
-
-You can also think of headers as the API between the end hosts sending/receiving data, and the network infrastructure carrying the data. When we write software, we need to decide on the interface that users will use to interact with our code (e.g. what functions users can call, the parameters to those functions). Similarly, the information in the header is how users access functions and pass parameters to the network.
-
-Everybody on the Internet (every end host, every switch) needs to agree on the format of a header. If Microsoft Windows changes the code in its operating system to send packets with a different header structure, nobody else will understand the packets being sent.
-
-This also means we need to be careful about designing headers. Once we design a header and deploy it on the Internet, it's very hard to change the design (we'd have to get everybody to agree to change it). This is why standards bodies can spend years designing and standardizing headers.
+Отримувача цікавить вміст листа, а не конверт. Аналогічно застосунок на кінцевому хості цікавить корисне навантаження, а не заголовок. Утім, кінцеві хости все одно мають знати про заголовки, щоб додавати їх до пакетів перед надсиланням.
 
 
-## What Should a Header Contain?
+## Заголовки стандартизовані
 
-What information should we put in the header?
+Заголовки також можна уявляти як API між кінцевими хостами, які надсилають/отримують дані, і мережевою інфраструктурою, яка ці дані переносить. Коли ми пишемо програмне забезпечення, нам потрібно визначитися з інтерфейсом, через який користувачі взаємодіятимуть з нашим кодом (наприклад, які функції користувачі можуть викликати, які параметри цих функцій). Аналогічно інформація в заголовку — це те, як користувачі звертаються до функцій мережі та передають їй параметри.
 
-The header should definitely contain the destination address, which tells us where to send the packet.
+Усі в Інтернеті (кожен кінцевий хост, кожен комутатор) мають дійти згоди щодо формату заголовка. Якщо Microsoft Windows змінить код своєї операційної системи, щоб надсилати пакети з іншою структурою заголовка, ніхто інший не зрозуміє надісланих пакетів.
 
-Headers could also contain other information that's not required, but is useful to have. Technically, the source address is not required to deliver the packet, but in practice, we almost always include the source address in the header. This allows the recipient to send replies back to the sender.
-
-The header could also include a checksum, to ensure that packet is not corrupted while in transit.
-
-The header could also contain other metadata like the length of the packet. Note that packets can vary in size (e.g. the user might only need to send a few bytes).
+Це також означає, що проєктувати заголовки треба обережно. Щойно ми спроєктуємо заголовок і розгорнемо його в Інтернеті, змінити його дизайн буде дуже важко (довелося б переконати всіх погодитися на зміну). Саме тому органи стандартизації можуть роками проєктувати та стандартизувати заголовки.
 
 
-## Multiple Headers
+## Що має містити заголовок?
 
-Let's go back to the postal analogy briefly. Suppose the boss of Company A wants to write a letter to the boss of Company B. How does the message get sent?
+Яку інформацію слід розмістити в заголовку?
+
+Заголовок обов'язково має містити адресу призначення, яка вказує, куди надіслати пакет.
+
+Заголовки також можуть містити іншу інформацію, яка не є обов'язковою, але корисна. Технічно адреса джерела не потрібна для доставки пакета, але на практиці ми майже завжди включаємо адресу джерела в заголовок. Це дає отримувачеві змогу надсилати відповіді назад відправникові.
+
+Заголовок також може містити контрольну суму (checksum), щоб переконатися, що пакет не пошкоджено під час передавання.
+
+Заголовок також може містити інші метадані, як-от довжину пакета. Зверніть увагу, що пакети можуть мати різний розмір (наприклад, користувачеві може знадобитися надіслати лише кілька байтів).
+
+
+## Кілька заголовків
+
+Ненадовго повернімося до поштової аналогії. Припустімо, керівник компанії A хоче написати листа керівникові компанії B. Як надсилається повідомлення?
 
 <img width="700px" src="/assets/intro/1-10-multiheader1.png">
 
-Company A's boss folds the letter and hands it to their secretary. Then, the secretary puts the letter in an envelope with Company B's boss's full name.
+Керівник компанії A складає листа й передає його своєму секретареві. Потім секретар кладе лист у конверт із повним ім'ям керівника компанії B.
 
 <img width="700px" src="/assets/intro/1-11-multiheader2.png">
 
-The secretary passes this letter to the mailroom. The postal worker puts the letter in a box with Company B's street address on it, and puts the package in a delivery truck.
+Секретар передає цей лист до поштової кімнати. Поштовий працівник кладе лист у коробку з вуличною адресою компанії B і завантажує посилку у вантажівку доставки.
 
 <img width="700px" src="/assets/intro/1-12-multiheader3.png">
 
-At this point, the letter itself is wrapped in multiple layers of identifying information (envelope, box). The delivery company sends the letter to Company B (possibly across several trucks, planes, mailmen, etc.).
+На цьому етапі сам лист загорнуто в кілька шарів ідентифікаційної інформації (конверт, коробка). Служба доставки надсилає лист до компанії B (можливо, кількома вантажівками, літаками, листоношами тощо).
 
 <img width="700px" src="/assets/intro/1-13-multiheader4.png">
 
-When the letter reaches Company B, the mailroom removes the box and passes the envelope to the secretary.
+Коли лист доходить до компанії B, поштова кімната виймає його з коробки й передає конверт секретареві.
 
 <img width="700px" src="/assets/intro/1-14-multiheader5.png">
 
-Then, the secretary sees the boss's name on the envelope, removes the envelope, and passes the letter up to the Company B boss.
+Потім секретар бачить на конверті ім'я керівника, знімає конверт і передає лист керівникові компанії B.
 
 <img width="700px" src="/assets/intro/1-15-multiheader6.png">
 
-Notice that as we moved to lower abstraction layers, we wrapped more headers around the data. Then, as we moved to higher abstraction layers, we peeled layers off the data.
+Зверніть увагу: що нижче ми спускалися рівнями абстракції, то більше заголовків загортали навколо даних. А піднімаючись вищими рівнями абстракції, ми знімали з даних шар за шаром.
 
 <img width="900px" src="/assets/intro/1-16-wrapping-unwrapping.png">
 
-Each layer only has to understand its own header, and is "communicating" (in some sense) with its peers at the same layer. When Secretary A writes the name on the envelope, that's meant for Secretary B to read (not the mailmen, or the boss).
+Кожен рівень має розуміти лише власний заголовок і (у певному сенсі) «спілкується» зі своїми однорангами (peers) на тому самому рівні. Коли секретар A пише ім'я на конверті, це призначено для того, щоб прочитав секретар B (а не листоноші чи керівник).
 
-More formally, on the Internet, peers at the same layer communicate by establishing a protocol at that layer. The protocol only makes sense to entities at that specific layer.
+Формальніше: в Інтернеті одноранги на тому самому рівні спілкуються, встановлюючи протокол на цьому рівні. Протокол має сенс лише для сутностей на цьому конкретному рівні.
 
 <img width="900px" src="/assets/intro/1-17-layer-peers.png">
 
-Note that some layers offer multiple choices of protocol (e.g. wireless or wired protocols at Layer 2). In these cases, the two people communicating need to use the same choice of protocol. A wired sender can't talk to a wireless recipient.
+Зауважте, що деякі рівні пропонують кілька варіантів протоколу (наприклад, бездротові або дротові протоколи на рівні 2). У таких випадках двоє учасників спілкування мають обрати той самий протокол. Відправник у дротовій мережі не може спілкуватися з отримувачем у бездротовій.
 
 
-## Addressing and Naming
+## Адресація та іменування
 
-Earlier, we said that our headers need to contain the address of the recipient. What actually is that address? Formally, a network address is some value that tells us where a host is located in the network.
+Раніше ми казали, що наші заголовки мають містити адресу отримувача. Що ж таке ця адреса? Формально мережева адреса — це певне значення, яке вказує, де в мережі розташований хост.
 
-As we look at the different layers in more detail, we'll see that different layers have different addressing schemes. If you want to send a letter inside Soda Hall, you could write the destination address as 413 Soda Hall, and the people in the building know where to deliver the letter. By contrast, if you want to send a letter to New York, you'd have to write a full street address like 123 Main Street, New York, NY.
+Детальніше розглядаючи різні рівні, ми побачимо, що різні рівні мають різні схеми адресації. Якщо ви хочете надіслати лист у межах Soda Hall, можна записати адресу призначення як 413 Soda Hall, і люди в будівлі знатимуть, куди доставити лист. Натомість якщо ви хочете надіслати лист до Нью-Йорка, вам доведеться написати повну вуличну адресу, наприклад 123 Main Street, New York, NY.
 
-Similarly, different layers in the Internet have different addressing schemes that work best for that particular layer. For example, sometimes a host is referred to by its human-readable name (e.g. www.google.com). Other times, that same host is referred to by a machine-readable IP address (e.g. 74.124.56.2), where this number somehow encodes something about the server's location (and could change if the server moves). Other times, that same host could be referred to by its hardware MAC address, which never changes.
+Аналогічно різні рівні Інтернету мають різні схеми адресації, які найкраще підходять саме для цього рівня. Наприклад, іноді до хоста звертаються за його зрозумілим людині іменем (наприклад, www.google.com). Іншим разом до того самого хоста звертаються за машиночитною IP-адресою (наприклад, 74.124.56.2), де це число певним чином кодує щось про розташування сервера (і може змінитися, якщо сервер переміститься). А ще іноді до того самого хоста можуть звертатися за його апаратною MAC-адресою, яка ніколи не змінюється.
 
 <img width="700px" src="/assets/intro/1-18-naming.png">
 
 
-## Layers at Hosts and Routers
+## Рівні на хостах і маршрутизаторах
 
-The Internet is more than just a sender and a recipient. In addition to the two end hosts, there are routers forwarding the packet across multiple hops toward the destination. How do our ideas of layering and headers interact across all these machines?
+Інтернет — це щось більше, ніж просто відправник і отримувач. Окрім двох кінцевих хостів, є маршрутизатори, які пересилають пакет через кілька переходів до пункту призначення. Як наші ідеї рівнів і заголовків працюють на всіх цих машинах?
 
-The end hosts need to implement all the layers. Your computer needs to know about Layer 7 to run a web browser. Your computer also needs to know about Layer 1 to send the bits out along the wire. You'll also need all the layers in between in order for application-level data (the boss's letter) to be passed all the way down to the physical layer.
+Кінцеві хости мають реалізовувати всі рівні. Ваш комп'ютер має знати про рівень 7, щоб запускати веббраузер. Ваш комп'ютер також має знати про рівень 1, щоб надсилати біти по дроту. Вам також знадобляться всі проміжні рівні, щоб дані рівня застосунку (лист керівника) могли пройти весь шлях донизу до фізичного рівня.
 
-What about routers? The router does need Layer 1 for receiving bits on a wire, Layer 2 for sending packets along the wire, and Layer 3 for forwarding packets in the global network. However, the routers don't really need to think about Layer 4 and Layer 7. The router isn't running a web browser to display webpages, and the router doesn't need to think about reliability (recall, best-effort service model).
+А що з маршрутизаторами? Маршрутизаторові справді потрібен рівень 1, щоб отримувати біти з дроту, рівень 2, щоб надсилати пакети дротом, і рівень 3, щоб пересилати пакети в глобальній мережі. Однак маршрутизаторам насправді не потрібно перейматися рівнями 4 і 7. Маршрутизатор не запускає веббраузер для відображення вебсторінок, і йому не треба думати про надійність (пригадайте модель обслуговування без гарантій).
 
 <img width="900px" src="/assets/intro/1-19-layers-host-routers.png">
 
-In summary: The lower 3 layers are implemented everywhere, but the top 2 layers are only implemented at the end hosts.
+Підсумуємо: нижні 3 рівні реалізовано всюди, а верхні 2 рівні — лише на кінцевих хостах.
 
 
-## Multiple Headers at Hosts and Routers: Analogy
+## Кілька заголовків на хостах і маршрутизаторах: аналогія
 
-Let's think about sending mail again. Company A wrapped the letter in an envelope, which was then put in a box. The box doesn't magically travel to Company B. In fact, it might travel through several post offices.
+Знову подумаймо про надсилання пошти. Компанія A загорнула лист у конверт, який потім поклали в коробку. Коробка не переноситься чарівним чином до компанії B. Насправді вона може пройти через кілька поштових відділень.
 
 <img width="900px" src="/assets/intro/1-20-layer2-forwarding1.png">
 
-At each post office, the mailman opens the box and sorts through the mail. The mailman looks at the envelope (the next header revealed after opening the box), and sees that the envelope is meant for Company B.
+У кожному поштовому відділенні листоноша відкриває коробку й сортує пошту. Листоноша дивиться на конверт (наступний заголовок, що відкривається після відкриття коробки) і бачить, що конверт призначено для компанії B.
 
 <img width="900px" src="/assets/intro/1-21-layer2-forwarding2.png">
 
-The mailman then puts the envelope in another box, possibly different, so that the letter can reach the next post office on the way to Company B.
+Потім листоноша кладе конверт в іншу коробку (можливо, іншого типу), щоб лист міг дістатися наступного поштового відділення на шляху до компанії B.
 
 <img width="900px" src="/assets/intro/1-22-layer2-forwarding3.png">
 
-This process repeats at every post office. The box is opened, revealing the envelope inside. Then, the envelope goes in a new box, destined for the next post office. Notice that none of the post offices open the envelope to reveal the letter inside, because they don't need to read it.
+Цей процес повторюється в кожному поштовому відділенні. Коробку відкривають, і всередині виявляється конверт. Потім конверт кладуть у нову коробку, адресовану наступному поштовому відділенню. Зверніть увагу, що жодне з поштових відділень не відкриває конверт, щоб дістати лист, адже їм не потрібно його читати.
 
 <img width="900px" src="/assets/intro/1-23-layer2-forwarding4.png">
 
-Eventually, the letter reaches Company B in a box, and this time, Company B opens the box, and the envelope, to reveal the letter inside.
+Зрештою лист дістається компанії B у коробці, і цього разу компанія B відкриває і коробку, і конверт, щоб дістати лист.
 
 
-## Multiple Headers at Hosts and Routers
+## Кілька заголовків на хостах і маршрутизаторах
 
-Now that we have the full picture with hosts and routers, let's revisit the demo of wrapping and unwrapping headers, as the packet takes multiple hops across the network.
+Тепер, коли в нас є повна картина з хостами та маршрутизаторами, повернімося до демонстрації загортання й розгортання заголовків, коли пакет проходить мережею через кілька переходів.
 
-First, Host A takes the message and works its way down the stack, adding headers for Layer 7, 4, 3, 2, and 1. We now have a packet wrapped with headers for every layer.
+Спершу хост A бере повідомлення й проходить стеком донизу, додаючи заголовки для рівнів 7, 4, 3, 2 і 1. Тепер у нас є пакет, загорнутий у заголовки всіх рівнів.
 
-The Layer 1 protocol sends the bits of this packet along the wire, to the first router on the way to the destination.
+Протокол рівня 1 надсилає біти цього пакета дротом до першого маршрутизатора на шляху до пункту призначення.
 
 <img width="900px" src="/assets/intro/1-24-multiheader1.png">
 
-This router must forward the packet to the next hop, so that the packet eventually reaches Host B. We know that forwarding packets in the global network is a Layer 3 job. Therefore, the router must parse this packet up to Layer 3.
+Цей маршрутизатор має переслати пакет на наступний перехід, щоб пакет зрештою дістався хоста B. Ми знаємо, що пересилання пакетів у глобальній мережі — це завдання рівня 3. Отже, маршрутизатор має розібрати цей пакет до рівня 3.
 
-The router reads and unwraps the Layer 1 and Layer 2 headers, revealing the Layer 3 header underneath. The router reads this header to decide where to forward the packet next.
+Маршрутизатор читає й знімає заголовки рівнів 1 і 2, відкриваючи заголовок рівня 3 під ними. Маршрутизатор читає цей заголовок, щоб вирішити, куди переслати пакет далі.
 
 <img width="900px" src="/assets/intro/1-25-multiheader2.png">
 
-Now, to pass the packet along to the next hop, the router must go down the stack again, wrapping new Layer 2 and Layer 1 headers, and then sending the bits along the wire to the next hop.
+Тепер, щоб передати пакет на наступний перехід, маршрутизатор має знову пройти стеком донизу, загорнувши пакет у нові заголовки рівнів 2 і 1, а потім надіслати біти дротом на наступний перехід.
 
 <img width="900px" src="/assets/intro/1-26-multiheader3.png">
 
-This pattern repeats at every router: Layers 1 and 2 are unwrapped to reveal the Layer 3 header, and then new Layer 2 and Layer 1 headers are wrapped before sending the packet to the next hop. Notice that none of the routers look beyond the Layer 3 protocol, because the upper layers are only parsed by the end hosts.
+Цей шаблон повторюється на кожному маршрутизаторі: рівні 1 і 2 знімаються, щоб відкрити заголовок рівня 3, а потім додаються нові заголовки рівнів 2 і 1 перед надсиланням пакета на наступний перехід. Зверніть увагу, що жоден із маршрутизаторів не зазирає далі протоколу рівня 3, адже верхні рівні розбирають лише кінцеві хости.
 
 <img width="900px" src="/assets/intro/1-27-multiheader4.png">
 
-Eventually, the packet reaches Host B, who unwraps every layer, one by one: Layer 1, 2, 3, 4, 7. Host B has successfully received the message!
+Зрештою пакет дістається хоста B, який знімає всі рівні один за одним: 1, 2, 3, 4, 7. Хост B успішно отримав повідомлення!
 
 <img width="900px" src="/assets/intro/1-28-multiheader5.png">
 
-One consequence of this layering scheme is that each hop can use different protocols at Layer 2 and 1. For example, the first hop could get sent along a wire, and the initial Layer 2 and 1 headers used by Host A and the first router can be for a wired protocol. By contrast, a later hop could get sent along a wireless link, and the Layer 2 and 1 headers used by the routers on either end of that hop can be for a wireless protocol.
+Один із наслідків такої схеми рівнів полягає в тому, що на кожному переході можуть використовуватися різні протоколи рівнів 2 і 1. Наприклад, перший перехід може пролягати дротом, і початкові заголовки рівнів 2 і 1, які використовують хост A і перший маршрутизатор, можуть належати дротовому протоколу. Натомість пізніший перехід може пролягати бездротовим каналом, і заголовки рівнів 2 і 1, які використовують маршрутизатори на обох кінцях цього переходу, можуть належати бездротовому протоколу.
 
 <img width="900px" src="/assets/intro/1-29-layer2-peers.png">
 
-More generally, we said that each layer only needs to communicate with its peers at the same layer. We can now see this at play across all the layers. At Layers 4 and 7, the two hosts must speak the same protocols to send and receive packets. The host's peer is the other host.
+Загальніше, ми казали, що кожен рівень має спілкуватися лише зі своїми однорангами на тому самому рівні. Тепер ми бачимо, як це працює на всіх рівнях. На рівнях 4 і 7 два хости мають говорити тими самими протоколами, щоб надсилати й отримувати пакети. Одноранг хоста — інший хост.
 
-By contrast, at Layers 1 and 2, the router must speak the same protocol as the previous-hop and the next-hop router, so that the router can receive packets from the previous hop and send packets to the next hop. The router's peers are its neighboring routers along the path.
+Натомість на рівнях 1 і 2 маршрутизатор має говорити тим самим протоколом, що й маршрутизатори попереднього та наступного переходів, щоб отримувати пакети з попереднього переходу й надсилати пакети на наступний. Одноранги маршрутизатора — сусідні маршрутизатори вздовж шляху.
 
 <img width="900px" src="/assets/intro/1-19-layers-host-routers.png">
 
-In summary: Each router parses Layers 1 through 3, while the end hosts parse Layers 1 through 7.
+Підсумуємо: кожен маршрутизатор розбирає рівні з 1 по 3, а кінцеві хости — рівні з 1 по 7.
 
 <img width="900px" src="/assets/intro/1-30-packet-path.png">

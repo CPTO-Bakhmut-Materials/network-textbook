@@ -1,9 +1,9 @@
 ---
-title: Cellular
+title: Стільникові мережі
 nav_exclude: true
 layout: page
 ---
 
-# Cellular
+# Стільникові мережі
 
-[This page has been moved.](/wireless/cellular)
+[Цю сторінку переміщено.](/wireless/cellular)

@@ -1,5 +1,5 @@
-# Introduction to the Internet: Architecture and Protocols (CS 168 Course Notes)
+# Вступ до Інтернету: архітектура та протоколи (конспект курсу CS 168)
 
-This is the source for the [CS 168 course notes](https://textbook.cs168.io) at UC Berkeley. It is built through Github Pages.
+Це вихідний код [конспекту курсу CS 168](https://textbook.cs168.io) в UC Berkeley. Сайт збирається за допомогою GitHub Pages.
 
-Updates to the textbook are recorded in the commit history of this repository.
+Зміни в підручнику фіксуються в історії комітів цього репозиторію.

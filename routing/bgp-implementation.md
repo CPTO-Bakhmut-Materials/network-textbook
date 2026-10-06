@@ -1,236 +1,236 @@
 ---
-title: BGP Implementation and Issues
-parent: Routing
+title: Реалізація BGP та проблеми
+parent: Маршрутизація
 nav_order: 10
 layout: page-with-toc
 ---
 
-# BGP Implementation and Issues
+# Реалізація BGP та проблеми
 
-## Border and Interior Routers
+## Прикордонні та внутрішні маршрутизатори
 
-At this point, we have an intuitive picture of how BGP works between ASes. In this section, we'll show how BGP is actually implemented at the router level. In doing so, we will also show how BGP interacts with the intra-domain routing protocols from earlier.
+На цьому етапі ми маємо інтуїтивне уявлення про те, як BGP працює між AS. У цьому розділі ми покажемо, як BGP насправді реалізовано на рівні маршрутизаторів. Водночас ми покажемо, як BGP взаємодіє з протоколами внутрішньодоменної маршрутизації, які ми розглядали раніше.
 
-So far, our model of inter-domain routing has treated an entire AS as a single entity, importing and exporting paths.
+Досі наша модель міждоменної маршрутизації розглядала всю AS як єдину сутність, що імпортує й експортує шляхи.
 
 <img width="900px" src="/assets/routing/2-165-combining1.png">
 
-However, in reality, the AS contains many routers (and hosts) connected by links.
+Однак насправді AS містить багато маршрутизаторів (і хостів), з'єднаних каналами.
 
 <img width="900px" src="/assets/routing/2-166-combining2.png">
 
-In order to actually implement BGP, we need all the routers inside the AS to work cooperatively to act as a single node.
+Щоб справді реалізувати BGP, нам потрібно, щоб усі маршрутизатори всередині AS спільно діяли як одна вершина.
 
-Within an AS, we will classify all routers into two types. **Border routers** have at least one link to a router in a different AS. **Interior routers** only have links to other routers within the same AS.
+У межах AS ми поділятимемо всі маршрутизатори на два типи. **Прикордонні маршрутизатори** (border routers) мають щонайменше один канал до маршрутизатора в іншій AS. **Внутрішні маршрутизатори** (interior routers) мають канали лише до інших маршрутизаторів у тій самій AS.
 
 <img width="900px" src="/assets/routing/2-167-borders.png">
 
-Only the border routers need to advertise routes to other ASes. Sometimes, we call the routers advertising BGP routes **BGP speakers**. The BGP speakers need to understand the semantics and syntax of the BGP protocol (how to read and create a BGP announcement, what to do when receiving an announcement, and so on).
+Оголошувати маршрути іншим AS потрібно лише прикордонним маршрутизаторам. Маршрутизатори, що оголошують маршрути BGP, іноді називають **BGP-спікерами** (BGP speakers). BGP-спікери мають розуміти семантику й синтаксис протоколу BGP (як читати й створювати оголошення BGP, що робити в разі отримання оголошення тощо).
 
 
-## External and Internal BGP Sessions
+## Зовнішні та внутрішні сеанси BGP
 
-A **BGP session** consists of two routers exchanging information between each other.
+**Сеанс BGP** (BGP session) — це обмін інформацією між двома маршрутизаторами.
 
 <img width="900px" src="/assets/routing/2-168-bgp1.png">
 
-An **external BGP (eBGP) session** is between two routers from different ASes. eBGP sessions can be used to exchange announcements between different ASes and learn about routes to other ASes. Only border routers participate in eBGP sessions (since eBGP requires talking to a different AS).
+**Зовнішній сеанс BGP** (external BGP, eBGP) відбувається між двома маршрутизаторами з різних AS. Сеанси eBGP можна використовувати для обміну оголошеннями між різними AS і для вивчення маршрутів до інших AS. У сеансах eBGP беруть участь лише прикордонні маршрутизатори (бо eBGP вимагає спілкування з іншою AS).
 
 <img width="900px" src="/assets/routing/2-169-bgp2.png">
 
-By contrast, an **internal BGP (iBGP) session** is between two routers in the same AS (not necessarily directly connected by a link). More specifically, if a border router learns about a new route, it can use iBGP to distribute that new route to the other routers in the AS. This allows all the routers in the AS to coordinate and act together as one entity. Both border and internal routers participate in iBGP sessions.
+Натомість **внутрішній сеанс BGP** (internal BGP, iBGP) відбувається між двома маршрутизаторами в тій самій AS (не обов'язково безпосередньо з'єднаними каналом). Конкретніше, якщо прикордонний маршрутизатор дізнається про новий маршрут, він може за допомогою iBGP поширити цей новий маршрут іншим маршрутизаторам в AS. Це дає змогу всім маршрутизаторам в AS координувати дії й діяти разом як одна сутність. У сеансах iBGP беруть участь і прикордонні, і внутрішні маршрутизатори.
 
 <img width="900px" src="/assets/routing/2-170-bgp3.png">
 
-eBGP and iBGP sessions are different from **interior gateway protocols (IGP)**. These are the intra-domain routing protocols (e.g. distance-vector, link-state) that are deployed within an AS to route packets inside the AS.
+Сеанси eBGP та iBGP відрізняються від **протоколів внутрішнього шлюзу** (interior gateway protocols, IGP). Це протоколи внутрішньодоменної маршрутизації (наприклад, дистанційно-векторні, стану каналів), розгорнуті в межах AS для маршрутизації пакетів усередині AS.
 
 <img width="900px" src="/assets/routing/2-171-bgp4.png">
 
-It's easy to confuse iBGP and IGP. Both exchange messages within the same AS. However, iBGP is part of an inter-domain protocol, helping routers learn about paths to other ASes. IGP is an intra-domain protocol, helping routers learn about paths to destinations in the same AS.
+iBGP та IGP легко сплутати. Обидва обмінюються повідомленнями в межах тієї самої AS. Однак iBGP є частиною міждоменного протоколу й допомагає маршрутизаторам дізнаватися про шляхи до інших AS. IGP — це внутрішньодоменний протокол, що допомагає маршрутизаторам дізнаватися про шляхи до пунктів призначення в тій самій AS.
 
 <img width="900px" src="/assets/routing/2-172-bgp5.png">
 
-eBGP, iBGP, and IGP work together to establish routes from any one router to any other router in the Internet (even if the routers are in different ASes).
+eBGP, iBGP та IGP спільно встановлюють маршрути від будь-якого маршрутизатора до будь-якого іншого маршрутизатора в Інтернеті (навіть якщо маршрутизатори в різних AS).
 
-First, each AS runs IGP to learn least-cost paths between any two routers inside the same AS.
+Спершу кожна AS запускає IGP, щоб дізнатися шляхи з найменшою вартістю між будь-якими двома маршрутизаторами всередині тієї самої AS.
 
 <img width="900px" src="/assets/routing/2-173-bgp6.png">
 
-Next, the ASes run eBGP, advertising routes to each other to learn about routes to other ASes.
+Далі AS запускають eBGP, оголошуючи маршрути одна одній, щоб дізнатися маршрути до інших AS.
 
 <img width="900px" src="/assets/routing/2-174-bgp7.png">
 
-Finally, the ASes run iBGP, so that a router that has learned about an external route can distribute that route to all the other routers in the same AS.
+Нарешті AS запускають iBGP, щоб маршрутизатор, який дізнався про зовнішній маршрут, міг поширити цей маршрут усім іншим маршрутизаторам у тій самій AS.
 
 <img width="900px" src="/assets/routing/2-175-bgp8.png">
 
-The routes learned from eBGP, iBGP, and IGP can be used to send packets anywhere in the Internet. If the destination is within the same AS (same IP prefix), we can use the routes learned from IGP to forward the packet. If the destination is in a different AS (different IP prefix), we can think back to iBGP, which told us about any external routes discovered by anybody in my AS. Using the iBGP results, we can figure out which border router is on that external route. Then, we can use IGP to forward the packet to the correct border router (who will then forward the packet to the next AS).
+Маршрути, отримані з eBGP, iBGP та IGP, можна використовувати для надсилання пакетів будь-куди в Інтернеті. Якщо пункт призначення в тій самій AS (той самий IP-префікс), ми можемо використати маршрути, отримані з IGP, щоб переслати пакет. Якщо пункт призначення в іншій AS (інший IP-префікс), ми можемо згадати iBGP, який повідомив нам про будь-які зовнішні маршрути, виявлені будь-ким у моїй AS. За результатами iBGP ми можемо з'ясувати, який прикордонний маршрутизатор розташований на цьому зовнішньому маршруті. Потім за допомогою IGP ми можемо переслати пакет правильному прикордонному маршрутизатору (який потім перешле пакет до наступної AS).
 
 <img width="900px" src="/assets/routing/2-176-bgp9.png">
 
-As a concrete example, let's say E wants to send packets to Z. First, every router in E's AS runs IGP, learning all the internal routes. Next, some router in AS#5 advertises a route to Z using eBGP. At this point, only G knows that it can reach Z. Finally, G tells all routers in its own AS that it can reach Z, using iBGP.
+Як конкретний приклад, скажімо, E хоче надіслати пакети до Z. Спершу кожен маршрутизатор в AS маршрутизатора E запускає IGP, дізнаючись усі внутрішні маршрути. Далі якийсь маршрутизатор в AS#5 оголошує маршрут до Z за допомогою eBGP. На цьому етапі лише G знає, що може дістатися Z. Нарешті G за допомогою iBGP повідомляє всім маршрутизаторам у своїй AS, що може дістатися Z.
 
-E has heard from iBGP that G, a router in the same AS, can reach Z. Using the IGP routes, E can send the packet to G (forwarding to F first). Then, G can use the route learned in eBGP to send the packet to Z.
+E дізнався з iBGP, що G, маршрутизатор у тій самій AS, може дістатися Z. Використовуючи маршрути IGP, E може надіслати пакет до G (спершу переславши до F). Потім G може використати маршрут, отриманий з eBGP, щоб надіслати пакет до Z.
 
-The border router who advertises a route to an external destination is sometimes called the **egress router** for that destination. This is the router who can help your packet exit the local network and move to other networks closer to the destination. In the example above, G is the egress router for destination Z.
+Прикордонний маршрутизатор, що оголошує маршрут до зовнішнього пункту призначення, іноді називають **вихідним маршрутизатором** (egress router) для цього пункту призначення. Це маршрутизатор, що може допомогти вашому пакету вийти з локальної мережі й перейти до інших мереж, ближчих до пункту призначення. У прикладі вище G — вихідний маршрутизатор для пункту призначення Z.
 
-A consequence of these protocols is that every router has two forwarding tables. One is a table mapping all internal destinations (same AS) to a next hop, populated with information from IGP. The other is a table mapping all external destinations to an egress router (who knows a route to the external destination), populated with information from eBGP.
+Наслідок цих протоколів полягає в тому, що кожен маршрутизатор має дві таблиці пересилання. Одна — таблиця, що відображає всі внутрішні пункти призначення (та сама AS) на наступний перехід і заповнюється інформацією з IGP. Інша — таблиця, що відображає всі зовнішні пункти призначення на вихідний маршрутизатор (який знає маршрут до зовнішнього пункту призначення) і заповнюється інформацією з eBGP.
 
 <img width="900px" src="/assets/routing/2-177-bgp10.png">
 
-Note that in the eBGP table, the egress router is not necessarily a next hop. The egress router might be several local hops away, but we use IGP to reach that egress router.
+Зауважте, що в таблиці eBGP вихідний маршрутизатор не обов'язково є наступним переходом. Вихідний маршрутизатор може бути за кілька локальних переходів, але щоб дістатися цього вихідного маршрутизатора, ми використовуємо IGP.
 
 <img width="900px" src="/assets/routing/2-178-bgp11.png">
 
-We've seen how eBGP (path-vector, advertising routes) and IGP (distance-vector or link-state) are implemented as algorithms. How is iBGP implemented? When a border router installs a new route to a destination, it has to inform the other routers in the AS. One simple solution is to have the border router directly tell every other router in the AS.
+Ми бачили, як eBGP (вектор шляху, оголошення маршрутів) та IGP (дистанційно-векторний або стану каналів) реалізуються як алгоритми. А як реалізовано iBGP? Коли прикордонний маршрутизатор встановлює новий маршрут до пункту призначення, він має повідомити інші маршрутизатори в AS. Одне просте рішення — щоб прикордонний маршрутизатор безпосередньо повідомляв кожен інший маршрутизатор в AS.
 
 <img width="900px" src="/assets/routing/2-179-bgp12.png">
 
-This solution is relatively simple, though it requires every border router to have an iBGP session with every other router. In a network with B border routers and N routers total, this protocol would require BN iBGP connections, and might scale poorly as local networks get larger.
+Це рішення відносно просте, хоча вимагає, щоб кожен прикордонний маршрутизатор мав сеанс iBGP з кожним іншим маршрутизатором. У мережі з B прикордонними маршрутизаторами та N маршрутизаторами загалом цей протокол потребував би BN з'єднань iBGP і може погано масштабуватися зі зростанням локальних мереж.
 
-Note: In reality, there are other ways to combine inter-domain and intra-domain routers. You can look up "route reflectors" if you're interested, though they won't be covered in this class.
+Примітка: насправді існують інші способи поєднувати міждоменні та внутрішньодоменні маршрутизатори. Якщо вам цікаво, можете пошукати «route reflectors» (рефлектори маршрутів), хоча в цьому курсі вони не розглядатимуться.
 
 
-## Multiple Links Between ASes: Hot Potato Routing
+## Кілька каналів між AS: маршрутизація «гаряча картопля»
 
-So far, in our AS graph, we've shown two ASes having a single link (edge) between them if they are connected. In practice, because an AS actually consists of many routers, it's possible for two ASes to be connected by multiple links.
+Досі в нашому графі AS ми показували, що дві AS, якщо вони з'єднані, мають між собою один канал (ребро). На практиці, оскільки AS насправді складається з багатьох маршрутизаторів, дві AS можуть бути з'єднані кількома каналами.
 
-In practice, it can be useful to have multiple links between large ASes. For example, Verizon and AT&T are very large ASes with infrastructure across the entire United States. Suppose there was only one link between the two ASes on the west coast. If a Verizon router in the east coast and an AT&T router in the east coast wanted to communicate, the packet would have to travel across the country on Verizon's network, traverse the link into AT&T's network, and then travel back across the country to the destination.
+На практиці кілька каналів між великими AS можуть бути корисними. Наприклад, Verizon і AT&T — дуже великі AS з інфраструктурою по всіх Сполучених Штатах. Припустімо, між цими двома AS був би лише один канал на західному узбережжі. Якби маршрутизатор Verizon на східному узбережжі і маршрутизатор AT&T на східному узбережжі захотіли спілкуватися, пакет мав би перетнути країну мережею Verizon, пройти каналом у мережу AT&T, а потім знову перетнути країну до пункту призначення.
 
 <img width="800px" src="/assets/routing/2-180-multilink1.png">
 
-Multiple links between two ASes also means that there can be multiple paths between two routers that pass through the same ASes. At the AS level, both of these paths go through the same ASes, and our earlier model made no distinction between them. However, in our more detailed model, both paths need to be exported, and a preferred route has to be imported.
+Кілька каналів між двома AS також означають, що між двома маршрутизаторами може бути кілька шляхів, які проходять через ті самі AS. На рівні AS обидва ці шляхи проходять через ті самі AS, і наша попередня модель їх не розрізняла. Однак у нашій детальнішій моделі обидва шляхи мають бути експортовані, а бажаний маршрут — імпортований.
 
 <img width="800px" src="/assets/routing/2-181-multilink2.png">
 
-If there are two routes, which route does the importing AS prefer?
+Якщо є два маршрути, якому з них надає перевагу AS, що імпортує?
 
 <img width="800px" src="/assets/routing/2-182-multilink3.png">
 
-Bandwidth costs money, so I would prefer if this traffic traveled as far as possible on infrastructure owned and paid for by other people, and traveled as little as possible on my own infrastructure. Therefore, the orange path is preferred.
+Пропускна здатність коштує грошей, тож я волів би, щоб цей трафік якомога довше йшов інфраструктурою, яка належить іншим людям і оплачується ними, і якомога менше — моєю власною інфраструктурою. Тому перевагу має помаранчевий шлях.
 
-More formally, the importing AS receives two announcements: one from the west router, and one from the east router.
+Формальніше, AS, що імпортує, отримує два оголошення: одне від західного маршрутизатора, а інше від східного.
 
 <img width="800px" src="/assets/routing/2-183-multilink4.png">
 
-Using iBGP, every router inside the AS sees both announcements. One says, the egress router is the west router, and the other says, the egress router is the east router. Every router has to decide which announcement to import.
+За допомогою iBGP кожен маршрутизатор усередині AS бачить обидва оголошення. Одне каже, що вихідний маршрутизатор — західний, а інше — що вихідний маршрутизатор — східний. Кожен маршрутизатор має вирішити, яке оголошення імпортувати.
 
 <img width="800px" src="/assets/routing/2-184-multilink5.png">
 
-Let's focus on router E. Using IGP, this router can figure out the distance to the west egress router (F), and the distance to the east egress router (I). Since the west egress router (F) is closer, routing packets via the west egress router (F) will use up less of this AS's bandwidth. Therefore, this router will import the path via the west egress router (F). Another router, like one closer to the east egress router (I), might decide to import a different path.
+Зосередьмося на маршрутизаторі E. За допомогою IGP цей маршрутизатор може з'ясувати відстань до західного вихідного маршрутизатора (F) і відстань до східного вихідного маршрутизатора (I). Оскільки західний вихідний маршрутизатор (F) ближчий, маршрутизація пакетів через нього витрачатиме менше пропускної здатності цієї AS. Тому цей маршрутизатор імпортує шлях через західний вихідний маршрутизатор (F). Інший маршрутизатор, наприклад ближчий до східного вихідного маршрутизатора (I), може вирішити імпортувати інший шлях.
 
 <img width="800px" src="/assets/routing/2-185-multilink6.png">
 
-This strategy of selecting the nearest egress router is sometimes called **hot potato routing**. We want the packet to leave our AS as soon as possible, and start traveling over somebody else's links as soon as possible.
+Таку стратегію вибору найближчого вихідного маршрутизатора іноді називають **маршрутизацією «гаряча картопля»** (hot potato routing). Ми хочемо, щоб пакет якомога швидше покинув нашу AS і якомога швидше почав мандрувати чужими каналами.
 
 
-## Multiple Links Between Routers: MED
+## Кілька каналів між маршрутизаторами: MED
 
-What if a router is equally close to both possible egress routers?
+А що, як маршрутизатор однаково близький до обох можливих вихідних маршрутизаторів?
 
 <img width="800px" src="/assets/routing/2-186-med1.png">
 
-In order to tiebreak, the exporting AS can announce a preference for one route over the other.
+Щоб розв'язати нічию, AS, що експортує, може оголосити, що надає перевагу одному маршруту над іншим.
 
-Which route does the exporting AS prefer? Again, since bandwidth costs money, the exporting AS prefers the pink path, which uses less of its bandwidth. In the announcement of the pink path, the exporting AS can additionally say "I prefer if you used this path," and in the announcement of the orange path, the exporting AS can additionally say "I prefer if you avoided this path."
+Якому маршруту надає перевагу AS, що експортує? Знову ж таки, оскільки пропускна здатність коштує грошей, AS, що експортує, надає перевагу рожевому шляху, який витрачає менше її пропускної здатності. В оголошенні рожевого шляху AS, що експортує, може додатково сказати: «Я хотів би, щоб ви використовували цей шлях», а в оголошенні помаранчевого шляху — «Я хотів би, щоб ви уникали цього шляху».
 
 <img width="900px" src="/assets/routing/2-187-med2.png">
 
-Now, the router that is equally close to both egress routers can see this extra information in the iBGP announcement.
+Тепер маршрутизатор, однаково близький до обох вихідних маршрутизаторів, може бачити цю додаткову інформацію в оголошенні iBGP.
 
 <img width="900px" src="/assets/routing/2-188-med3.png">
 
-Using this extra information, the router can select the egress router on the pink path, since the exporting AS preferred this path.
+Використовуючи цю додаткову інформацію, маршрутизатор може обрати вихідний маршрутизатор на рожевому шляху, бо саме цьому шляху надала перевагу AS, що експортує.
 
 <img width="800px" src="/assets/routing/2-189-med4.png">
 
-This additional information in the exporting announcement is called the **Multi-Exit Discriminator (MED)**. From the perspective of the exporter, it indicates my preferred router for entering my network. From the perspective of the importer, it indicates the other AS's preferred router for exiting my network and entering the other AS's network.
+Ця додаткова інформація в експортованому оголошенні називається **дискримінатором кількох виходів** (Multi-Exit Discriminator, MED). З погляду того, хто експортує, він вказує бажаний для мене маршрутизатор для входу в мою мережу. З погляду того, хто імпортує, він вказує бажаний для іншої AS маршрутизатор для виходу з моєї мережі та входу в мережу іншої AS.
 
-Another way to interpret the MED is, the distance to the destination, via this router. The exporter can say, "the west coast router is 3 hops away from the destination," and "the east coast router is 12 hops away from the destination." Lower MED numbers are preferred, since the exporter wants to use as little of its own bandwidth as possible. The exporter would rather use 3 of its own links, instead of 12 of its own links.
+Ще один спосіб інтерпретувати MED — як відстань до пункту призначення через цей маршрутизатор. Той, хто експортує, може сказати: «маршрутизатор на західному узбережжі за 3 переходи від пункту призначення» і «маршрутизатор на східному узбережжі за 12 переходів від пункту призначення». Перевагу мають менші значення MED, бо той, хто експортує, хоче якомога менше витрачати власної пропускної здатності. Він волів би використати 3 власні канали, а не 12.
 
 
-## Import Policy Priority
+## Пріоритет політики імпорту
 
-Our more detailed model, where two ASes can be connected with multiple links, means that we now have additional import policy rules, in addition to the Gao-Rexford rules. When you receive multiple announcements for the same destination, select a path based on these tiebreaking rules, in this order:
+Наша детальніша модель, де дві AS можуть бути з'єднані кількома каналами, означає, що тепер на додачу до правил Гао–Рексфорда в нас є додаткові правила політики імпорту. Коли ви отримуєте кілька оголошень для того самого пункту призначення, обирайте шлях за такими правилами розв'язання нічиїх у такому порядку:
 
-1. Use the **Gao-Rexford rules**. Select the path advertised by a customer, over the path advertised by a peer, over the path advertised by a provider.
-2. If multiple paths have the same Gao-Rexford priority (e.g. two paths from customers), select the **shorter path** (the path passing through fewer ASes).
-3. If multiple paths have the same length, select the path with the **closer egress router** (using IGP to find distance to each egress router).
-4. If multiple paths have the same distance to egress router, select the path with the **lower MED** (where MED is included in the advertisement).
-5. If multiple paths have the same MED, **tiebreak arbitrarily** (e.g. pick the router with the lower IP address).
+1. Використовуйте **правила Гао–Рексфорда**. Обирайте шлях, оголошений клієнтом, перед шляхом, оголошеним піром, а його — перед шляхом, оголошеним провайдером.
+2. Якщо кілька шляхів мають однаковий пріоритет за Гао–Рексфордом (наприклад, два шляхи від клієнтів), обирайте **коротший шлях** (шлях, що проходить через меншу кількість AS).
+3. Якщо кілька шляхів мають однакову довжину, обирайте шлях із **ближчим вихідним маршрутизатором** (використовуючи IGP для визначення відстані до кожного вихідного маршрутизатора).
+4. Якщо кілька шляхів мають однакову відстань до вихідного маршрутизатора, обирайте шлях із **меншим MED** (MED міститься в оголошенні).
+5. Якщо кілька шляхів мають однаковий MED, **розв'язуйте нічию довільно** (наприклад, обирайте маршрутизатор із меншою IP-адресою).
 
 <img width="900px" src="/assets/routing/2-190-med5.png">
 
-Notice that closest egress router (hot potato routing) and MED are often contradictory. Every AS prefers to minimize their own bandwidth usage, and wants the packet to be carried on other ASes' bandwidth.
+Зверніть увагу, що найближчий вихідний маршрутизатор («гаряча картопля») і MED часто суперечать одне одному. Кожна AS прагне мінімізувати використання власної пропускної здатності й хоче, щоб пакет переносився пропускною здатністю інших AS.
 
-As the exporting AS, I want the packet to enter my AS as close to the destination as possible. This means I want the importing AS to carry the packet really far (long path to egress).
+Як AS, що експортує, я хочу, щоб пакет увійшов у мою AS якомога ближче до пункту призначення. Це означає, що я хочу, щоб AS, яка імпортує, перенесла пакет справді далеко (довгий шлях до виходу).
 
 <img width="900px" src="/assets/routing/2-191-med6.png">
 
-By contrast, as the importing AS, I want to carry the packet as little as possible (short path to egress). This means I want the packet to enter the other AS as far from the destination as possible (force the other AS to do all the work).
+Натомість як AS, що імпортує, я хочу переносити пакет якомога менше (короткий шлях до виходу). Це означає, що я хочу, щоб пакет увійшов в іншу AS якомога далі від пункту призначення (змусити іншу AS виконати всю роботу).
 
 <img width="900px" src="/assets/routing/2-192-med7.png">
 
-One consequence of this contradiction is that paths through the Internet are often asymmetric. If two hosts are sending packets back and forth, the path in one direction might be different from the path in the other direction.
+Один із наслідків цієї суперечності полягає в тому, що шляхи через Інтернет часто асиметричні. Якщо два хости надсилають пакети туди й назад, шлях в одному напрямку може відрізнятися від шляху в іншому.
 
 <img width="800px" src="/assets/routing/2-193-med8.png">
 
-In this example, for eastbound packets, A picks the west egress router and forces B to carry the traffic most of the way. In the other (westbound) direction, B picks the east egress router, and forces A to carry the traffic most of the way.
+У цьому прикладі для пакетів, що йдуть на схід, A обирає західний вихідний маршрутизатор і змушує B переносити трафік більшу частину шляху. В іншому напрямку (на захід) B обирає східний вихідний маршрутизатор і змушує A переносити трафік більшу частину шляху.
 
-Fundamentally, BGP allows this behavior because every AS is granted the autonomy to set their own policy (here, that policy is hot potato routing).
+По суті, BGP допускає таку поведінку, бо кожній AS надано автономію встановлювати власну політику (тут ця політика — маршрутизація «гаряча картопля»).
 
-In practice, sometimes ASes will try and implement more clever strategies to trick other ASes into carrying the packet further. Or, an AS with better bandwidth might agree to carry your traffic further for you, if you pay a premium fee.
+На практиці AS іноді намагаються застосовувати хитріші стратегії, щоб обманом змусити інші AS переносити пакет далі. Або AS із кращою пропускною здатністю може погодитися переносити ваш трафік далі, якщо ви заплатите додаткову плату.
 
 
-## BGP Message Types and Route Attributes
+## Типи повідомлень BGP і атрибути маршрутів
 
-Recall that a protocol must specify syntax and semantics. Specifically, BGP must specify the structure of messages being sent and received. BGP must also specify what a router should do when it receives a message.
+Пригадайте, що протокол має визначати синтаксис і семантику. Зокрема, BGP має визначати структуру повідомлень, що надсилаються й отримуються. BGP також має визначати, що маршрутизатор має робити, коли отримує повідомлення.
 
-There are four different BGP message types. Open messages can be used to start a session between two routers to communicate with each other. KeepAlive messages can be used to confirm that a session is still open, even if messages haven't been sent recently. Notification messages can be used to process errors. We won't describe these first three message types in any further detail.
+Є чотири різні типи повідомлень BGP. Повідомлення Open можна використовувати, щоб розпочати сеанс між двома маршрутизаторами для спілкування один з одним. Повідомлення KeepAlive можна використовувати, щоб підтвердити, що сеанс досі відкритий, навіть якщо останнім часом повідомлень не надсилалося. Повідомлення Notification можна використовувати для обробки помилок. Ці перші три типи повідомлень ми детальніше не описуватимемо.
 
-We'll focus on the fourth and most interesting message type, Update. These messages are used to announce new routes, change existing routes, or delete routes that are no longer active.
+Ми зосередимося на четвертому й найцікавішому типі повідомлень — Update. Ці повідомлення використовуються, щоб оголошувати нові маршрути, змінювати наявні маршрути або видаляти маршрути, які більше не активні.
 
-The Update message contains a destination, represented as an IP prefix. The message also contains **route attributes**, which can be used to encode any useful information corresponding to that IP prefix. The route attributes are a set of name-value pairs, where the name indicates the type of attribute, and the value indicates the value of that attribute. A non-networking example of attributes might be: color=red, shape=triangle. The attribute names are color and shape, and they correspond to values of red and triangle, respectively.
+Повідомлення Update містить пункт призначення, поданий як IP-префікс. Повідомлення також містить **атрибути маршруту** (route attributes), за допомогою яких можна кодувати будь-яку корисну інформацію, що відповідає цьому IP-префіксу. Атрибути маршруту — це набір пар «ім'я–значення», де ім'я вказує тип атрибута, а значення — значення цього атрибута. Немережевий приклад атрибутів: color=red, shape=triangle. Імена атрибутів — color і shape, і їм відповідають значення red і triangle.
 
-Some attributes are local to an AS, and are only exchanged in iBGP messages. Other attributes are global, and can be sent in eBGP advertisements.
+Деякі атрибути локальні для AS і передаються лише в повідомленнях iBGP. Інші атрибути глобальні й можуть надсилатися в оголошеннях eBGP.
 
-There are many BGP attributes, but we'll focus on three important ones, which are used to encode the different tiebreakers for importing paths.
+Атрибутів BGP багато, але ми зосередимося на трьох важливих, які використовуються для кодування різних правил розв'язання нічиїх під час імпорту шляхів.
 
-The **LOCAL PREFERENCE** attribute encodes the Gao-Rexford import rules (top priority tiebreaker) inside a specific AS. An AS can assign a higher value to more preferred routes (e.g. from customers), and a lower value to less preferred routes (e.g. from providers). This attribute is local, and only carried in iBGP messages. This attribute is not sent to other ASes in eBGP announcements, because other ASes don't need to know about this AS's preferences.
+Атрибут **LOCAL PREFERENCE** (локальна перевага) кодує правила імпорту Гао–Рексфорда (правило з найвищим пріоритетом) усередині конкретної AS. AS може призначати вище значення бажанішим маршрутам (наприклад, від клієнтів) і нижче значення менш бажаним маршрутам (наприклад, від провайдерів). Цей атрибут локальний і передається лише в повідомленнях iBGP. Він не надсилається іншим AS в оголошеннях eBGP, бо іншим AS не потрібно знати про вподобання цієї AS.
 
 <img width="900px" src="/assets/routing/2-194-attribute1.png">
 
-As an example, suppose router E receives an eBGP announcement from AS#7, and router A knows that AS#7 is a customer. Then, in the iBGP message, router E can set a local preference value of 3000 (high number). Now, every other router in the same AS knows that router E can reach the destination it's announcing, via the path in the `ASPATH` attribute, with a local preference of 3000.
+Як приклад, припустімо, маршрутизатор E отримує оголошення eBGP від AS#7, і маршрутизатор A знає, що AS#7 — клієнт. Тоді в повідомленні iBGP маршрутизатор E може встановити значення локальної переваги 3000 (велике число). Тепер кожен інший маршрутизатор у тій самій AS знає, що маршрутизатор E може дістатися оголошуваного пункту призначення шляхом з атрибута `ASPATH` з локальною перевагою 3000.
 
-By contrast, if router D receives an eBGP announcement from AS#79, and this AS is a peer, then in the iBGP message, router D can set a lower local preference value of 1000 and then distribute this path (with lower local preference) to the other routers in the AS.
+Натомість якщо маршрутизатор D отримує оголошення eBGP від AS#79, а ця AS — пір, то в повідомленні iBGP маршрутизатор D може встановити нижче значення локальної переваги 1000, а потім поширити цей шлях (з нижчою локальною перевагою) іншим маршрутизаторам в AS.
 
-The local preference numbers are arbitrary, and only their relative ranking is important. In the example above, the numbers could have been 300 and 100 instead of 3000 and 1000, and the behavior would be the same. The local preference numbers are often set manually by operators.
+Числа локальної переваги довільні, і важливий лише їхній відносний порядок. У прикладі вище числа могли бути 300 і 100 замість 3000 і 1000, і поведінка була б такою самою. Числа локальної переваги часто встановлюють оператори вручну.
 
-The **ASPATH** attribute contains a list of ASes along the route being advertised (in reverse order). This attribute is global, and can be sent in eBGP announcements.
+Атрибут **ASPATH** містить список AS уздовж оголошуваного маршруту (у зворотному порядку). Цей атрибут глобальний і може надсилатися в оголошеннях eBGP.
 
 <img width="800px" src="/assets/routing/2-195-attribute2.png">
 
-As an example, an announcement would have IP prefix of the destination (128.112.0.0/16), and an ASPATH attribute of [3, 72, 25].
+Як приклад, оголошення мало б IP-префікс пункту призначення (128.112.0.0/16) і атрибут ASPATH [3, 72, 25].
 
-The `ASPATH` is the second priority tiebreaker when importing paths. If two announcements have the same local preference (e.g. both are from customers), then we'll select the shorter path. `ASPATH` tells us the length of each path, measured by the number of ASes the path goes through.
+`ASPATH` — правило розв'язання нічиїх другого пріоритету під час імпорту шляхів. Якщо два оголошення мають однакову локальну перевагу (наприклад, обидва від клієнтів), ми обираємо коротший шлях. `ASPATH` повідомляє нам довжину кожного шляху, виміряну кількістю AS, через які проходить шлях.
 
-If the local preference and path length are tied, the third priority tiebreaker is the IGP cost to the egress router. This cost is stored in the router's local forwarding table (e.g. a local distance-vector protocol would store the cost to every other router in the same AS).
+Якщо локальна перевага й довжина шляху однакові, правилом третього пріоритету є вартість IGP до вихідного маршрутизатора. Ця вартість зберігається в локальній таблиці пересилання маршрутизатора (наприклад, локальний дистанційно-векторний протокол зберігав би вартість до кожного іншого маршрутизатора в тій самій AS).
 
-The **MED** attribute encodes the preferences of the exporting AS. Equivalently, this attribute represents the distance from the exporting router to the destination (lower numbers are preferred).
+Атрибут **MED** кодує вподобання AS, що експортує. Рівнозначно, цей атрибут представляє відстань від маршрутизатора, що експортує, до пункту призначення (перевагу мають менші числа).
 
 <img width="900px" src="/assets/routing/2-196-attribute3.png">
 
-For example, if there are two links between these two ASes, both border routers from the exporting AS will announce a path. The `ASPATH` and destination are the same, since the path of ASes to the destination is the same in both cases. However, the west router will include a lower `MED` attribute number, than the east router. This says: when possible, please route packets for the destination through my west router (lower number), because this router is closer to the destination.
+Наприклад, якщо між цими двома AS є два канали, обидва прикордонні маршрутизатори AS, що експортує, оголосять шлях. `ASPATH` і пункт призначення однакові, бо шлях AS до пункту призначення в обох випадках однаковий. Однак західний маршрутизатор включить менше значення атрибута `MED`, ніж східний. Це означає: за можливості маршрутизуйте пакети для цього пункту призначення через мій західний маршрутизатор (менше число), бо цей маршрутизатор ближчий до пункту призначення.
 
-If the local preference, path length, and distance to egress router are all tied, the fourth priority tiebreaker is the MED number inside each announcement.
+Якщо локальна перевага, довжина шляху й відстань до вихідного маршрутизатора однакові, правилом четвертого пріоритету є значення MED у кожному оголошенні.
 
 
-## Issues with BGP
+## Проблеми BGP
 
-BGP has no built-in security guarantees. A malicious AS could lie and advertise a route to a destination, even if the AS cannot reach that destination. A malicious AS could also advertise a very cheap route to a destination, even if that cheap route doesn't actually exist. This could encourage other ASes to route packets through the malicious AS, where the attacker could delete or modify packets passing through the malicious AS. These attacks are called **prefix hijacking**. There is active research on using cryptography to secure BGP, though such protocols are not widely deployed.
+BGP не має вбудованих гарантій безпеки. Зловмисна AS може збрехати й оголосити маршрут до пункту призначення, навіть якщо вона не може його досягти. Зловмисна AS також може оголосити дуже дешевий маршрут до пункту призначення, навіть якщо такого дешевого маршруту насправді не існує. Це може спонукати інші AS маршрутизувати пакети через зловмисну AS, де зловмисник може видаляти чи змінювати пакети, що проходять через неї. Такі атаки називаються **перехопленням префіксів** (prefix hijacking). Ведуться активні дослідження щодо використання криптографії для захисту BGP, хоча такі протоколи не набули широкого розгортання.
 
-BGP prioritizes policy over least-cost when selecting paths. Also, because BGP measures path length in terms of the number of ASes, the path length can be misleading (e.g. one AS could contain 2 routers or 200 routers along the path being advertised). This can lead to issues where packets don't always take least-cost paths, and it's difficult to reason about performance on the Internet. Some might classify these as issues, though they may be more of an intentional design trade-off. The designers of BGP made a conscious design choice to prioritize policy and hide the internal topology of an AS, at the expense of performance.
+Обираючи шляхи, BGP ставить політику вище за найменшу вартість. Крім того, оскільки BGP вимірює довжину шляху кількістю AS, довжина шляху може вводити в оману (наприклад, одна AS може містити 2 маршрутизатори або 200 маршрутизаторів уздовж оголошуваного шляху). Це може призводити до того, що пакети не завжди йдуть шляхами з найменшою вартістю, і міркувати про продуктивність в Інтернеті складно. Дехто може класифікувати це як проблеми, хоча це радше свідомий проєктний компроміс. Розробники BGP свідомо вирішили поставити на перше місце політику й приховати внутрішню топологію AS ціною продуктивності.
 
-BGP is complicated to implement. There are many subtle implementation details that we didn't cover. Even in the topics we covered, certain configurations like local preference or MED numbers have to be manually set by the operator, and incorrect configurations could lead to incorrect paths spreading through the network. BGP misconfigurations can often lead to Internet outages, and there is active research on tools to verify that BGP is properly configured.
+BGP складно реалізувати. Є багато тонких подробиць реалізації, яких ми не розглядали. Навіть у розглянутих темах певні налаштування, як-от числа локальної переваги чи MED, оператор має встановлювати вручну, і неправильні налаштування можуть призводити до поширення неправильних шляхів мережею. Неправильні налаштування BGP часто можуть спричиняти збої Інтернету, і ведуться активні дослідження інструментів для перевірки правильності налаштування BGP.
 
-BGP requires certain assumptions (everybody is following the Gao-Rexford rules, AS graph forms a hierarchy, no provider-customer cycles) in order to guarantee reachability and convergence. If these assumptions don't hold (e.g. an AS chooses its own policy that violates Gao-Rexford), BGP can produce unstable behavior, where routes never converge, or cycles and dead-ends appear.
+BGP вимагає певних припущень (усі дотримуються правил Гао–Рексфорда, граф AS утворює ієрархію, немає циклів «провайдер–клієнт»), щоб гарантувати досяжність і збіжність. Якщо ці припущення не виконуються (наприклад, AS обирає власну політику, що порушує правила Гао–Рексфорда), BGP може поводитися нестабільно: маршрути ніколи не збігаються або з'являються цикли й глухі кути.

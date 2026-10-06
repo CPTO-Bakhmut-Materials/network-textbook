@@ -1,207 +1,207 @@
 ---
-title: Host Networking
-parent: Datacenters
+title: Мережева підсистема хоста
+parent: Дата-центри
 nav_order: 7
 layout: page-with-toc
 ---
 
-# Host Networking
+# Мережева підсистема хоста
 
-## What is Host Networking?
+## Що таке мережева підсистема хоста?
 
-Traditionally, the bottleneck of the network is inside the network infrastructure, not at the end hosts. However, in modern high-performance datacenters, as network performance demand continues to increase, the end hosts are struggling to keep up with the demand.
+Традиційно вузьке місце мережі розташоване всередині мережевої інфраструктури, а не на кінцевих хостах. Однак у сучасних високопродуктивних дата-центрах, оскільки попит на продуктивність мережі продовжує зростати, кінцеві хости ледве встигають за попитом.
 
-In particular, the CPU running network protocols like TCP is no longer able to deliver the high performance that the datacenter needs. CPUs are expensive, and delivering high performance means that the CPU is spending all its time running network protocols, with fewer resources allocated toward running the actual applications.
+Зокрема, процесор, що виконує мережеві протоколи на кшталт TCP, уже не здатен забезпечити високу продуктивність, потрібну дата-центру. Процесори дорогі, а забезпечення високої продуктивності означає, що процесор витрачає весь свій час на виконання мережевих протоколів, і менше ресурсів виділяється на виконання власне застосунків.
 
-Also, the actual protocols that we've been running, like IP and TCP, are no longer able to meet modern high performance demands.
+Крім того, самі протоколи, які ми використовували, як-от IP і TCP, уже не здатні задовольнити сучасні вимоги до високої продуктивності.
 
-To solve these two problems, we turn to **host networking**, which involves optimizations at the end hosts (as opposed to inside the network).
+Щоб розв'язати ці дві проблеми, ми звертаємося до **мережевої підсистеми хоста** (host networking), що передбачає оптимізації на кінцевих хостах (на відміну від оптимізацій усередині мережі).
 
 <img width="700px" src="/assets/datacenter/6-079-host-networking-taxonomy.png">
 
 
-## Optimization: Shared Memory in User Space
+## Оптимізація: спільна пам'ять у просторі користувача
 
-Recall that at the end host, Layers 1 and 2 are implemented in hardware at the network interface card (NIC). Layers 3 and 4 are implemented in software in the operating system (on the CPU). Layer 7 is the application itself.
+Пригадайте, що на кінцевому хості рівні 1 і 2 реалізовано апаратно на мережевій карті (network interface card, NIC). Рівні 3 і 4 реалізовано програмно в операційній системі (на процесорі). Рівень 7 — сам застосунок.
 
 <img width="800px" src="/assets/datacenter/6-080-layers.png">
 
-Recall from a prerequisite class (e.g. CS 61C at UC Berkeley) that modern computers are designed with virtual memory, so that each application gets its own dedicated address space, isolated from other applications. In particular, each Layer 7 application gets its own dedicated address space in **user space**. By contrast, the operating system itself runs in **kernel space**, which is a special part of memory that applications in user space cannot access.
+Пригадайте з курсу-передумови (наприклад, CS 61C в UC Berkeley), що сучасні комп'ютери спроєктовано з віртуальною пам'яттю, тож кожен застосунок отримує власний виділений адресний простір, ізольований від інших застосунків. Зокрема, кожен застосунок рівня 7 отримує власний виділений адресний простір у **просторі користувача** (user space). Натомість сама операційна система працює в **просторі ядра** (kernel space) — спеціальній частині пам'яті, до якої застосунки в просторі користувача не мають доступу.
 
-This memory management model means that when we pass packets down the stack to send data, we are constantly copying data from user space to kernel space. Also, when we pass packets up the stack to receive data, we are constantly copying data from kernel space to user space. Copying bits between kernel space and user space is expensive and kind of pointless. 
+Ця модель керування пам'яттю означає, що коли ми передаємо пакети стеком донизу, щоб надіслати дані, ми постійно копіюємо дані з простору користувача в простір ядра. Крім того, коли ми передаємо пакети стеком нагору, щоб отримати дані, ми постійно копіюємо дані з простору ядра в простір користувача. Копіювання бітів між простором ядра й простором користувача дороге й, по суті, безглузде.
 
-Another problem with this memory management model is, programming in kernel space is difficult. If we wanted to modify TCP and optimize it for our purposes, we would have to reach into the operating system and program at a very low level. Deployment and testing is harder and slower in the kernel space than in the user space.
+Ще одна проблема цієї моделі керування пам'яттю — програмувати в просторі ядра складно. Якби ми захотіли змінити TCP й оптимізувати його під свої цілі, нам довелося б лізти в операційну систему й програмувати на дуже низькому рівні. Розгортання й тестування в просторі ядра складніше й повільніше, ніж у просторі користувача.
 
 <img width="800px" src="/assets/datacenter/6-081-kernel1.png">
 
-To solve these two problems, we can move the networking stack (e.g. Layer 3 and 4 protocols) out of kernel space, and into user space. Now, Layers 3, 4, and 7 can all access a shared address space, and no copying back-and-forth is needed. Also, iterating and innovating in user space is now easier.
+Щоб розв'язати ці дві проблеми, можна перенести мережевий стек (наприклад, протоколи рівнів 3 і 4) із простору ядра в простір користувача. Тепер рівні 3, 4 і 7 усі можуть мати доступ до спільного адресного простору, і копіювання туди й назад не потрібне. Крім того, ітерації й інновації в просторі користувача тепер легші.
 
 <img width="500px" src="/assets/datacenter/6-082-kernel2.png">
 
-Using shared memory in user space helps us eliminate some extraneous work like copying back-and-forth, but it still isn't enough to make our hosts meet modern performance requirements.
+Використання спільної пам'яті в просторі користувача допомагає позбутися певної зайвої роботи на кшталт копіювання туди й назад, але цього все одно недостатньо, щоб наші хости відповідали сучасним вимогам до продуктивності.
 
 
-## Optimization: Offloading to NIC
+## Оптимізація: перенесення на NIC
 
-CPUs are not fast enough to run network protocols (e.g. IP, TCP) at modern performance speeds. Also, using CPUs to run network protocols leaves less CPU resources for the applications themselves to use.
+Процесори недостатньо швидкі, щоб виконувати мережеві протоколи (наприклад, IP, TCP) на сучасних швидкостях. Крім того, використання процесорів для виконання мережевих протоколів залишає менше процесорних ресурсів для самих застосунків.
 
-To solve this problem, we can offload the networking stack out of the CPU (software), and into the NIC (hardware).
+Щоб розв'язати цю проблему, ми можемо перенести (offload) мережевий стек із процесора (програмного забезпечення) на мережеву карту (апаратне забезпечення).
 
-The NIC is a natural place for offloading operations. Every packet has to pass through the NIC, so the NIC can do some extra processing and save the CPU from doing that work.
+Мережева карта — природне місце для перенесення операцій. Кожен пакет мусить пройти через мережеву карту, тож вона може виконувати певну додаткову обробку й звільнити процесор від цієї роботи.
 
 <img width="900px" src="/assets/datacenter/6-084-epoch0-1.png">
 
-The **network driver** is a piece of software in the OS that programs and manages the NIC. The driver provides an API that allows higher-level programs in the OS to interact with the NIC. You can think of the driver as the bridge between hardware and software.
+**Мережевий драйвер** (network driver) — програмне забезпечення в ОС, що програмує мережеву карту й керує нею. Драйвер надає API, що дає програмам вищого рівня в ОС змогу взаємодіяти з мережевою картою. Драйвер можна уявляти як міст між апаратним і програмним забезпеченням.
 
-What are the benefits of offloading? It frees up CPU resources for the application to use. Also, specialized processing in hardware can be more efficient than processing on general-purpose CPUs. Here, efficiency refers to both speed and power consumption. Finally, running operations in hardware gives us not just lower latency, but also more predictable and consistent latencies. When running applications in software, the CPU has to schedule different processes, which can add unpredictable delay. (For example, if I have a packet to process, the CPU might have to finish its current job before switching over to processing my packet.)
+Які переваги перенесення? Воно звільняє ресурси процесора для використання застосунком. Крім того, спеціалізована апаратна обробка може бути ефективнішою за обробку на процесорах загального призначення. Тут ефективність стосується і швидкості, і енергоспоживання. Нарешті, виконання операцій апаратно дає нам не лише нижчу латентність, а й передбачуванішу та стабільнішу латентність. Під час програмного виконання застосунків процесор має планувати різні процеси, що може додавати непередбачувану затримку. (Наприклад, якщо в мене є пакет для обробки, процесорові, можливо, доведеться завершити поточне завдання, перш ніж перейти до обробки мого пакета.)
 
 
-## Brief History of Offloading: Epoch 0
+## Коротка історія перенесення: епоха 0
 
-Offloading operations from the OS (software) to the NIC (hardware) is an active, ongoing area of research. There have been three epochs of development, where increasingly complicated operations have been offloaded to the NIC.
+Перенесення операцій з ОС (програмного забезпечення) на мережеву карту (апаратне забезпечення) — активна, поточна галузь досліджень. Розробка пройшла три епохи, протягом яких на мережеву карту переносили дедалі складніші операції.
 
-**Epoch 0**: Before any offloading, let's see what the NIC does in the standard networking stack we've seen so far.
+**Епоха 0**: до будь-якого перенесення подивімося, що робить мережева карта в стандартному мережевому стеку, який ми досі бачили.
 
-The NIC has a central controller processor that manages operation on the card.
+Мережева карта має центральний процесор-контролер, що керує роботою карти.
 
-For incoming packets, the transceiver converts electrical signals into digital signals (1s and 0s) and puts those bits in a buffer. Then, the NIC reads bits from the buffer, parses them as Ethernet frames, processes the frame (e.g. verifies checksum), and removes the Layer 2 header. Finally, the NIC generates an interrupt to tell the CPU to stop what it's doing and collect the resulting Layer 3 packet for further processing.
+Для вхідних пакетів трансивер перетворює електричні сигнали на цифрові (одиниці й нулі) і поміщає ці біти в буфер. Потім мережева карта читає біти з буфера, розбирає їх як кадри Ethernet, обробляє кадр (наприклад, перевіряє контрольну суму) і знімає заголовок рівня 2. Нарешті мережева карта генерує переривання, щоб сказати процесорові зупинити те, що він робить, і забрати отриманий пакет рівня 3 для подальшої обробки.
 
-For outgoing packets, packets from the network driver are placed in a buffer. The NIC reads bits from the buffer and processes them to construct Ethernet frames. Then, the frame is passed to a transceiver, which converts the digital bits to electrical signals.
+Для вихідних пакетів пакети від мережевого драйвера поміщаються в буфер. Мережева карта читає біти з буфера й обробляє їх, щоб побудувати кадри Ethernet. Потім кадр передається трансиверу, який перетворює цифрові біти на електричні сигнали.
 
 <img width="900px" src="/assets/datacenter/6-085-epoch0-2.png">
 
-In the standard networking stack, you can think of the NIC as a doormat that passes incoming packets to the OS, and sends outgoing packets for the OS, but performs very minimal processing on those packets.
+У стандартному мережевому стеку мережеву карту можна уявляти як придверний килимок, що передає вхідні пакети ОС і надсилає вихідні пакети за ОС, але виконує дуже мінімальну обробку цих пакетів.
 
 
-## Brief History of Offloading: Epoch 1
+## Коротка історія перенесення: епоха 1
 
 <img width="700px" src="/assets/datacenter/6-086-epoch-taxonomy.png">
 
-The first operations that we tried to offload to the NIC are simple, stateless operations. These stateless operations can be done independently per packet, and the NIC doesn't have to remember any state across multiple packets.
+Першими операціями, які ми намагалися перенести на мережеву карту, були прості операції без збереження стану (stateless). Ці операції можна виконувати незалежно для кожного пакета, і мережевій карті не треба пам'ятати жодного стану між кількома пакетами.
 
-One stateless operation we can offload is checksum computations, not just at Layer 2, but also at Layers 3 and 4. The NIC can validate these checksums (for incoming packets) and compute these checksums (for outgoing packets), so that the CPU doesn't have to.
+Одна операція без стану, яку можна перенести, — обчислення контрольних сум, не лише на рівні 2, а й на рівнях 3 і 4. Мережева карта може перевіряти ці контрольні суми (для вхідних пакетів) і обчислювати їх (для вихідних), щоб процесору не доводилося цього робити.
 
-Another stateless operation we can offload is segmentation. In our standard model, if the application has a huge file to send, then the OS is responsible for splitting up the file into smaller packets. Then, at the recipient, the OS is responsible for reassembling those packets. As an optimization, we can make the NIC deal with splitting up and reassembling packets. Now, the OS no longer has to deal with a ton of small packets, and can instead deal with a few large packets, which is more efficient (e.g. fewer headers to process).
+Ще одна операція без стану, яку можна перенести, — сегментація. У нашій стандартній моделі, якщо застосунку треба надіслати величезний файл, ОС відповідає за розбиття файлу на менші пакети. Потім на боці отримувача ОС відповідає за повторне збирання цих пакетів. Як оптимізацію, ми можемо змусити мережеву карту займатися розбиттям і повторним збиранням пакетів. Тепер ОС більше не мусить мати справу з купою дрібних пакетів, а може натомість мати справу з кількома великими, що ефективніше (наприклад, менше заголовків для обробки).
 
 <img width="900px" src="/assets/datacenter/6-087-reassemble.png">
 
-With segmentation, there's a trade-off between smooth connections and CPU efficiency. If the application hands large packets to the NIC, the CPU has less work to do. However, the NIC now gets large bursts of data, and the connection is more bursty. By contrast, if the application hands smaller packets to the NIC, the CPU has more work to do, but the NIC gets a steadier stream of data, and the resulting connection is smoother.
+Із сегментацією є компроміс між рівномірністю з'єднань і ефективністю процесора. Якщо застосунок передає мережевій карті великі пакети, процесор має менше роботи. Однак мережева карта тепер отримує великі сплески даних, і з'єднання стає більш пульсуючим. Натомість якщо застосунок передає мережевій карті менші пакети, процесор має більше роботи, але мережева карта отримує рівномірніший потік даних, і отримане з'єднання рівномірніше.
 
-There are some challenges associated with aggregating small packets. What if an intermediate packet is lost? Then the NIC might have to pass up a bunch of small packets, and is unable to combine them into one big packet. What if some packets have a flag (e.g. ECN for congestion) set, and others don't? Should the resulting aggregated packet have the flag set or not?
+З агрегацією дрібних пакетів пов'язані певні труднощі. Що, як проміжний пакет втрачено? Тоді мережевій карті, можливо, доведеться передати нагору купу дрібних пакетів, і вона не зможе об'єднати їх в один великий пакет. Що, як деякі пакети мають встановлений прапорець (наприклад, ECN для перевантаження), а інші — ні? Чи має отриманий агрегований пакет мати встановлений прапорець?
 
-The third stateless operation we'll look at offloading is multi-queue support. In our standard model, the NIC has one queue for outgoing packets, and one queue for incoming packets, and all applications share these queues. The network driver (in software) was responsible for load balancing, in case multiple applications or multiple CPUs were sending and receiving data.
+Третя операція без стану, перенесення якої ми розглянемо, — підтримка кількох черг. У нашій стандартній моделі мережева карта має одну чергу для вихідних пакетів і одну для вхідних, і всі застосунки ділять ці черги. Мережевий драйвер (програмний) відповідав за балансування навантаження на випадок, якщо дані надсилали й отримували кілька застосунків чи кілька процесорів.
 
-We can instead offload this load balancing job to the NIC. Now, the NIC has multiple transmit queues, and multiple receive queues. For example, in a multi-processor system, each CPU can have its own dedicated transmit/receive queues. The NIC maintains all the queues in parallel, ensuring isolation and load-balancing between the different CPUs. The NIC can also prioritize certain queues over others.
+Натомість ми можемо перенести це завдання балансування навантаження на мережеву карту. Тепер мережева карта має кілька черг передавання й кілька черг приймання. Наприклад, у багатопроцесорній системі кожен процесор може мати власні виділені черги передавання/приймання. Мережева карта паралельно підтримує всі черги, забезпечуючи ізоляцію й балансування навантаження між різними процесорами. Мережева карта також може пріоритезувати одні черги над іншими.
 
-Even though the NIC has multiple queues, it ultimately still has to send out all the packets along one wire. Therefore, the NIC needs some packet scheduler to decide which queue to send from next. The scheduler can be programmed to achieve the desired load-balancing behavior (e.g. if we want to prioritize one queue over another).
+Хоча мережева карта має кілька черг, зрештою вона однаково мусить надсилати всі пакети одним дротом. Тому мережевій карті потрібен певний планувальник пакетів, щоб вирішувати, з якої черги надсилати далі. Планувальник можна запрограмувати, щоб досягти бажаної поведінки балансування навантаження (наприклад, якщо ми хочемо пріоритезувати одну чергу над іншою).
 
 <img width="400px" src="/assets/datacenter/6-088-multiqueue.png">
 
-One challenge with multiple queues is mapping packets to queues. When a CPU has some data to send, which queue does it use? In particular, we want to make sure that all the packets within a single flow end up in the same queue (and not spread out across many queues). This helps us ensure that packets in a flow are sent in-order. Recall that in TCP, sending packets out-of-order works, but is bad for performance (e.g. receiver has to buffer out-of-order packets).
+Одна з труднощів кількох черг — відображення пакетів на черги. Коли процесор має дані для надсилання, яку чергу він використовує? Зокрема, ми хочемо переконатися, що всі пакети одного потоку потрапляють у ту саму чергу (а не розподіляються по багатьох чергах). Це допомагає гарантувати, що пакети потоку надсилаються по порядку. Пригадайте, що в TCP надсилання пакетів не по порядку працює, але погано для продуктивності (наприклад, отримувач має буферизувати пакети, що надійшли не по порядку).
 
-When processing incoming packets from the various receive queues, the NIC can hash the packet to decide which CPU will handle that incoming packet. Then, the NIC interrupts that CPU and tells it to process the packet. The hash-based behavior is similar to ECMP (Equal-Cost Multi-Path Routing), and helps us ensure that all packets in the same flow are processed in order by the same CPU.
+Обробляючи вхідні пакети з різних черг приймання, мережева карта може гешувати пакет, щоб вирішити, який процесор оброблятиме цей вхідний пакет. Потім мережева карта перериває цей процесор і каже йому обробити пакет. Поведінка на основі гешування схожа на ECMP (маршрутизацію за кількома шляхами однакової вартості) і допомагає гарантувати, що всі пакети того самого потоку обробляються по порядку тим самим процесором.
 
 
-## Brief History of Offloading: Epoch 2
+## Коротка історія перенесення: епоха 2
 
-Later, we started to offload more complicated, stateful operations to the NIC.
+Пізніше на мережеву карту почали переносити складніші операції зі збереженням стану (stateful).
 
-The development of Epoch 2 has been driven by virtualization in datacenters, where multiple virtual machines run on the same physical server. For example, in virtualization, we needed a virtual switch to forward incoming packets to the appropriate VM. We showed the virtual switch running in software, but the virtual switch could also be implemented in hardware.
+Розробку епохи 2 рухала віртуалізація в дата-центрах, де на тому самому фізичному сервері працює кілька віртуальних машин. Наприклад, у віртуалізації нам потрібен був віртуальний комутатор, щоб пересилати вхідні пакети відповідній ВМ. Ми показували віртуальний комутатор, що працює програмно, але віртуальний комутатор можна реалізувати й апаратно.
 
-Firewalls and bandwidth management are another example of a stateful offload. In software, we can implement a firewall that enforces security policies (e.g. drop all incoming packets from this malicious IP). We can also enforce policies to manage bandwidth between users (e.g. User A can only send 100 packets per minute, any excess is dropped). These security policies could be checked by hardware instead.
+Брандмауери й керування пропускною здатністю — ще один приклад перенесення операцій зі станом. Програмно можна реалізувати брандмауер, що застосовує політики безпеки (наприклад, відкидати всі вхідні пакети з цієї зловмисної IP-адреси). Ми також можемо застосовувати політики керування пропускною здатністю між користувачами (наприклад, користувач A може надсилати лише 100 пакетів на хвилину, а надлишок відкидається). Ці політики безпеки натомість може перевіряти апаратне забезпечення.
 
-To implement these stateful operations, we can use a match-action pair table, similar to the OpenFlow tables (from the SDN section). This API allows the software to program different policies onto the hardware, so that the hardware can process packets according to those policies. As we saw earlier, the match could be against a 5-tuple or some other header fields. The actions could be dropping packets, forwarding packets to a specific next-hop, or modifying headers.
+Щоб реалізувати ці операції зі станом, можна використати таблицю пар «зіставлення–дія», схожу на таблиці OpenFlow (з розділу про SDN). Цей API дає програмному забезпеченню змогу програмувати різні політики на апаратне забезпечення, щоб воно обробляло пакети відповідно до цих політик. Як ми бачили раніше, зіставлення може бути за п'ятіркою чи якимись іншими полями заголовка. Діями можуть бути відкидання пакетів, пересилання пакетів конкретному наступному переходу чи зміна заголовків.
 
 <img width="600px" src="/assets/datacenter/6-089-flowtable.png">
 
 
-## Brief History of Offloading: Epoch 3
+## Коротка історія перенесення: епоха 3
 
-This is the current era of offloading. There are ongoing efforts to offload entire protocols, like TCP, out of the OS and onto the NIC. This epoch is being driven by even higher performance demands, especially with applications like AI/ML (artificial intelligence, machine learning) with high performance requirements.
+Це поточна ера перенесення. Тривають зусилля з перенесення цілих протоколів, як-от TCP, з ОС на мережеву карту. Цю епоху рухають ще вищі вимоги до продуктивності, особливо із застосунками на кшталт AI/ML (штучного інтелекту, машинного навчання) з високими вимогами до продуктивності.
 
 <img width="900px" src="/assets/datacenter/6-090-epoch3.png">
 
-Ideally, we'd like to let the application directly hand data to hardware, and let the hardware perform all the necessary network processing at Layers 4, 3, 2, and 1. The OS is entirely out of the picture, and all the network protocols are implemented directly in hardware.
+В ідеалі ми хотіли б дати застосунку змогу безпосередньо передавати дані апаратному забезпеченню, а апаратному забезпеченню — виконувати всю потрібну мережеву обробку на рівнях 4, 3, 2 і 1. ОС повністю виключено з картини, а всі мережеві протоколи реалізовано безпосередньо апаратно.
 
-While there's been some experimentation with offloading standard networking protocols like TCP onto the NIC, they haven't been deployed at scale. Instead, we've designed new networking protocols like RDMA, which are specially designed to allow implementation directly in hardware.
+Хоча були певні експерименти з перенесенням стандартних мережевих протоколів, як-от TCP, на мережеву карту, у масштабі їх не розгорнули. Натомість ми спроєктували нові мережеві протоколи, як-от RDMA, спеціально призначені для реалізації безпосередньо в апаратному забезпеченні.
 
 
 
-## RDMA: Remote Direct Memory Access
+## RDMA: віддалений прямий доступ до пам'яті
 
-RDMA offers an abstraction where Server A can directly access the memory in Server B, without the involvement of the OS or the CPU in either server. RDMA can be implemented directly in hardware, replacing the standard TCP/IP software networking stack.
+RDMA (Remote Direct Memory Access, віддалений прямий доступ до пам'яті) пропонує абстракцію, за якої сервер A може безпосередньо отримувати доступ до пам'яті сервера B без участі ОС чи процесора на жодному із серверів. RDMA можна реалізувати безпосередньо апаратно, замінивши стандартний програмний мережевий стек TCP/IP.
 
-Suppose that Server A wants to send a 10 GB file to Server B. In the standard networking stack, the CPU reads the file from memory, processes it (e.g. TCP/IP), and passes the resulting packets to the NIC. At the recipient, the NIC passes the packets to the CPU, which processes the packets, and writes the resulting file payload into memory. Notice that the CPU is involved in processing every single packet of the 10 GB file.
+Припустімо, сервер A хоче надіслати серверу B файл на 10 ГБ. У стандартному мережевому стеку процесор читає файл із пам'яті, обробляє його (наприклад, TCP/IP) і передає отримані пакети мережевій карті. На боці отримувача мережева карта передає пакети процесору, який обробляє пакети й записує отримане корисне навантаження файлу в пам'ять. Зверніть увагу, що процесор бере участь в обробці кожного окремого пакета файлу на 10 ГБ.
 
 <img width="800px" src="/assets/datacenter/6-091-pre-rdma.png">
 
-In the RDMA abstraction, the NIC reads the file from memory and sends it out, with no CPU involvement. At the recipient, the NIC processes the incoming bytes and writes them to memory, again with no CPU involvement. Note that the CPU is still needed at the beginning to set up the transfer, and at the end to complete the transfer. But the bulk of the 10 GB file transfer is done without the CPU.
+В абстракції RDMA мережева карта читає файл із пам'яті й надсилає його без участі процесора. На боці отримувача мережева карта обробляє вхідні байти й записує їх у пам'ять — знову без участі процесора. Зауважте, що процесор однаково потрібен на початку, щоб налаштувати передавання, і наприкінці, щоб завершити його. Але основна частина передавання файлу на 10 ГБ виконується без процесора.
 
 <img width="800px" src="/assets/datacenter/6-092-post-rdma.png">
 
-To use RDMA, programmers no longer use the socket abstraction. Instead, the main abstraction we use is the **queue pair**. The send work queue has all of the pending jobs where data needs to be transferred from me to somebody else. The receive work queue has all of the pending jobs where I need to receive data from somebody else. A single NIC can have multiple queue pairs, where each offers different service to the programmer. For example, one pair might offer reliable, in-order delivery, while another pair might offer unreliable delivery. A queue pair configured to be reliable and in-order is the closest to a traditional TCP connection.
+Щоб використовувати RDMA, програмісти більше не використовують абстракцію сокета. Натомість основна абстракція, яку ми використовуємо, — **пара черг** (queue pair). Черга робіт надсилання містить усі очікувані завдання, де дані треба передати від мене комусь іншому. Черга робіт приймання містить усі очікувані завдання, де мені треба отримати дані від когось іншого. Одна мережева карта може мати кілька пар черг, кожна з яких пропонує програмістові різне обслуговування. Наприклад, одна пара може пропонувати надійну впорядковану доставку, а інша — ненадійну. Пара черг, налаштована як надійна й упорядкована, найближча до традиційного з'єднання TCP.
 
 <img width="300px" src="/assets/datacenter/6-093-queue1.png">
 
-Each element in the queue is called a **work queue element (WQE)**. A WQE lets the application describe what work needs to be done. In English, the WQE in the receive queue might say, "Take 100 MB starting from address 0xffff1234 on the remote server, and write them to address 0xffff7890 in my local memory." In code, the WQE is a struct that contains these instructions, e.g. a pointer to where we're writing the received data.
+Кожен елемент черги називається **елементом черги робіт** (work queue element, WQE). WQE дає застосунку змогу описати, яку роботу треба виконати. Звичайною мовою WQE в черзі приймання може казати: «Візьми 100 МБ, починаючи з адреси 0xffff1234 на віддаленому сервері, і запиши їх за адресою 0xffff7890 у моїй локальній пам'яті». У коді WQE — структура, що містить ці інструкції, наприклад вказівник на місце, куди ми записуємо отримані дані.
 
 <img width="400px" src="/assets/datacenter/6-094-queue2.png">
 
-Notice that the WQE abstraction gives the RDMA protocol a higher-level view of the application. In the TCP/IP stack, the network just sees a bytestream, but in RDMA, the WQE allows the application to describe the job in more detail (e.g. specifying the start and end of a block of data being transferred).
+Зверніть увагу, що абстракція WQE дає протоколу RDMA вищорівневий погляд на застосунок. У стеку TCP/IP мережа бачить лише потік байтів, а в RDMA WQE дає застосунку змогу детальніше описати завдання (наприклад, вказати початок і кінець блоку даних, що передається).
 
-When a job is finished, the WQE is removed from the queue, and the NIC creates a new struct called a **Completion Queue Element (CQE)**, describing what happened to the job (e.g. success or failure). This CQE is stored in the Completion Queue, and sits there waiting until the application is ready to read the CQE and understand what happened to the job.
+Коли завдання завершено, WQE видаляється з черги, а мережева карта створює нову структуру під назвою **елемент черги завершень** (Completion Queue Element, CQE), що описує, що сталося із завданням (наприклад, успіх чи невдача). Цей CQE зберігається в черзі завершень і чекає там, доки застосунок не буде готовий прочитати CQE й зрозуміти, що сталося із завданням.
 
 <img width="300px" src="/assets/datacenter/6-095-queue3.png">
 
-Notice that RDMA is asynchronous. Applications can add jobs (WQEs) to the queue pairs whenever they want, and the NIC will process the jobs in order. Similarly, when the job is done, a CQE is placed in the completion queue, and the application can read the CQE whenever it wants. (Contrast this with the TCP/IP stack, where incoming data triggers an interrupt for the CPU to handle that data.)
+Зверніть увагу, що RDMA асинхронний. Застосунки можуть додавати завдання (WQE) до пар черг коли завгодно, і мережева карта оброблятиме завдання по порядку. Аналогічно, коли завдання виконано, CQE поміщається в чергу завершень, і застосунок може прочитати CQE коли завгодно. (Порівняйте зі стеком TCP/IP, де вхідні дані ініціюють переривання, щоб процесор обробив ці дані.)
 
 
-## RDMA Example
+## Приклад RDMA
 
-RDMA can be used for several different operations between servers. Each operation has its own performance specifications (e.g. different latencies), and different semantics (e.g. different error messages). As an example, let's look at an RDMA send operation, where Server A reads a file from its memory, transfers that data, and Server B writes that file into its memory.
+RDMA можна використовувати для кількох різних операцій між серверами. Кожна операція має власні характеристики продуктивності (наприклад, різну латентність) і різну семантику (наприклад, різні повідомлення про помилки). Як приклад розгляньмо операцію надсилання RDMA, де сервер A читає файл зі своєї пам'яті, передає ці дані, а сервер B записує цей файл у свою пам'ять.
 
-1. Each server designates some section of its memory to be accessible by the NIC for RDMA transfers. Server A designates the memory corresponding to the file as NIC-readable. Server B designates a blank buffer where it will receive the file as NIC-readable.
+1. Кожен сервер позначає певну ділянку своєї пам'яті як доступну мережевій карті для передавань RDMA. Сервер A позначає пам'ять, що відповідає файлу, як доступну для читання мережевою картою. Сервер B позначає порожній буфер, куди він отримає файл, як доступний для читання мережевою картою.
 
     <img width="900px" src="/assets/datacenter/6-096-rdma1.png">
 
-2. Each server sets up queues. Both NICs now have a send queue, a receive queue, and a completion queue. Note that this step can be done out-of-band, using a traditional protocol like TCP to coordinate between the two servers.
+2. Кожен сервер налаштовує черги. Обидві мережеві карти тепер мають чергу надсилання, чергу приймання й чергу завершень. Зауважте, що цей крок можна виконати поза основним каналом (out-of-band), використовуючи традиційний протокол на кшталт TCP для координації між двома серверами.
 
     <img width="900px" src="/assets/datacenter/6-097-rdma2.png">
 
-3. Server A creates a WQE in the send queue. This WQE contains a pointer to the file, indicating the data to be sent. On the other side, Server B creates a WQE in the receive queue. This WQE contains a pointer to the blank buffer, indicating where the received data should be written.
+3. Сервер A створює WQE в черзі надсилання. Цей WQE містить вказівник на файл, що позначає дані для надсилання. З іншого боку сервер B створює WQE в черзі приймання. Цей WQE містить вказівник на порожній буфер, що позначає, куди слід записати отримані дані.
 
     <img width="900px" src="/assets/datacenter/6-098-rdma3.png">
 
     <img width="900px" src="/assets/datacenter/6-099-rdma4.png">
 
-4. Once the transfer is queued on both sides, the data transfer can occur, with no involvement from software. The NIC handles everything, including reliability, congestion control, and so on.
+4. Щойно передавання поставлено в чергу з обох боків, може відбутися передавання даних без жодної участі програмного забезпечення. Мережева карта займається всім, включно з надійністю, керуванням перевантаженням тощо.
 
     <img width="900px" src="/assets/datacenter/6-100-rdma5.png">
 
-5. When the transfer is done, the WQEs are removed from the queues. Both NICs generate a CQE, indicating that the transfer is done, and including any relevant status messages (e.g. error messages). Server A's CQE indicates that the data was successfully sent, and Server B's CQE indicates that the data was successfully received.
+5. Коли передавання завершено, WQE видаляються з черг. Обидві мережеві карти генерують CQE, що вказує, що передавання завершено, і містить будь-які відповідні повідомлення про стан (наприклад, повідомлення про помилки). CQE сервера A вказує, що дані успішно надіслано, а CQE сервера B — що дані успішно отримано.
 
     <img width="900px" src="/assets/datacenter/6-101-rdma6.png">
 
-6. Eventually, the applications read the CQE to understand what happened to the transfer.
+6. Зрештою застосунки читають CQE, щоб зрозуміти, що сталося з передаванням.
 
     <img width="900px" src="/assets/datacenter/6-102-rdma7.png">
 
 
-## RDMA Pros, Cons, Applications
+## Переваги, недоліки та застосування RDMA
 
-RDMA gives us high-performance data transfer (low latency, high bandwidth), and frees up the CPU for applications. However, RDMA doesn't come for free. RDMA requires specialized hardware and software, and is generally more complex than the traditional networking stack. Remember, RDMA is replacing the TCP/IP stack, so it has to implement all the TCP/IP functionality like reliabilty and congestion control, all directly in hardware.
+RDMA дає нам високопродуктивне передавання даних (низька латентність, висока пропускна здатність) і звільняє процесор для застосунків. Однак RDMA не дається задарма. RDMA потребує спеціалізованого апаратного й програмного забезпечення і загалом складніший за традиційний мережевий стек. Пам'ятайте: RDMA замінює стек TCP/IP, тож має реалізовувати всю функціональність TCP/IP, як-от надійність і керування перевантаженням, і все це безпосередньо апаратно.
 
-RDMA also has some limitations, and usually works best in datacenters where the two servers are physically near each other. If the two servers are far away, the dominant delay comes from sending data across the network, and the time savings from RDMA are negligible. By contrast, if the two servers are nearby, the host processing packets could be the dominant delay, so RDMA gives significant time savings.
+RDMA також має певні обмеження й зазвичай найкраще працює в дата-центрах, де два сервери фізично розташовані поруч. Якщо два сервери далеко, основна затримка виникає через надсилання даних мережею, і економія часу від RDMA незначна. Натомість якщо два сервери поруч, основною затримкою може бути обробка пакетів на хості, тож RDMA дає суттєву економію часу.
 
-RDMA has been applied in many different settings that require high-performance, low-latency computing. Examples include scientific research, financial modeling, weather forecasting, machine learning, and search queries. In cloud computing, RDMA can be used to migrate a large VM from one physical server to another, freeing up the CPU for customers to use. In AI/ML training, RDMA not only frees up the CPU and gives us low latency, but it also gives us predictable latency, which is important when different servers need to coordinate to train AI/ML models.
+RDMA застосовують у багатьох різних умовах, що потребують високопродуктивних обчислень із низькою латентністю. Приклади — наукові дослідження, фінансове моделювання, прогнозування погоди, машинне навчання й пошукові запити. У хмарних обчисленнях RDMA можна використовувати, щоб мігрувати велику ВМ з одного фізичного сервера на інший, звільняючи процесор для використання клієнтами. У навчанні AI/ML RDMA не лише звільняє процесор і дає низьку латентність, а й дає передбачувану латентність, що важливо, коли різні сервери мають координуватися для навчання моделей AI/ML.
 
 
-## Implementing RDMA
+## Реалізація RDMA
 
-Remember, RDMA replaces the TCP/IP networking stack, so RDMA is responsible for reliability, congestion control, and so on. There are two broad philosophies for how to implement this.
+Пам'ятайте, RDMA замінює мережевий стек TCP/IP, тож RDMA відповідає за надійність, керування перевантаженням тощо. Є дві загальні філософії того, як це реалізувати.
 
-One option is to implement these features in the network itself, e.g. reliability at the switches. This is the idea behind Nvidia's InfiniBand.
+Один варіант — реалізувати ці функції в самій мережі, наприклад надійність на комутаторах. Це ідея, що лежить в основі InfiniBand від Nvidia.
 
-Another option is to implement these features in the NIC, underneath the queue-pair abstraction. This is the idea currently being pursued at Google.
+Інший варіант — реалізувати ці функції на мережевій карті, під абстракцією пари черг. Цю ідею нині розвиває Google.
 
-In both cases, the application and the OS in software gets the illusion of reliable, in-order delivery via the queue pair abstraction. The difference here is how RDMA actually implements those service guarantees.
+В обох випадках застосунок і ОС у програмному забезпеченні отримують ілюзію надійної впорядкованої доставки через абстракцію пари черг. Різниця в тому, як RDMA насправді реалізує ці гарантії обслуговування.

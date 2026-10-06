@@ -1,94 +1,94 @@
 ---
-title: Transport Layer Principles
-parent: Transport
+title: Принципи транспортного рівня
+parent: Транспортний рівень
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Transport Layer Principles
+# Принципи транспортного рівня
 
-## Reliability Abstraction and Goals
+## Абстракція надійності та цілі
 
-Many applications require reliability. For example, when sending a file over the Internet, we want the recipient to receive the same bytes in the same order as what the sender sent.
+Багато застосунків потребують надійності. Наприклад, надсилаючи файл через Інтернет, ми хочемо, щоб отримувач отримав ті самі байти в тому самому порядку, що й надіслав відправник.
 
-However, Layer 3 only provided unreliable, best-effort packet delivery. Packets can be lost (dropped), corrupted, and reordered (order of packets sent doesn't match order of packets received). Packets can be delayed (e.g. a packet could stuck in a queue waiting to cross a link).
+Однак рівень 3 забезпечував лише ненадійну доставку пакетів без гарантій. Пакети можуть губитися (відкидатися), пошкоджуватися й переупорядковуватися (порядок надісланих пакетів не збігається з порядком отриманих). Пакети можуть затримуватися (наприклад, пакет може застрягнути в черзі, чекаючи проходження каналом).
 
-In rare cases, packets can even be duplicated, where the sender sends one packet but the recipient receives multiple copies of that packet. This usually happens if a router along the path encounters an error of some sort. In practice, this error is very rare.
+У рідкісних випадках пакети можуть навіть дублюватися: відправник надсилає один пакет, а отримувач отримує кілька його копій. Зазвичай це трапляється, якщо маршрутизатор на шляху стикається з якоюсь помилкою. На практиці така помилка дуже рідкісна.
 
-Fun fact: Vern Paxson, UC Berkeley faculty, was one of the first people to discover and report packets being duplicated at the link layer.
+Цікавий факт: Верн Паксон (Vern Paxson), викладач UC Berkeley, був одним із перших, хто виявив дублювання пакетів на канальному рівні й повідомив про нього.
 
-We will use Layer 4 (the transport layer) to bridge this gap by developing protocols that rely on the best-effort packet abstraction supported by the network, and provide a reliable abstraction that application developers can use.
+Ми використаємо рівень 4 (транспортний рівень), щоб подолати цей розрив, розробивши протоколи, які спираються на абстракцію пакетів без гарантій, що її підтримує мережа, і надають надійну абстракцію, якою можуть користуватися розробники застосунків.
 
-For practical reasons (discussed elsewhere), reliability is implemented at the end hosts, not at intermediate routers. Also, reliability is implemented in the operating system for convenience, so that applications don't need to all re-implement their own reliability.
+З практичних причин (обговорених деінде) надійність реалізується на кінцевих хостах, а не на проміжних маршрутизаторах. Крім того, для зручності надійність реалізується в операційній системі, щоб застосункам не доводилося кожному заново реалізовувати власну надійність.
 
 <img width="900px" src="/assets/transport/3-007-reliability-at-end-hosts.png">
 
-We will formalize reliability by defining **at-least-once delivery**. In this model, the destination must receive every packet, without corruption, at least once, but may receive multiple duplicate copies of a packet. The transport layer will use the best-effort delivery to provide at-least-once delivery. Then, using at-least-once delivery, our protocol can remove duplicates and provide exactly-once delivery to the applications.
+Ми формалізуємо надійність, визначивши **доставку щонайменше один раз** (at-least-once delivery). У цій моделі адресат має отримати кожен пакет без пошкоджень щонайменше один раз, але може отримати кілька дублікатів пакета. Транспортний рівень використовуватиме доставку без гарантій, щоб забезпечити доставку щонайменше один раз. Потім, використовуючи доставку щонайменше один раз, наш протокол може прибирати дублікати й забезпечувати застосункам доставку рівно один раз (exactly-once delivery).
 
-Note that reliable delivery does not guarantee that packets will be sent. A computer not connected to the network cannot send data to the destination, no matter what reliability protocol we use. Reliability protocols are allowed to give up and fail to send a packet, but the failure must be reported to the application. The protocol cannot falsely claim to have successfully delivered a packet.
+Зауважте, що надійна доставка не гарантує, що пакети буде надіслано. Комп'ютер, не під'єднаний до мережі, не може надіслати дані адресатові, хоч який протокол надійності ми використовуємо. Протоколам надійності дозволено здатися й не надіслати пакет, але про невдачу треба повідомити застосунок. Протокол не може хибно стверджувати, що успішно доставив пакет.
 
-Our protocol should also be efficient. More specifically, our protocol should deliver data as quickly as possible, and our protocol should minimize bandwidth use and avoid sending packets unnecessarily. For example, we could guarantee that packets arrive by re-sending every packet hundreds of times, but this would violate our requirement of using bandwidth efficiently.
-
-
-## Transport Layer Goals
-
-At the transport layer, our goal is to provide applications with a convenient abstraction that makes developers' lives easier. The transport layer allows application developers to think in terms of connections, instead of individual packets being sent across the network. Ideally, the developers shouldn't need to think about the low-level network details like splitting long data into packets, re-sending dropped packets, timeouts, etc.
-
-Reliability is just one of several goals we might want to achieve at the transport layer.
-
-The transport layer implements **demultiplexing** between different processes at the end host, by introducing port numbers that can be used to associate each flow (connection) with a different process on the end host.
-
-The transport layer also implements flow control and congestion control, which will help limit the rate of packets being sent in order to avoid overloading the receiver and the network, respectively.
+Наш протокол також має бути ефективним. Конкретніше, наш протокол має доставляти дані якомога швидше, мінімізувати використання пропускної здатності й не надсилати пакетів без потреби. Наприклад, ми могли б гарантувати надходження пакетів, повторно надсилаючи кожен пакет сотні разів, але це порушило б нашу вимогу ефективного використання пропускної здатності.
 
 
-## Demultiplexing with Ports
+## Цілі транспортного рівня
 
-Suppose that my personal computer has two applications that are both talking to the same server. When packets arrive at my personal computer, they have the same source IP address (server), and the same destination IP address (my computer). How can I tell which packets are meant for which application?
+На транспортному рівні наша мета — надати застосункам зручну абстракцію, що полегшує життя розробникам. Транспортний рівень дає розробникам застосунків змогу мислити з'єднаннями, а не окремими пакетами, що надсилаються мережею. В ідеалі розробникам не має бути потреби думати про низькорівневі мережеві подробиці, як-от розбиття довгих даних на пакети, повторне надсилання відкинутих пакетів, тайм-аути тощо.
+
+Надійність — лише одна з кількох цілей, яких ми можемо прагнути досягти на транспортному рівні.
+
+Транспортний рівень реалізує **демультиплексування** (demultiplexing) між різними процесами на кінцевому хості, запроваджуючи номери портів, за допомогою яких кожен потік (з'єднання) можна пов'язати з окремим процесом на кінцевому хості.
+
+Транспортний рівень також реалізує керування потоком і керування перевантаженням, які допомагають обмежувати швидкість надсилання пакетів, щоб не перевантажити отримувача та мережу відповідно.
+
+
+## Демультиплексування за допомогою портів
+
+Припустімо, на моєму персональному комп'ютері є два застосунки, що обидва спілкуються з тим самим сервером. Коли пакети надходять на мій комп'ютер, вони мають ту саму IP-адресу джерела (сервер) і ту саму IP-адресу призначення (мій комп'ютер). Як визначити, які пакети призначені якому застосунку?
 
 <img width="900px" src="/assets/transport/3-001-demultiplex.png">
 
-In order to distinguish, or **demultiplex**, which packets are meant for which application, the transport layer header includes an additional **port number**, which can be used to identify a specific application on an end host.
+Щоб розрізняти, або **демультиплексувати**, які пакети призначені якому застосунку, заголовок транспортного рівня містить додатковий **номер порту** (port number), за допомогою якого можна ідентифікувати конкретний застосунок на кінцевому хості.
 
 <img width="900px" src="/assets/transport/3-002-ports.png">
 
-When the transport layer receives a packet, it can use the port number to decide which higher-layer application the payload should be sent to. Because the transport layer is implemented in the operating system, these ports (sometimes called **logical ports**) are the attachment point where the application connects to the operating system's network stack. The application knows its own port number, and the operating system knows the port numbers for all the applications, and the matching number is how data is unambiguously transferred between the application and operating system (without getting mixed up with data from other applications).
+Коли транспортний рівень отримує пакет, він може за номером порту вирішити, якому застосунку вищого рівня слід передати корисне навантаження. Оскільки транспортний рівень реалізовано в операційній системі, ці порти (іноді їх називають **логічними портами**, logical ports) є точкою під'єднання, де застосунок під'єднується до мережевого стеку операційної системи. Застосунок знає власний номер порту, а операційна система знає номери портів усіх застосунків, і саме збіг номерів дає змогу однозначно передавати дані між застосунком і операційною системою (не плутаючи їх із даними інших застосунків).
 
 <img width="800px" src="/assets/transport/3-003-port-attachment.png">
 
-Port numbers are 16 bits long. The modern Internet commonly uses the client-server design, where clients access services, and servers provide those services. Servers usually listen for requests on well-known ports (port numbers 0-1023). Clients know these ports and can access them to request services. For example, application-level protocols with well-known port numbers include HTTP (port 80) and SSH (port 22).
+Номери портів мають довжину 16 бітів. Сучасний Інтернет зазвичай використовує модель «клієнт–сервер», де клієнти звертаються до сервісів, а сервери надають ці сервіси. Сервери зазвичай слухають запити на загальновідомих портах (well-known ports; номери портів 0–1023). Клієнти знають ці порти й можуть звертатися до них, щоб запитувати сервіси. Наприклад, прикладні протоколи із загальновідомими номерами портів — HTTP (порт 80) і SSH (порт 22).
 
-By contrast, clients can select their own random port numbers (usually port numbers 1024-65535). These port numbers can be randomly-chosen, since the client is the one initiating the connection, and nobody is relying on the client having a fixed port number (the client isn't providing services). Client port numbers are **ephemeral** (temporary), because the port number can be abandoned after the connection is over, and does not need to be permanent.
+Натомість клієнти можуть обирати власні випадкові номери портів (зазвичай номери портів 1024–65535). Ці номери портів можна обирати випадково, бо саме клієнт ініціює з'єднання, і ніхто не розраховує на те, що клієнт має фіксований номер порту (клієнт не надає сервісів). Номери портів клієнтів **ефемерні** (ephemeral, тимчасові), бо номер порту можна покинути після завершення з'єднання, і він не мусить бути постійним.
 
 
-## Bytestream Abstraction
+## Абстракція потоку байтів
 
-Implementing reliability at the transport layer means that the application developer no longer needs to think in terms of individual limited-size packets being sent across the network. Instead, the developer can think in terms of a **reliable in-order bytestream**. The sender has a stream of bytes with no length limit, and provides this stream to the transport layer. Then, the recipient receives the exact same stream of bytes, in the same order, with no bytes lost. You can think of a bytestream as a pipe, where the sender inserts bytes, one by one, into the pipe, and those same bytes appear, one by one, on the recipient's end of the pipe. The sender and recipient don't need to think about re-sending lost packets or packets arriving out of order, because the transport layer protocol will implement that for the developer.
+Реалізація надійності на транспортному рівні означає, що розробникові застосунку більше не потрібно мислити окремими пакетами обмеженого розміру, що надсилаються мережею. Натомість розробник може мислити **надійним упорядкованим потоком байтів** (reliable in-order bytestream). Відправник має потік байтів без обмеження довжини й передає цей потік транспортному рівню. Потім отримувач отримує точнісінько той самий потік байтів у тому самому порядку, без жодного втраченого байта. Потік байтів можна уявляти як трубу, в яку відправник вставляє байти один за одним, а ті самі байти один за одним з'являються на кінці труби в отримувача. Відправникові й отримувачу не потрібно думати про повторне надсилання втрачених пакетів чи пакети, що надходять не по порядку, бо протокол транспортного рівня реалізує це за розробника.
 
 <img width="900px" src="/assets/transport/3-004-bytestream.png">
 
 
-## UDP and Datagrams
+## UDP і датаграми
 
-Sometimes, applications don't need reliability. For example, consider a sensor that reads the water pressure in your home. The sensor sends a reading (small, fixed-size message with the time and water pressure) to the utility company every minute. This system might not need packets to arrive in order (e.g. if the readings already include timestamps), and might not need the ability to split long messages into packets (every reading is small). The system might not even need reliability, as long as most of the readings arrive at the utility company.
+Іноді застосункам не потрібна надійність. Наприклад, розгляньте датчик, що зчитує тиск води у вашому домі. Датчик щохвилини надсилає комунальній компанії показання (невелике повідомлення фіксованого розміру з часом і тиском води). Такій системі може бути не потрібно, щоб пакети надходили по порядку (наприклад, якщо показання вже містять позначки часу), і може бути не потрібна можливість розбивати довгі повідомлення на пакети (кожне показання невелике). Системі може навіть не знадобитися надійність, якщо більшість показань доходить до комунальної компанії.
 
-Applications that don't need reliability can use **UDP** (User Datagram Protocol) instead of TCP at the transport layer. UDP does not provide reliability guarantees. If the application needs a packet to arrive, the application must handle re-sending packets on its own (the transport layer will not re-send packets). Messages in UDP are limited to a single packet. If the application wants to send larger messages, the application is responsible for breaking up and reassembling those messages. Note that UDP still implements the notion of ports for demultiplexing, though.
+Застосунки, яким не потрібна надійність, можуть використовувати на транспортному рівні **UDP** (User Datagram Protocol, протокол датаграм користувача) замість TCP. UDP не надає гарантій надійності. Якщо застосункові потрібно, щоб пакет дійшов, застосунок має сам повторно надсилати пакети (транспортний рівень повторно надсилати пакети не буде). Повідомлення в UDP обмежені одним пакетом. Якщо застосунок хоче надсилати більші повідомлення, він сам відповідає за розбиття й повторне збирання цих повідомлень. Утім, зауважте, що UDP однаково реалізує поняття портів для демультиплексування.
 
 <img width="900px" src="/assets/transport/3-005-datagram.png">
 
-At the transport layer, you can choose to use either UDP and TCP depending on your needs, but you can't choose to use both. UDP and TCP are the standard transport layer protocols in the modern Internet.
+На транспортному рівні ви можете обрати UDP або TCP залежно від своїх потреб, але не можете обрати обидва. UDP і TCP — стандартні протоколи транспортного рівня в сучасному Інтернеті.
 
 <img width="300px" src="/assets/transport/3-006-tcp-features.png">
 
-## Other Reliability Designs
+## Інші підходи до надійності
 
-TCP was initially implemented by Vint Cerf and Bob Kahn, while they were students at UCLA. They have since been given the Turing Award, Presidential Medal of Freedom, etc. for their work. It's pretty remarkable that the initial TCP design is pretty similar to what is used in practice today, and has stood the test of time. The core ideas of TCP are quite simple, and the design is quite elegant (though not perfect). However, the implementation can be tricky to get right, and the stakes are high, since almost the entire modern Internet runs on TCP.
+TCP спочатку реалізували Вінт Серф (Vint Cerf) і Боб Кан (Bob Kahn), коли були студентами UCLA. Відтоді за свою роботу вони отримали премію Тюрінга, Президентську медаль Свободи тощо. Досить дивовижно, що початковий дизайн TCP доволі схожий на той, що використовується на практиці сьогодні, і витримав перевірку часом. Ключові ідеї TCP досить прості, а дизайн доволі елегантний (хоча й не ідеальний). Однак правильно реалізувати його може бути непросто, а ставки високі, бо майже весь сучасний Інтернет працює на TCP.
 
-Since its initial creation, many individual pieces of TCP have evolved (e.g. better algorithms for estimating timers, smarter acknowledgements, smarter ISN selection, congestion control), but the core architectural decisions and abstractions (connection-oriented bytestreams, windows) have remained the same.
+Від початкового створення багато окремих частин TCP еволюціонували (наприклад, кращі алгоритми оцінювання таймерів, розумніші підтвердження, розумніший вибір ISN, керування перевантаженням), але ключові архітектурні рішення та абстракції (орієнтовані на з'єднання потоки байтів, вікна) залишилися незмінними.
 
-TCP is the standard reliability protocol on the Internet, but other fundamentally different approaches exist.
+TCP — стандартний протокол надійності в Інтернеті, але існують і принципово інші підходи.
 
-For example, the sender could exploit the idea of redundancy (as seen in error-correcting codes or RAID) to send data more reliably. Instead of sending the user data as-is, the sender encodes the data into more packets with redundancy intentionally built into each packet. For example, the user might have 10 packets, and an algorithm might encode that data into 20 packets. The algorithm might guarantee that as long as any 15 of the 20 packets are received, then the original 10 packets of data can be reconstructed.
+Наприклад, відправник може використати ідею надлишковості (як у кодах із виправленням помилок чи RAID), щоб надсилати дані надійніше. Замість надсилати дані користувача як є, відправник кодує дані в більшу кількість пакетів із навмисно закладеною в кожен пакет надлишковістю. Наприклад, у користувача може бути 10 пакетів, а алгоритм може закодувати ці дані в 20 пакетів. Алгоритм може гарантувати, що якщо отримано будь-які 15 із 20 пакетів, то початкові 10 пакетів даних можна відновити.
 
-More formally, an encoding algorithm might take k packets, encode them as n packets (where n is greater than k), such that the original k packets can be recovered as long as any k' of the packets are received (where k' is greater than k but less than n).
+Формальніше, алгоритм кодування може взяти k пакетів і закодувати їх у n пакетів (де n більше за k) так, що початкові k пакетів можна відновити, якщо отримано будь-які k' пакетів (де k' більше за k, але менше за n).
 
-Coding schemes are a deep topic with many algorithms (e.g. fountain codes, raptor codes), though we will not discuss them any further. They can be seen in practice in video streaming platforms.
+Схеми кодування — глибока тема з багатьма алгоритмами (наприклад, фонтанні коди, raptor-коди), але ми не обговорюватимемо їх далі. На практиці їх можна побачити на платформах потокового відео.

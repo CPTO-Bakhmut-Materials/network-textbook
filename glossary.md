@@ -1,413 +1,412 @@
 ---
-title: Glossary
+title: Глосарій
 nav_order: 9
 ---
 
-# Glossary
+# Глосарій
 
-This glossary is adapted from [past offerings of CS 168](https://sp24.cs168.io/glossary).
+Цей глосарій адаптовано з [попередніх версій курсу CS 168](https://sp24.cs168.io/glossary). Терміни наведено англійською (в алфавітному порядку) разом з українським відповідником.
 
 <table>
         <thead>
-          <th>Term</th>
-          <th>Definition</th>
+          <th>Термін</th>
+          <th>Визначення</th>
         </thead>
         <tbody><tr>
-            <td>ACK</td>
-            <td align="left"><p>TCP packet with ACK flag set, that indicates data has been received.</p>
+            <td>ACK<br><em>підтвердження</em></td>
+            <td align="left"><p>Пакет TCP із встановленим прапорцем ACK, що вказує, що дані отримано.</p>
 </td>
           </tr><tr>
             <td>ARP</td>
-            <td align="left"><p>Address Resolution Protocol. The protocol that allows devices to map MAC addresses to IP addresses. A device will send out (broadcast) an ARP <strong>Request</strong> message, to find out the MAC address corresponding to the IP Address. The device that is being queried will respond (unicast) with an ARP <strong>Response</strong> message. Mappings between MAC addresses and IP addresses are stored in the ARP table, which serves as a cache. Entries in the ARP table will time out (soft state).</p>
+            <td align="left"><p>Address Resolution Protocol, протокол розв'язання адрес. Протокол, що дає пристроям змогу відображати MAC-адреси на IP-адреси. Пристрій розсилає (широкомовно) повідомлення-<strong>запит</strong> (Request) ARP, щоб дізнатися MAC-адресу, що відповідає IP-адресі. Пристрій, якого запитують, відповідає (одноадресно) повідомленням-<strong>відповіддю</strong> (Response) ARP. Відображення між MAC-адресами та IP-адресами зберігаються в таблиці ARP, яка слугує кешем. Термін дії записів у таблиці ARP спливає (м'який стан).</p>
 </td>
           </tr><tr>
-            <td>Autonomous System</td>
-            <td align="left"><p>A network or set of networks that are all managed and supervised by a single entity or organization. A single ISP is often a single AS; however, some ISPs partition their network into multiple ASes. Each AS is assigned a number, which is used in BGP to identify paths.</p>
+            <td>Autonomous System<br><em>автономна система</em></td>
+            <td align="left"><p>Мережа чи набір мереж, якими керує й наглядає одна сутність чи організація. Один провайдер часто є однією AS; однак деякі провайдери поділяють свою мережу на кілька AS. Кожній AS призначається номер, який використовується в BGP для ідентифікації шляхів.</p>
 </td>
           </tr><tr>
             <td>AXE</td>
-            <td align="left"><p>A proposed alternative to STP, where loops are prevented without the need for a spanning tree (by using duplicate suppression instead). Source of some of the finest poetry the world has ever seen.</p>
+            <td align="left"><p>Запропонована альтернатива STP, де петлям запобігають без потреби в кістяковому дереві (натомість використовуючи придушення дублікатів). Джерело однієї з найвишуканіших поезій, які коли-небудь бачив світ.</p>
 </td>
           </tr><tr>
-            <td>Bad things that can happen to packets</td>
-            <td align="left"><p>Lost, corrupted, reordered, delayed, duplicated.</p>
+            <td>Bad things that can happen to packets<br><em>погані речі, що можуть статися з пакетами</em></td>
+            <td align="left"><p>Втрата, пошкодження, переупорядкування, затримка, дублювання.</p>
 </td>
           </tr><tr>
-            <td>Bandwidth-Delay Product</td>
-            <td align="left"><p>This is the quantity (bandwidth)*(propagation delay) which represents the number of bits needed to “fill the pipe” (i.e., the number of bits that would have been sent but not yet received if the sender was sending at the bandwidth of the link).</p>
+            <td>Bandwidth-Delay Product<br><em>добуток пропускної здатності на затримку</em></td>
+            <td align="left"><p>Величина (пропускна здатність)*(затримка поширення), що відповідає кількості бітів, потрібних, щоб «заповнити трубу» (тобто кількості бітів, які було б надіслано, але ще не отримано, якби відправник надсилав зі швидкістю, що дорівнює пропускній здатності каналу).</p>
 </td>
           </tr><tr>
-            <td>Bellman Ford Equation</td>
-            <td align="left"><p>Equation that says your shortest distance to a destination is the minimum of your cost to a neighbour plus that neighbour’s distance to the link, for all neighbours. Or, more concretely, Node u’s cost to a given destination v is then: d(u,v) = min(nbrs w) [c(u,w) + d(w,v)]</p>
+            <td>Bellman Ford Equation<br><em>рівняння Беллмана–Форда</em></td>
+            <td align="left"><p>Рівняння, яке каже, що ваша найкоротша відстань до пункту призначення — мінімум (за всіма сусідами) суми вашої вартості до сусіда й відстані цього сусіда до каналу. Або конкретніше, вартість вершини u до певного пункту призначення v тоді така: d(u,v) = min(nbrs w) [c(u,w) + d(w,v)]</p>
 </td>
           </tr><tr>
-            <td>Best Effort</td>
-            <td align="left"><p>On-demand delivery where the system provides no performance guarantees other than the system will try its best.</p>
+            <td>Best Effort<br><em>без гарантій</em></td>
+            <td align="left"><p>Доставка на вимогу, за якої система не надає жодних гарантій продуктивності, окрім того, що система зробить усе можливе.</p>
 </td>
           </tr><tr>
-            <td>Border Router</td>
-            <td align="left"><p>Routers that are connected to routers in another network.</p>
+            <td>Border Router<br><em>прикордонний маршрутизатор</em></td>
+            <td align="left"><p>Маршрутизатори, під'єднані до маршрутизаторів в іншій мережі.</p>
 </td>
           </tr><tr>
-            <td>Checksum</td>
-            <td align="left"><p>This is used to detect corruption, and is a number computed over some portion of the packet (which depends on which protocol).</p>
+            <td>Checksum<br><em>контрольна сума</em></td>
+            <td align="left"><p>Використовується для виявлення пошкоджень; це число, обчислене за певною частиною пакета (яка саме — залежить від протоколу).</p>
 </td>
           </tr><tr>
             <td>CIDR</td>
-            <td align="left"><p>Short for Classless Interdomain Routing. Couples IP address with a network mask to determine which bits are the network bits. Far more flexible than the original IP addressing scheme, or classful addressing.</p>
+            <td align="left"><p>Скорочення від Classless Interdomain Routing (безкласова міждоменна маршрутизація). Поєднує IP-адресу з маскою мережі, щоб визначити, які біти є бітами мережі. Набагато гнучкіша за початкову схему IP-адресації чи класову адресацію.</p>
 </td>
           </tr><tr>
-            <td>Circuit Switching</td>
-            <td align="left"><p>Method of data transfer in which an end system reserves BW along a path - sets up a circuit - for communication. No need for packets.</p>
+            <td>Circuit Switching<br><em>комутація каналів</em></td>
+            <td align="left"><p>Метод передавання даних, за якого кінцева система резервує пропускну здатність уздовж шляху — встановлює канал (circuit) — для спілкування. Пакети не потрібні.</p>
 </td>
           </tr><tr>
-            <td>Classful Addressing</td>
-            <td align="left"><p>A scheme for determining the network and host bits of an IP address. There are three classes (that we deal with): <strong>Class A</strong> addresses start with 0, and use the first 8 bits to identify the network. The last 24 bits identify the host. <strong>Class B</strong> addresses start with 10, and use the first 16 bits to identify the network. The last 16 bits identify the host. <strong>Class C</strong> addresses start with 110, and use the first 24 bits to identify the network. The last 8 bits identify the host.”</p>
+            <td>Classful Addressing<br><em>класова адресація</em></td>
+            <td align="left"><p>Схема визначення бітів мережі й бітів хоста IP-адреси. Є три класи (з якими ми маємо справу): адреси <strong>класу A</strong> починаються з 0 і використовують перші 8 бітів для ідентифікації мережі. Останні 24 біти ідентифікують хост. Адреси <strong>класу B</strong> починаються з 10 і використовують перші 16 бітів для ідентифікації мережі. Останні 16 бітів ідентифікують хост. Адреси <strong>класу C</strong> починаються з 110 і використовують перші 24 біти для ідентифікації мережі. Останні 8 бітів ідентифікують хост.»</p>
 </td>
           </tr><tr>
-            <td>Control Plane</td>
-            <td align="left"><p>This refers to the network mechanisms used to compute routing tables and other forwarding information.</p>
+            <td>Control Plane<br><em>площина керування</em></td>
+            <td align="left"><p>Мережеві механізми, що використовуються для обчислення таблиць маршрутизації та іншої інформації для пересилання.</p>
 </td>
           </tr><tr>
-            <td>Convergence</td>
-            <td align="left"><p>We say that an algorithm has converged once all parties have up-to-date information and, barring a change in the topology of the network, all subsequent “updates” sent and received don’t affect the routing state.</p>
+            <td>Convergence<br><em>збіжність</em></td>
+            <td align="left"><p>Кажуть, що алгоритм збігся, коли всі сторони мають актуальну інформацію і, за відсутності змін топології мережі, усі подальші надіслані й отримані «оновлення» не впливають на стан маршрутизації.</p>
 </td>
           </tr><tr>
-            <td>Core/Backbone Router</td>
-            <td align="left"><p>Routers that are connected to other internal routers.</p>
+            <td>Core/Backbone Router<br><em>маршрутизатор ядра / магістральний маршрутизатор</em></td>
+            <td align="left"><p>Маршрутизатори, під'єднані до інших внутрішніх маршрутизаторів.</p>
 </td>
           </tr><tr>
-            <td>Cost Table</td>
-            <td align="left"><p>Data structure on routers that contains the set of costs to all neighbors.</p>
+            <td>Cost Table<br><em>таблиця вартостей</em></td>
+            <td align="left"><p>Структура даних на маршрутизаторах, що містить набір вартостей до всіх сусідів.</p>
 </td>
           </tr><tr>
-            <td>Count-to-Infinity Problem</td>
-            <td align="left"><p>The name for a certain type of routing loop that can occur due to the asynchronous nature of information propogation using Distance Vector. Usually caused by a link going down, a router, originally using a broken path to a certain destination, believes their neighbour has a valid path to said destination and adopts this path without knowing that it contains as subset of its original broken path. Both neighbours repeatedly receive updates from each other, adopting this broken path.</p>
+            <td>Count-to-Infinity Problem<br><em>проблема рахунку до нескінченності</em></td>
+            <td align="left"><p>Назва певного типу петлі маршрутизації, що може виникати через асинхронну природу поширення інформації в дистанційно-векторному підході. Зазвичай спричинена виходом каналу з ладу: маршрутизатор, що спочатку використовував зламаний шлях до певного пункту призначення, вважає, що його сусід має коректний шлях до цього пункту призначення, і приймає цей шлях, не знаючи, що той містить як підмножину його початковий зламаний шлях. Обидва сусіди раз у раз отримують оновлення один від одного, приймаючи цей зламаний шлях.</p>
 </td>
           </tr><tr>
-            <td>Cumulative ACK</td>
-            <td align="left"><p>ACK means “I have received all packets (or bytes) up until this one”.</p>
+            <td>Cumulative ACK<br><em>кумулятивне підтвердження</em></td>
+            <td align="left"><p>ACK означає «Я отримав усі пакети (чи байти) до цього».</p>
 </td>
           </tr><tr>
-            <td>Data Plane</td>
-            <td align="left"><p>This refers to the network mechanisms used to forward data.</p>
+            <td>Data Plane<br><em>площина даних</em></td>
+            <td align="left"><p>Мережеві механізми, що використовуються для пересилання даних.</p>
 </td>
           </tr><tr>
-            <td>Datacenters</td>
-            <td align="left"><p>Massive collections of machines.</p>
+            <td>Datacenters<br><em>дата-центри</em></td>
+            <td align="left"><p>Величезні сукупності машин.</p>
 </td>
           </tr><tr>
-            <td>David Clark</td>
-            <td align="left"><p>The unsung hero of the Internet. He was the chief architect and authored the end-to-end principle.</p>
+            <td>David Clark<br><em>Девід Кларк</em></td>
+            <td align="left"><p>Неоспіваний герой Інтернету. Він був головним архітектором і автором наскрізного принципу.</p>
 </td>
           </tr><tr>
-            <td>Dead End</td>
-            <td align="left"><p>When a packet arrives at a router or switch but the forwarding decision does not yield an outgoing port, forcing the packet to be dropped.</p>
+            <td>Dead End<br><em>глухий кут</em></td>
+            <td align="left"><p>Коли пакет надходить до маршрутизатора чи комутатора, але рішення про пересилання не дає вихідного порту, що змушує відкинути пакет.</p>
 </td>
           </tr><tr>
-            <td>Destination-Based Routing</td>
-            <td align="left"><p>Routing that only depends on the destination. Paths from two difference sources to same destination must coincide once they overlap.</p>
+            <td>Destination-Based Routing<br><em>маршрутизація на основі адреси призначення</em></td>
+            <td align="left"><p>Маршрутизація, що залежить лише від пункту призначення. Шляхи від двох різних джерел до того самого пункту призначення мусять збігатися, щойно вони перетнулися.</p>
 </td>
           </tr><tr>
             <td>DHCP</td>
-            <td align="left"><p>Dynamic Host Configuration Protocol. The protocol that provides a host with its IP address upon connecting to a network. When a host connects to a new network, it sends a DHCP <strong>Discovery</strong> message to notify the DHCP server(s) that it needs an IP address. The server sends an <strong>Offer</strong> message, containing an offered IP address, a subnet mask, the IP address of the first-hop router, and a lease time. The host will send a <strong>Request</strong>, corresponding to the offer it would like to accept. The server responds with an <strong>Acknowledgement/Acceptance</strong> message. All DHCP messages are broadcasted.</p>
+            <td align="left"><p>Dynamic Host Configuration Protocol, протокол динамічного налаштування хостів. Протокол, що надає хосту його IP-адресу під час під'єднання до мережі. Коли хост під'єднується до нової мережі, він надсилає повідомлення DHCP <strong>Discovery</strong>, щоб повідомити сервер(и) DHCP, що йому потрібна IP-адреса. Сервер надсилає повідомлення <strong>Offer</strong> (пропозицію), що містить запропоновану IP-адресу, маску підмережі, IP-адресу маршрутизатора першого переходу й термін оренди. Хост надішле <strong>Request</strong> (запит), що відповідає пропозиції, яку він хоче прийняти. Сервер відповідає повідомленням <strong>Acknowledgement/Acceptance</strong> (підтвердження/прийняття). Усі повідомлення DHCP розсилаються широкомовно.</p>
 </td>
           </tr><tr>
-            <td>Distance Vector Routing</td>
-            <td align="left"><p>Distance vector routing is a scalable and distributed routing algorithm in which each router keeps a “vector” of distances as well the next-hop router to each destination. Each node floods its vector shortest distances to its neighbors and upon receiving a vector each router uses Bellman-Ford to update its own vector.</p>
+            <td>Distance Vector Routing<br><em>дистанційно-векторна маршрутизація</em></td>
+            <td align="left"><p>Дистанційно-векторна маршрутизація — масштабований і розподілений алгоритм маршрутизації, у якому кожен маршрутизатор зберігає «вектор» відстаней, а також маршрутизатор наступного переходу до кожного пункту призначення. Кожна вершина лавинно розсилає свій вектор найкоротших відстаней своїм сусідам, а отримавши вектор, кожен маршрутизатор використовує Беллмана–Форда, щоб оновити власний вектор.</p>
 </td>
           </tr><tr>
             <td>DNS</td>
-            <td align="left"><p>Domain Name Service, a system which associates names with addresses and is commonly used to look up the address of a host given a name.</p>
+            <td align="left"><p>Domain Name Service, система, що пов'язує імена з адресами й зазвичай використовується для пошуку адреси хоста за іменем.</p>
 </td>
           </tr><tr>
-            <td>Dotted-quad notation</td>
-            <td align="left"><p>A notation that writes down IPv4 addresses as 4 numbers, one number per byte. For example, 12.34.158.5</p>
+            <td>Dotted-quad notation<br><em>десятковий запис із крапками</em></td>
+            <td align="left"><p>Запис, що подає адреси IPv4 як 4 числа, по одному числу на байт. Наприклад, 12.34.158.5</p>
 </td>
           </tr><tr>
-            <td>Duplicate ACKs</td>
-            <td align="left"><p>A stream of cumulative ACKs that acknowledge the same received data multiple times: a sign of an isolated packet loss, because these additional ACKs show that data is still being received.</p>
+            <td>Duplicate ACKs<br><em>дублікати підтверджень</em></td>
+            <td align="left"><p>Потік кумулятивних підтверджень, що кілька разів підтверджують ті самі отримані дані: ознака поодинокої втрати пакета, бо ці додаткові підтвердження показують, що дані досі отримуються.</p>
 </td>
           </tr><tr>
-            <td>Edge Router</td>
-            <td align="left"><p>Routers to which end hosts are attached.</p>
+            <td>Edge Router<br><em>граничний маршрутизатор</em></td>
+            <td align="left"><p>Маршрутизатори, до яких під'єднано кінцеві хости.</p>
 </td>
           </tr><tr>
-            <td>End to End Principle</td>
-            <td align="left"><p>Helps determine whether or not something should be implemented in the network, or only in the end hosts. This class presented three interpretations: <strong>Only-if-necessary</strong>: If a function can be implemented by the hosts, don’t implement it in the network. <strong>Only-if-sufficient</strong>: Only implement a function at this level if it can be completely implemented at this level and you can relieve burden from the hosts. <strong>Only-if-useful</strong>: Implement a function in the network if it can improve the performance of the funciton without burdening applications that don’t require it.</p>
+            <td>End to End Principle<br><em>наскрізний принцип</em></td>
+            <td align="left"><p>Допомагає визначити, чи слід щось реалізовувати в мережі, чи лише на кінцевих хостах. Цей курс представив три тлумачення: <strong>лише за потреби</strong> (Only-if-necessary): якщо функцію можуть реалізувати хости, не реалізовуйте її в мережі. <strong>Лише за достатності</strong> (Only-if-sufficient): реалізовуйте функцію на цьому рівні, лише якщо її можна повністю реалізувати на цьому рівні й ви можете зняти навантаження з хостів. <strong>Лише за корисності</strong> (Only-if-useful): реалізовуйте функцію в мережі, якщо вона може покращити продуктивність функції, не обтяжуючи застосунків, яким вона не потрібна.</p>
 </td>
           </tr><tr>
-            <td>Enterprises</td>
-            <td align="left"><p>Companies and universities.</p>
+            <td>Enterprises<br><em>підприємства</em></td>
+            <td align="left"><p>Компанії та університети.</p>
 </td>
           </tr><tr>
-            <td>Fate Sharing</td>
-            <td align="left"><p>Store state in the entities that rely on that state, such that that entity will not be affected by other failures.</p>
+            <td>Fate Sharing<br><em>спільна доля</em></td>
+            <td align="left"><p>Зберігати стан у сутностях, що покладаються на цей стан, щоб на цю сутність не впливали інші відмови.</p>
 </td>
           </tr><tr>
-            <td>First-hop router</td>
-            <td align="left"><p>The router that a host sends a packet to when it wants to send that packet to a destination outside its L2 network.</p>
+            <td>First-hop router<br><em>маршрутизатор першого переходу</em></td>
+            <td align="left"><p>Маршрутизатор, якому хост надсилає пакет, коли хоче надіслати цей пакет адресатові поза своєю мережею L2.</p>
 </td>
           </tr><tr>
-            <td>Flooding</td>
-            <td align="left"><p>In this class, we use flooding to refer to the act of sending a packet out all ports (excepting the incoming port) in a single switch.</p>
+            <td>Flooding<br><em>лавинне розсилання</em></td>
+            <td align="left"><p>У цьому курсі лавинним розсиланням ми називаємо надсилання пакета через усі порти (окрім вхідного) одного комутатора.</p>
 </td>
           </tr><tr>
-            <td>Flow</td>
-            <td align="left"><p>A stream of packets between two processes.</p>
+            <td>Flow<br><em>потік</em></td>
+            <td align="left"><p>Послідовність пакетів між двома процесами.</p>
 </td>
           </tr><tr>
-            <td>Forwarding</td>
-            <td align="left"><p>Sending a packet towards its destination. This is done by reading the address from the packet’s header, searching the routing state for the correct output port, and sending the packet out that port. This is a local process within a router, done in the data plane, and it must be done quickly.</p>
+            <td>Forwarding<br><em>пересилання</em></td>
+            <td align="left"><p>Надсилання пакета в напрямку його пункту призначення. Це робиться читанням адреси із заголовка пакета, пошуком правильного вихідного порту в стані маршрутизації й надсиланням пакета через цей порт. Це локальний процес усередині маршрутизатора, що виконується на площині даних, і він має бути швидким.</p>
 </td>
           </tr><tr>
-            <td>Forwarding Entry</td>
-            <td align="left"><p>An entry in the forwarding table that maps an address or set of addresses to an outgoing port.</p>
+            <td>Forwarding Entry<br><em>запис пересилання</em></td>
+            <td align="left"><p>Запис у таблиці пересилання, що відображає адресу чи набір адрес на вихідний порт.</p>
 </td>
           </tr><tr>
-            <td>Forwarding Table</td>
-            <td align="left"><p>A table the router computes for itself to guide its forwarding decisions. The forwarding table is computer using the information in the peer and cost tables.</p>
+            <td>Forwarding Table<br><em>таблиця пересилання</em></td>
+            <td align="left"><p>Таблиця, яку маршрутизатор обчислює для себе, щоб керуватися нею в рішеннях про пересилання. Таблиця пересилання обчислюється за інформацією з таблиць пірів і вартостей.</p>
 </td>
           </tr><tr>
-            <td>Fragmentation</td>
-            <td align="left"><p>Dividing a packet into smaller packets to fit the maximum transmission unit (MTU) of a link.</p>
+            <td>Fragmentation<br><em>фрагментація</em></td>
+            <td align="left"><p>Поділ пакета на менші пакети, щоб вони вміщувалися в максимальний розмір блоку передачі (MTU) каналу.</p>
 </td>
           </tr><tr>
-            <td>Full-information ACK</td>
-            <td align="left"><p>An ACK that describes all data received so far, and can take the form “I have received all packets up until this one, plus these additional ones”.</p>
+            <td>Full-information ACK<br><em>підтвердження з повною інформацією</em></td>
+            <td align="left"><p>Підтвердження, що описує всі отримані досі дані й може мати вигляд «Я отримав усі пакети до цього, плюс ось ці додаткові».</p>
 </td>
           </tr><tr>
-            <td>Hard State</td>
-            <td align="left"><p>Systems in “hard state” do not time out their information – they assume once they have been given some knowledge, it remains true and valid until explicitly told otherwise.</p>
+            <td>Hard State<br><em>жорсткий стан</em></td>
+            <td align="left"><p>Системи в «жорсткому стані» не встановлюють термінів дії своєї інформації: вони вважають, що щойно отримане знання залишається правдивим і чинним, доки їм явно не скажуть інакше.</p>
 </td>
           </tr><tr>
-            <td>Host bits</td>
-            <td align="left"><p>The part of the IP address that identifies the host inside its network.</p>
+            <td>Host bits<br><em>біти хоста</em></td>
+            <td align="left"><p>Частина IP-адреси, що ідентифікує хост у межах його мережі.</p>
 </td>
           </tr><tr>
-            <td>Host/End System</td>
-            <td align="left"><p>End-points of a network. These entities are responsible for the generation of data packets that are then routed across the network.</p>
+            <td>Host/End System<br><em>хост / кінцева система</em></td>
+            <td align="left"><p>Кінцеві точки мережі. Ці сутності відповідають за генерування пакетів даних, які потім маршрутизуються мережею.</p>
 </td>
           </tr><tr>
-            <td>Individual ACK</td>
-            <td align="left"><p>An ACK that means “I received this single, specific packet”.</p>
+            <td>Individual ACK<br><em>окреме підтвердження</em></td>
+            <td align="left"><p>Підтвердження, що означає «Я отримав цей один конкретний пакет».</p>
 </td>
           </tr><tr>
-            <td>Internet</td>
-            <td align="left"><p>The core network infrastructure that links all connected computing devices.</p>
+            <td>Internet<br><em>Інтернет</em></td>
+            <td align="left"><p>Основна мережева інфраструктура, що з'єднує всі під'єднані обчислювальні пристрої.</p>
 </td>
           </tr><tr>
-            <td>IP Address</td>
-            <td align="left"><p>The addressing scheme used in layer 3.</p>
+            <td>IP Address<br><em>IP-адреса</em></td>
+            <td align="left"><p>Схема адресації, що використовується на рівні 3.</p>
 </td>
           </tr><tr>
             <td>IPv4</td>
-            <td align="left"><p>Version 4 of the IP protocol.</p>
+            <td align="left"><p>Версія 4 протоколу IP.</p>
 </td>
           </tr><tr>
-            <td>ISP (Internet Service Provider)/ISP Network</td>
-            <td align="left"><p>A network of packet switches and communication links providing network access to end systems.</p>
+            <td>ISP (Internet Service Provider)/ISP Network<br><em>інтернет-провайдер / мережа провайдера</em></td>
+            <td align="left"><p>Мережа пакетних комутаторів і каналів зв'язку, що надає кінцевим системам доступ до мережі.</p>
 </td>
           </tr><tr>
-            <td>LAN</td>
-            <td align="left"><p>Local area network, an L2 network that spans a small geographical area, for example a house.</p>
+            <td>LAN<br><em>локальна мережа</em></td>
+            <td align="left"><p>Local area network, локальна мережа — мережа L2, що охоплює невелику географічну територію, наприклад будинок.</p>
 </td>
           </tr><tr>
-            <td>Layering</td>
-            <td align="left"><p>Generally, layering is splitting a complex system into separate levels that build upon/depend on each other. In the Internet context, this refers to a specific set of layers (physical = L1, datalink = L2, internetworking = L3, transport = L4) that only interact with the layers directly above or below.</p>
+            <td>Layering<br><em>розбиття на рівні</em></td>
+            <td align="left"><p>Загалом розбиття на рівні — це поділ складної системи на окремі рівні, що будуються один на одному / залежать один від одного. У контексті Інтернету це стосується конкретного набору рівнів (фізичний = L1, канальний = L2, міжмережевий = L3, транспортний = L4), які взаємодіють лише з рівнями безпосередньо над чи під собою.</p>
 </td>
           </tr><tr>
-            <td>Layers</td>
-            <td align="left"><p><strong>Application</strong> (Network support for apps). 4: <strong>Transport</strong> (Reliable/Unreliable end-to-end delivery). 3: <strong>Network</strong> (Global best-effort delivery). 2: <strong>Datalink</strong> (local best-effort delivery). 1: <strong>Physical</strong> (bits being transmitted over some medium).</p>
+            <td>Layers<br><em>рівні</em></td>
+            <td align="left"><p><strong>Прикладний</strong> (мережева підтримка застосунків). 4: <strong>Транспортний</strong> (надійна/ненадійна наскрізна доставка). 3: <strong>Мережевий</strong> (глобальна доставка без гарантій). 2: <strong>Канальний</strong> (локальна доставка без гарантій). 1: <strong>Фізичний</strong> (біти, що передаються певним середовищем).</p>
 </td>
           </tr><tr>
-            <td>Learning Switches</td>
-            <td align="left"><p>Typically used at L2 in combination with the spanning tree protocol. Learning switches maintain a forwarding table mapping destination to output link. They learn from the “source” field of a packet. When a packet comes in, the switch checks if the destination is in it’s table. If it is, it forwards the packet down that link. If it isn’t, it floods the packet.</p>
+            <td>Learning Switches<br><em>самонавчальні комутатори</em></td>
+            <td align="left"><p>Зазвичай використовуються на L2 у поєднанні з протоколом кістякового дерева. Самонавчальні комутатори підтримують таблицю пересилання, що відображає пункт призначення на вихідний канал. Вони навчаються з поля «джерело» пакета. Коли надходить пакет, комутатор перевіряє, чи є пункт призначення в його таблиці. Якщо є, він пересилає пакет цим каналом. Якщо немає, він лавинно розсилає пакет.</p>
 </td>
           </tr><tr>
-            <td>Linecard</td>
-            <td align="left"><p>Piece of hardware (in a router) that receives/sends packets. They update various fields (checksum, TTL, etc.) and select outgoing port.</p>
+            <td>Linecard<br><em>лінійна карта</em></td>
+            <td align="left"><p>Апаратний компонент (у маршрутизаторі), що отримує/надсилає пакети. Лінійні карти оновлюють різні поля (контрольну суму, TTL тощо) й обирають вихідний порт.</p>
 </td>
           </tr><tr>
-            <td>Link</td>
-            <td align="left"><p>The physical pieces of infrastructure that connects routers.</p>
+            <td>Link<br><em>канал</em></td>
+            <td align="left"><p>Фізичні елементи інфраструктури, що з'єднують маршрутизатори.</p>
 </td>
           </tr><tr>
-            <td>Link-State Routing</td>
-            <td align="left"><p>In Link-State routing, each router sends (using a protocol-specific broadcast mechanism) its link state to all other routers in the network. This way, every router learns the entire network graph. Then, every router computes the least-cost paths from themselves to all other nodes using any valid algorithm (for example, Dijkstra’s).</p>
+            <td>Link-State Routing<br><em>маршрутизація за станом каналів</em></td>
+            <td align="left"><p>У маршрутизації за станом каналів кожен маршрутизатор надсилає (за допомогою специфічного для протоколу механізму широкомовної розсилки) стан своїх каналів усім іншим маршрутизаторам мережі. Таким чином кожен маршрутизатор дізнається весь граф мережі. Потім кожен маршрутизатор обчислює шляхи з найменшою вартістю від себе до всіх інших вершин за допомогою будь-якого коректного алгоритму (наприклад, Дейкстри).</p>
 </td>
           </tr><tr>
-            <td>Loop</td>
-            <td align="left"><p>When a packet cycles around the same set of nodes forever.</p>
+            <td>Loop<br><em>петля</em></td>
+            <td align="left"><p>Коли пакет нескінченно ходить по колу через ту саму множину вершин.</p>
 </td>
           </tr><tr>
             <td>LPM</td>
-            <td align="left"><p>Longest-prefix-match: When an IP Address matches multiple prefixes, select the longest match (Think of traversing the prefix tree until the address ‘falls off’).</p>
+            <td align="left"><p>Longest-prefix-match, пошук найдовшого збігу префікса: коли IP-адреса збігається з кількома префіксами, обрати найдовший збіг (уявіть, що ви спускаєтеся префіксним деревом, доки адреса не «випаде» з нього).</p>
 </td>
           </tr><tr>
-            <td>MAC Address</td>
-            <td align="left"><p>Used for L2 routing, a MAC Address is a 48 bit number burned into the network interface of hosts and routers. The MAC address is encoded in the physical hardware stored in Read-Only memory, making it a permanent identifier.</p>
+            <td>MAC Address<br><em>MAC-адреса</em></td>
+            <td align="left"><p>Використовується для маршрутизації на L2; MAC-адреса — 48-бітове число, «впалене» в мережевий інтерфейс хостів і маршрутизаторів. MAC-адреса закодована у фізичному обладнанні й зберігається в постійній пам'яті, що робить її постійним ідентифікатором.</p>
 </td>
           </tr><tr>
-            <td>Maximum Transmission Unit (MTU)</td>
-            <td align="left"><p>The largest number of bits a link can transfer as a single unit, the largest packet size that can be sent across a link.</p>
+            <td>Maximum Transmission Unit (MTU)<br><em>максимальний розмір блоку передачі</em></td>
+            <td align="left"><p>Найбільша кількість бітів, яку канал може передати як одне ціле; найбільший розмір пакета, який можна надіслати каналом.</p>
 </td>
           </tr><tr>
-            <td>Modularity</td>
-            <td align="left"><p>Decomposing a problem into tasks or abstractions. Leads to the design principles of layering.</p>
+            <td>Modularity<br><em>модульність</em></td>
+            <td align="left"><p>Розкладання задачі на завдання чи абстракції. Веде до принципів проєктування з розбиттям на рівні.</p>
 </td>
           </tr><tr>
-            <td>Multihoming</td>
-            <td align="left"><p>Connecting one host to multiple, disparate networks, so that if one parent network goes offline, the host is still accessible. Prevents aggregation.</p>
+            <td>Multihoming<br><em>багатоканальне підключення</em></td>
+            <td align="left"><p>Під'єднання одного хоста до кількох різних мереж, щоб у разі відключення однієї батьківської мережі хост залишався доступним. Перешкоджає агрегації.</p>
 </td>
           </tr><tr>
-            <td>NACK</td>
-            <td align="left"><p>“Non-acknowledgement” message – “I did not receive this data [that I was expecting to]”.</p>
+            <td>NACK<br><em>негативне підтвердження</em></td>
+            <td align="left"><p>Повідомлення «непідтвердження» — «Я не отримав цих даних [на які очікував]».</p>
 </td>
           </tr><tr>
-            <td>Network</td>
-            <td align="left"><p>When used informally, this refers to a system composing of end systems, routers/switches, and links that is able to transfer data between hosts (e.g. Berkeley’s campus network). When used formally, it refers to a set of network elements that share the same network address in IPv4, and is often used synonymously with subnet.</p>
+            <td>Network<br><em>мережа</em></td>
+            <td align="left"><p>У неформальному вжитку — система з кінцевих систем, маршрутизаторів/комутаторів і каналів, здатна передавати дані між хостами (наприклад, мережа кампусу Берклі). У формальному вжитку — набір мережевих елементів, що мають ту саму мережеву адресу в IPv4; часто вживається як синонім підмережі.</p>
 </td>
           </tr><tr>
-            <td>Network Address</td>
-            <td align="left"><p>The component of an IP address that refers to the network (or subnet), rather than the host.</p>
+            <td>Network Address<br><em>мережева адреса</em></td>
+            <td align="left"><p>Складова IP-адреси, що вказує на мережу (чи підмережу), а не на хост.</p>
 </td>
           </tr><tr>
-            <td>Network bits</td>
-            <td align="left"><p>The part of the IP address that identifies the network the host is on.</p>
+            <td>Network bits<br><em>біти мережі</em></td>
+            <td align="left"><p>Частина IP-адреси, що ідентифікує мережу, у якій перебуває хост.</p>
 </td>
           </tr><tr>
-            <td>Network mask</td>
-            <td align="left"><p>An IP-address-like string of bits used to identify the network portion of an IP Address. Made up of some set number of 1s (one per network address bit), followed by all 0s.</p>
+            <td>Network mask<br><em>маска мережі</em></td>
+            <td align="left"><p>Схожий на IP-адресу рядок бітів, що використовується для визначення мережевої частини IP-адреси. Складається з певної кількості одиниць (по одній на кожен біт мережевої адреси), за якими йдуть самі нулі.</p>
 </td>
           </tr><tr>
-            <td>Network Name</td>
-            <td align="left"><p>The name of a host (Something human-friendly).</p>
+            <td>Network Name<br><em>мережеве ім'я</em></td>
+            <td align="left"><p>Ім'я хоста (щось зручне для людини).</p>
 </td>
           </tr><tr>
-            <td>Network Stack</td>
-            <td align="left"><p>The networking software on the host, it replicates some functionality found at the routers and also adds additional functionality (e.g. Sockets, TCP header, etc).</p>
+            <td>Network Stack<br><em>мережевий стек</em></td>
+            <td align="left"><p>Мережеве програмне забезпечення на хості; воно відтворює певну функціональність маршрутизаторів, а також додає додаткову функціональність (наприклад, сокети, заголовок TCP тощо).</p>
 </td>
           </tr><tr>
-            <td>Packet</td>
-            <td align="left"><p>Bags of bits. Consists of: <strong>Header</strong> with meaningful information for network and network stack to make decisions. <strong>Body</strong> containing a payload. Ex. A file, imagine, an application header, etc.</p>
+            <td>Packet<br><em>пакет</em></td>
+            <td align="left"><p>Мішки бітів. Складається з: <strong>заголовка</strong> зі змістовною інформацією, за якою мережа й мережевий стек ухвалюють рішення; <strong>тіла</strong>, що містить корисне навантаження. Наприклад, файл, зображення, заголовок застосунку тощо.</p>
 </td>
           </tr><tr>
-            <td>Packet Switching</td>
-            <td align="left"><p>Method of data transfer in which data is segmented into packets and routers/switches service each packet they receive independently by inspecting its header.</p>
+            <td>Packet Switching<br><em>комутація пакетів</em></td>
+            <td align="left"><p>Метод передавання даних, за якого дані розбиваються на пакети, а маршрутизатори/комутатори обслуговують кожен отриманий пакет незалежно, перевіряючи його заголовок.</p>
 </td>
           </tr><tr>
-            <td>Path Vector Routing</td>
-            <td align="left"><p>Similar to distance vector routing, but when advertising to neighbors, instead of sending them your shortest distance, you send them your paths to destinations.</p>
+            <td>Path Vector Routing<br><em>маршрутизація за вектором шляху</em></td>
+            <td align="left"><p>Схожа на дистанційно-векторну маршрутизацію, але, оголошуючи сусідам, ви надсилаєте їм не свою найкоротшу відстань, а свої шляхи до пунктів призначення.</p>
 </td>
           </tr><tr>
-            <td>Payload</td>
-            <td align="left"><p>Data carried in packet.</p>
+            <td>Payload<br><em>корисне навантаження</em></td>
+            <td align="left"><p>Дані, що переносяться в пакеті.</p>
 </td>
           </tr><tr>
-            <td>Peer Table</td>
-            <td align="left"><p>Data structure on routers that contains copies of the information each of the router’s “peers” or “neighbours” sent them.</p>
+            <td>Peer Table<br><em>таблиця пірів</em></td>
+            <td align="left"><p>Структура даних на маршрутизаторах, що містить копії інформації, яку надіслав маршрутизатору кожен із його «пірів» чи «сусідів».</p>
 </td>
           </tr><tr>
-            <td>Poison Reverse</td>
-            <td align="left"><p>Method attempting to mitigate the count to infinity problem by not advertising the ability to reach a destination (i.e. advertising a distance of infinity) to a neighbour you use on the path to said destination. For example, router A creates a temporary copy of its vector to send to router C that advertises a distance of infinity for all destinations in which router A uses link AC.</p>
+            <td>Poison Reverse<br><em>отруєння зворотного маршруту</em></td>
+            <td align="left"><p>Метод, що намагається пом'якшити проблему рахунку до нескінченності, не оголошуючи здатності дістатися пункту призначення (тобто оголошуючи відстань «нескінченність») сусідові, якого ви використовуєте на шляху до цього пункту призначення. Наприклад, маршрутизатор A створює тимчасову копію свого вектора для надсилання маршрутизатору C, що оголошує відстань «нескінченність» для всіх пунктів призначення, до яких маршрутизатор A використовує канал AC.</p>
 </td>
           </tr><tr>
-            <td>Port (Logical)</td>
-            <td align="left"><p>A number that an OS assigns to a socket that is used to identify the socket.</p>
+            <td>Port (Logical)<br><em>порт (логічний)</em></td>
+            <td align="left"><p>Число, яке ОС призначає сокету й за яким сокет ідентифікується.</p>
 </td>
           </tr><tr>
-            <td>Port (Router)</td>
-            <td align="left"><p>The physical port which connects a router to another router through a link.</p>
+            <td>Port (Router)<br><em>порт (маршрутизатора)</em></td>
+            <td align="left"><p>Фізичний порт, що з'єднує маршрутизатор з іншим маршрутизатором через канал.</p>
 </td>
           </tr><tr>
-            <td>Prefix Aggregation</td>
-            <td align="left"><p>Combining routing table entries into one entry by using a common prefix (i.e. combining 101 and 100 to 10*).</p>
+            <td>Prefix Aggregation<br><em>агрегація префіксів</em></td>
+            <td align="left"><p>Об'єднання записів таблиці маршрутизації в один запис за допомогою спільного префікса (наприклад, об'єднання 101 і 100 у 10*).</p>
 </td>
           </tr><tr>
-            <td>Prefix Tree</td>
-            <td align="left"><p>Binary tree that represents matching bits in IP address lookup (how the lookup table is traversed).</p>
+            <td>Prefix Tree<br><em>префіксне дерево</em></td>
+            <td align="left"><p>Двійкове дерево, що відображає збіг бітів під час пошуку IP-адреси (як обходиться таблиця пошуку).</p>
 </td>
           </tr><tr>
-            <td>Reliability (see Robustness)</td>
-            <td align="left"><p>Two interpretations: 1) The network recovers from failures quickly, allowing two, non-partitioned endpoints to communicate. 2) Network failures do not interfere with endpoint semantics.</p>
+            <td>Reliability (see Robustness)<br><em>надійність (див. Robustness)</em></td>
+            <td align="left"><p>Два тлумачення: 1) мережа швидко відновлюється після відмов, даючи змогу спілкуватися двом нерозділеним кінцевим точкам; 2) мережеві відмови не порушують семантики кінцевих точок.</p>
 </td>
           </tr><tr>
-            <td>Reliable Delivery</td>
-            <td align="left"><p>Building a reliable transport service on top of best-effort delivery.</p>
+            <td>Reliable Delivery<br><em>надійна доставка</em></td>
+            <td align="left"><p>Побудова надійного транспортного сервісу поверх доставки без гарантій.</p>
 </td>
           </tr><tr>
-            <td>Reliable Transport</td>
-            <td align="left"><p>A transport mechanism is “reliable” if and only if (a) it resends all dropped or corrupted packets, and (b) it attempts to make progress.</p>
+            <td>Reliable Transport<br><em>надійний транспорт</em></td>
+            <td align="left"><p>Транспортний механізм «надійний» тоді й лише тоді, коли (a) він повторно надсилає всі відкинуті чи пошкоджені пакети і (b) він намагається просуватися вперед.</p>
 </td>
           </tr><tr>
-            <td>Resource Accountability</td>
-            <td align="left"><p>The ability to know who is using what resources (bandwidth) so that you can hold them accountable to it. A failure in Internet architecture.</p>
+            <td>Resource Accountability<br><em>облік ресурсів</em></td>
+            <td align="left"><p>Здатність знати, хто використовує які ресурси (пропускну здатність), щоб можна було притягати їх до відповідальності за це. Невдача архітектури Інтернету.</p>
 </td>
           </tr><tr>
-            <td>Robustness (see Reliability)</td>
-            <td align="left"><p>As long as the network is not partitioned, two hosts should be able to communicate enventually, AND failures should never interfere with application semantics.</p>
+            <td>Robustness (see Reliability)<br><em>стійкість (див. Reliability)</em></td>
+            <td align="left"><p>Доки мережу не розділено, два хости мають зрештою мати змогу спілкуватися, І відмови ніколи не повинні порушувати семантики застосунків.</p>
 </td>
           </tr><tr>
-            <td>Route Aggregation</td>
-            <td align="left"><p>Instead of having one forwarding entry per host, have one entry per set of hosts with the same prefix that all go out the same port.</p>
+            <td>Route Aggregation<br><em>агрегація маршрутів</em></td>
+            <td align="left"><p>Замість одного запису пересилання на хост мати один запис на набір хостів з однаковим префіксом, що всі виходять через той самий порт.</p>
 </td>
           </tr><tr>
-            <td>Route Poisoning</td>
-            <td align="left"><p>Procedure to mitigate network inconsistencies that says when a link goes down between A and B, router B should advertise to all its neighbours that it no longer has a link to router A (i.e. B advertises a distance of infinity), in order to signify that it can no longer reach A.</p>
+            <td>Route Poisoning<br><em>отруєння маршрутів</em></td>
+            <td align="left"><p>Процедура пом'якшення неузгодженостей у мережі, яка каже, що коли канал між A і B виходить з ладу, маршрутизатор B має оголосити всім своїм сусідам, що в нього більше немає каналу до маршрутизатора A (тобто B оголошує відстань «нескінченність»), щоб позначити, що він більше не може дістатися A.</p>
 </td>
           </tr><tr>
-            <td>Routing</td>
-            <td align="left"><p>Guiding packets from source to destination (can be done in many ways - see link-state, distance vector, spanning tree, etc). This is inherently a global process, so it must scale. This is done in the control plane, and may be done slowly.</p>
+            <td>Routing<br><em>маршрутизація</em></td>
+            <td align="left"><p>Спрямування пакетів від джерела до пункту призначення (можна робити багатьма способами — див. стан каналів, дистанційно-векторний підхід, кістякове дерево тощо). Це за своєю природою глобальний процес, тож він має масштабуватися. Він виконується на площині керування й може виконуватися повільно.</p>
 </td>
           </tr><tr>
-            <td>Routing Table</td>
-            <td align="left"><p>This is similar to the Forwarding Table, but can refer to all the information a router (including from other peers) rather than just the best forwarding entries.</p>
+            <td>Routing Table<br><em>таблиця маршрутизації</em></td>
+            <td align="left"><p>Схожа на таблицю пересилання, але може стосуватися всієї інформації маршрутизатора (включно з інформацією від інших пірів), а не лише найкращих записів пересилання.</p>
 </td>
           </tr><tr>
-            <td>Slash notation</td>
-            <td align="left"><p>Notation for taking about a subnet. Looks like 1.2.0.0/10 where the first 10 bits of 1.2.0.0 are the subnet prefix.</p>
+            <td>Slash notation<br><em>запис через скісну риску</em></td>
+            <td align="left"><p>Запис для позначення підмережі. Виглядає як 1.2.0.0/10, де перші 10 бітів 1.2.0.0 — префікс підмережі.</p>
 </td>
           </tr><tr>
-            <td>Sliding window</td>
-            <td align="left"><p>A finite number of un-acked packets allowed to be in flight (for efficiency purposes) before we stop sending more.</p>
+            <td>Sliding window<br><em>ковзне вікно</em></td>
+            <td align="left"><p>Скінченна кількість непідтверджених пакетів, яким дозволено бути в дорозі (заради ефективності), перш ніж ми припинимо надсилати нові.</p>
 </td>
           </tr><tr>
-            <td>Socket</td>
-            <td align="left"><p>An OS mechanism used to connect a process to the networking stack.</p>
+            <td>Socket<br><em>сокет</em></td>
+            <td align="left"><p>Механізм ОС, що використовується для під'єднання процесу до мережевого стеку.</p>
 </td>
           </tr><tr>
-            <td>Soft State</td>
-            <td align="left"><p>The concept of allowing your stored knowledge to “time out”, under the assumption that it may have changed/no longer be valid/etc. Systems that operate under soft state will periodically “forget” what they know and need to “re-learn” it – by requesting the information again, waiting for new messages and information, etc. DHCP offers having a ‘lease time’, cached ARP entries timing out, and the periodic messages in Distance-Vector Routing are all examples of soft-state.</p>
+            <td>Soft State<br><em>м'який стан</em></td>
+            <td align="left"><p>Концепція, за якої збереженим знанням дозволяють «спливати за тайм-аутом», припускаючи, що вони могли змінитися / більше не бути чинними тощо. Системи, що працюють у м'якому стані, періодично «забувають» те, що знають, і мають «дізнаватися заново» — повторно запитуючи інформацію, чекаючи на нові повідомлення та інформацію тощо. «Термін оренди» в пропозиціях DHCP, спливання кешованих записів ARP і періодичні повідомлення в дистанційно-векторній маршрутизації — усе це приклади м'якого стану.</p>
 </td>
           </tr><tr>
-            <td>Spanning Tree Protocol</td>
-            <td align="left"><p>A distributed protocol in which switches send messages of the format (Y, d, X) from node X proposing Y as the root and advertising a distance of d to Y. This protocol identifies the node with the lowest ID and builds a spanning tree with that node as the root.</p>
+            <td>Spanning Tree Protocol<br><em>протокол кістякового дерева</em></td>
+            <td align="left"><p>Розподілений протокол, у якому комутатори надсилають повідомлення у форматі (Y, d, X) від вершини X, що пропонує Y як корінь і оголошує відстань d до Y. Цей протокол визначає вершину з найменшим ID і будує кістякове дерево з цією вершиною як коренем.</p>
 </td>
           </tr><tr>
-            <td>Split Horizon</td>
-            <td align="left"><p>Split horizon provides the same functionality as poison reverse, but expresses the information differently.  Split Horizon is used in the context of full updates, and the router does not advertise any route to destination X to the neighbor it uses to reach destination X.</p>
+            <td>Split Horizon<br><em>розщеплений горизонт</em></td>
+            <td align="left"><p>Розщеплений горизонт надає ту саму функціональність, що й отруєння зворотного маршруту, але виражає інформацію інакше. Розщеплений горизонт використовується в контексті повних оновлень, і маршрутизатор не оголошує жодного маршруту до пункту призначення X сусідові, якого використовує, щоб дістатися пункту призначення X.</p>
 </td>
           </tr><tr>
-            <td>Statistical Multiplexing</td>
-            <td align="left"><p>Summing the maximum rate of flows is greater than combining the flows and finding the maximum.</p>
+            <td>Statistical Multiplexing<br><em>статистичне мультиплексування</em></td>
+            <td align="left"><p>Сума максимальних швидкостей потоків більша, ніж максимум об'єднаних потоків.</p>
 </td>
           </tr><tr>
-            <td>Subnet</td>
-            <td align="left"><p>In this class we use this term to refer to a portion of a network that is connected by L2 and shares the same network address.</p>
+            <td>Subnet<br><em>підмережа</em></td>
+            <td align="left"><p>У цьому курсі ми вживаємо цей термін для частини мережі, що з'єднана на L2 і має ту саму мережеву адресу.</p>
 </td>
           </tr><tr>
-            <td>Time to Live (TTL)</td>
-            <td align="left"><p>In IP, this refers to the number of hops a packet can travel before being dropped, which is useful in preventing loops. More generally, TTL refers to the time until something expires (such as a cached entry).</p>
+            <td>Time to Live (TTL)<br><em>час життя</em></td>
+            <td align="left"><p>В IP — кількість переходів, які пакет може пройти, перш ніж буде відкинутий, що корисно для запобігання петлям. Загальніше, TTL — час до спливання терміну дії чогось (наприклад, кешованого запису).</p>
 </td>
           </tr><tr>
-            <td>Valid Routing State</td>
-            <td align="left"><p>A routing state is valid if an only if there are no loops and no deadends (assuming no packet replication). If there is packet replication, then this changes to saying at least one replica does not hit a deadend.</p>
+            <td>Valid Routing State<br><em>коректний стан маршрутизації</em></td>
+            <td align="left"><p>Стан маршрутизації коректний тоді й лише тоді, коли немає петель і немає глухих кутів (за умови відсутності реплікації пакетів). Якщо є реплікація пакетів, то умова змінюється: щонайменше одна репліка не потрапляє в глухий кут.</p>
 </td>
           </tr><tr>
-            <td>WAN</td>
-            <td align="left"><p>This can refer to any L3 network (i.e., not just a local area network), or to networks that span large geographic distances (i.e., not a datacenter).</p>
+            <td>WAN<br><em>глобальна мережа</em></td>
+            <td align="left"><p>Може позначати будь-яку мережу L3 (тобто не лише локальну мережу) або мережі, що охоплюють великі географічні відстані (тобто не дата-центр).</p>
 </td>
           </tr></tbody>
     </table>
-

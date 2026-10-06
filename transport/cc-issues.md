@@ -1,80 +1,80 @@
 ---
-title: Congestion Control Issues
-parent: Transport
+title: Проблеми керування перевантаженням
+parent: Транспортний рівень
 nav_order: 8
 layout: page-with-toc
 ---
 
-# Congestion Control Issues
+# Проблеми керування перевантаженням
 
-## Confusing Corruption and Congestion
+## Плутанина між пошкодженням і перевантаженням
 
-TCP detects congestion by checking for packet loss, but congestion isn't the only reason packets would be lost. Packets could also be lost from congestion, and TCP cannot distinguish between loss due to corruption or congestion. If a packet is corrupted, TCP will still drop its rate, even if the network isn't congested.
+TCP виявляє перевантаження, перевіряючи втрату пакетів, але перевантаження — не єдина причина втрати пакетів. Пакети також можуть губитися через перевантаження, і TCP не може розрізнити втрату через пошкодження і через перевантаження. Якщо пакет пошкоджено, TCP однаково знизить швидкість, навіть якщо мережа не перевантажена.
 
-We can also see this in our equation, which related throughput to loss rate. The throughput and loss rate are inversely proportional, even for non-congestion losses. The equation can be helpful for estimating how a lossy link (e.g. a wireless link that frequently corrupts packets) would affect TCP.
+Це видно й з нашої формули, що пов'язувала пропускну спроможність із часткою втрат. Пропускна спроможність і частка втрат обернено пропорційні навіть для втрат, не пов'язаних із перевантаженням. Формула може бути корисною для оцінювання того, як канал із втратами (наприклад, бездротовий канал, що часто пошкоджує пакети) вплине на TCP.
 
 
-## Short Connections
+## Короткі з'єднання
 
-Most TCP connections in real life are very short-lived. 50% of connections send fewer than 1.5 KB, and 80% of connections send less than 100 KB. Very few packets (maybe only one) are sent during these connections.
+Більшість з'єднань TCP у реальному житті дуже короткочасні. 50% з'єднань надсилають менше ніж 1,5 КБ, а 80% з'єднань — менше ніж 100 КБ. Під час цих з'єднань надсилається дуже мало пакетів (можливо, лише один).
 
-Suppose we had a connection where the sender only had 3 packets to send. What would TCP congestion control do? We'd start with window size 1 and send the first packet. Then, we'd wait for the ack, increase the window size to 2, and send the remaining two packets. Then, we'd wait for two more acks, and finish.
+Припустімо, у нас з'єднання, де відправникові треба надіслати лише 3 пакети. Що зробило б керування перевантаженням TCP? Ми почали б з розміру вікна 1 і надіслали б перший пакет. Потім ми чекали б на підтвердження, збільшили б розмір вікна до 2 і надіслали б решту два пакети. Потім ми чекали б ще на два підтвердження й завершили б.
 
 <img width="400px" src="/assets/transport/3-091-short-flow.png">
 
-This connection took two RTTs to send 3 packets, resulting in an incredibly low throughput (1.5 packets per RTT).
+Цьому з'єднанню знадобилося два RTT, щоб надіслати 3 пакети, що дає неймовірно низьку пропускну спроможність (1,5 пакета за RTT).
 
-More generally, these short connections never leave the slow-start phase, and never reach their fair share of bandwidth. This causes short connections to suffer from unnecessarily long transfer times.
+Загальніше, ці короткі з'єднання ніколи не виходять із фази повільного старту й ніколи не досягають своєї справедливої частки пропускної здатності. Через це короткі з'єднання страждають від невиправдано довгого часу передавання.
 
-Another problem with short connections is handling loss. Recall that we detect loss when there are 3 duplicate acks, but in a short connection, we might not have enough packets to trigger these duplicate acks. For example, if we had 4 packets to send, and we lost the second packet, we'd never get 3 duplicate acks. Instead, we'd have to wait for the timeout to trigger. At typical real-world timeout values of roughly 500ms, this can also cause short connections to take unnecessarily long.
+Ще одна проблема коротких з'єднань — обробка втрат. Пригадайте, що ми виявляємо втрату, коли є 3 дублікати підтверджень, але в короткому з'єднанні може бракувати пакетів, щоб згенерувати ці дублікати. Наприклад, якби нам треба було надіслати 4 пакети і ми втратили другий, ми ніколи не отримали б 3 дублікатів підтверджень. Натомість нам довелося б чекати спрацювання тайм-ауту. За типових реальних значень тайм-ауту близько 500 мс це теж може робити короткі з'єднання невиправдано довгими.
 
-How can we fix both of these problems? One partial fix is to start with a higher initial window (e.g. 10 packets instead of 1). Now, connections with 10 or fewer packets can just send all the data at the start of the connection.
+Як виправити обидві ці проблеми? Одне часткове виправлення — починати з більшого початкового вікна (наприклад, 10 пакетів замість 1). Тепер з'єднання з 10 чи менше пакетами можуть просто надіслати всі дані на початку з'єднання.
 
 
-## TCP Fills Up Queues
+## TCP заповнює черги
 
-TCP detects congestion using loss, and the congestion control algorithm deliberately increases the rate until triggering loss. In order to trigger loss, queues need to fill up. This means that TCP introduces queuing delays throughout the network, and the delays affect everybody in the network.
+TCP виявляє перевантаження за втратами, і алгоритм керування перевантаженням навмисно збільшує швидкість, доки не спричинить втрату. Щоб спричинити втрату, черги мають заповнитися. Це означає, що TCP вносить затримки в чергах по всій мережі, і ці затримки впливають на всіх у мережі.
 
-Suppose we had one heavy-duty connection transferring a 10 GB file, and later, we start a small connection transferring a single packet. Both the connections share the same bottleneck link. The heavy-duty connection will increase its rate until the bottleneck link's queue fills up. Now, when the small connection starts, it is stuck waiting in the queue, behind the heavy-duty connection packets.
+Припустімо, в нас є одне ресурсоємне з'єднання, що передає файл на 10 ГБ, а пізніше ми починаємо невелике з'єднання, що передає один пакет. Обидва з'єднання ділять той самий канал — вузьке місце. Ресурсоємне з'єднання збільшуватиме швидкість, доки черга каналу — вузького місця не заповниться. Тепер, коли починається невелике з'єднання, воно застрягає в черзі позаду пакетів ресурсоємного з'єднання.
 
-This problem is made worse if routers keep extremely large queues. Routers having excessive memory for long queues is called **bufferbloat**. An example of bufferbloat occurs in home routers, which might have a huge queue, but very few connections (only the ones in your home) using that queue. Now, any connections you make will cause large queuing delays for other connections.
+Ця проблема загострюється, якщо маршрутизатори тримають надзвичайно великі черги. Те, що маршрутизатори мають надмірну пам'ять для довгих черг, називається **роздуванням буферів** (bufferbloat). Приклад роздування буферів трапляється в домашніх маршрутизаторах, які можуть мати величезну чергу, але дуже мало з'єднань (лише ті, що у вашому домі), що цю чергу використовують. Тепер будь-які ваші з'єднання спричинятимуть великі затримки в черзі для інших з'єднань.
 
-To avoid queues filling up, we could find a way to measure congestion that doesn't involve deliberately triggering losses. In particular, we could detect congestion when the RTT starts increasing, which indicates delay. This is the idea behind Google's recent BBR algorithm (2016). The sender learns its minimum RTT, and decreases its rate if it starts noticing the RTT exceeding the minimum.
+Щоб черги не заповнювалися, можна знайти спосіб вимірювати перевантаження, що не передбачає навмисного спричинення втрат. Зокрема, можна виявляти перевантаження, коли RTT починає зростати, що вказує на затримку. Це ідея нещодавнього алгоритму BBR від Google (2016). Відправник дізнається свій мінімальний RTT і зменшує швидкість, якщо починає помічати, що RTT перевищує мінімум.
 
 <img width="600px" src="/assets/transport/3-092-delay-based-taxonomy.png">
 
 
-## Cheating
+## Шахрайство
 
-There is nothing enforcing that senders have to follow the TCP congestion control algorithm. Senders could cheat to get an unfairly large share of the bandwidth.
+Ніщо не змушує відправників дотримуватися алгоритму керування перевантаженням TCP. Відправники можуть шахраювати, щоб отримати несправедливо велику частку пропускної здатності.
 
-For example, a sender could increase the window faster (e.g. +2 every RTT, instead of +1). If we applied our graphical model to one cheating sender and one honest sender, AIMD updates would actually converge on a bad fairness line where the cheating sender gets twice the bandwidth of the honest sender.
+Наприклад, відправник може збільшувати вікно швидше (наприклад, +2 кожен RTT замість +1). Якби ми застосували нашу графічну модель до одного відправника-шахрая й одного чесного відправника, оновлення AIMD фактично збігалися б до поганої прямої справедливості, де шахрай отримує вдвічі більше пропускної здатності, ніж чесний відправник.
 
 <img width="600px" src="/assets/transport/3-093-cheating-aimd.png">
 
-Many other ways to modify the protocol also exist, such as starting with very large initial congestion window.
+Існує й багато інших способів змінити протокол, наприклад починати з дуже великого початкового вікна перевантаження.
 
-In practice, because TCP is implemented in the operating system, in order to cheat, the sender would have to modify the code in their operating system, which the vast majority of Internet users don't do.
+На практиці, оскільки TCP реалізовано в операційній системі, щоб шахраювати, відправникові довелося б змінити код своєї операційної системи, чого переважна більшість користувачів Інтернету не робить.
 
-If a small number of senders abuse the system, those senders will get more bandwidth. If a large number of senders abuse the system (e.g. Microsoft releases a version of Windows that abuses TCP), the millions of Windows users are still competing with each other, and it's unlikely that anybody will end up with more bandwidth.
+Якщо систему зловживає невелика кількість відправників, ці відправники отримають більше пропускної здатності. Якщо систему зловживає велика кількість відправників (наприклад, Microsoft випускає версію Windows, що зловживає TCP), мільйони користувачів Windows однаково конкурують між собою, і малоймовірно, що хтось зрештою отримає більше пропускної здатності.
 
-Another way to cheat, without modifying TCP, is to open many connections. TCP only ensures that each connection gets a fair share. If a cheating sender opened 10 connections and an honest sender opened 1, the cheating sender would get 10 times more bandwidth. Many applications intentionally open more connections to improve bandwidth.
+Ще один спосіб шахраювати, не змінюючи TCP, — відкрити багато з'єднань. TCP гарантує лише, що кожне з'єднання отримує справедливу частку. Якби шахрай відкрив 10 з'єднань, а чесний відправник — 1, шахрай отримав би вдесятеро більше пропускної здатності. Багато застосунків навмисно відкривають більше з'єднань, щоб покращити пропускну здатність.
 
-If cheating is possible, why hasn't the Internet suffered another congestion collapse? It turns out, researchers don't really know the answer either. One possibility is: cheaters who modify the congestion control algorithm might get an unfair share of bandwidth, but if they're still following the principles of congestion control (e.g. reducing rate when loss occurs), then they aren't overwhelming the network. By contrast, in the original 1980s congestion collapse, senders kept re-sending packets at high rates, with no notion of adjusting rate.
+Якщо шахрайство можливе, чому Інтернет не пережив ще одного колапсу через перевантаження? Виявляється, дослідники теж до кінця не знають відповіді. Одна можливість: шахраї, які змінюють алгоритм керування перевантаженням, можуть отримувати несправедливу частку пропускної здатності, але якщо вони й далі дотримуються принципів керування перевантаженням (наприклад, знижують швидкість у разі втрат), то не перевантажують мережу. Натомість під час початкового колапсу через перевантаження в 1980-х відправники раз у раз повторно надсилали пакети з високою швидкістю, без жодного уявлення про коригування швидкості.
 
-If cheating is possible, how much cheating occurs in practice? Again, we don't really know. It's hard to measure cheating (e.g. you don't know the windows being used at every sender).
+Якщо шахрайство можливе, скільки його трапляється на практиці? Знову ж таки, ми до кінця не знаємо. Шахрайство важко виміряти (наприклад, ви не знаєте вікон, які використовує кожен відправник).
 
 
-## Congestion Control and Reliability are Intertwined
+## Керування перевантаженням і надійність переплетені
 
-The mechanisms for congestion control and reliability are tightly coupled. As we saw, congestion control was implemented by taking the code for TCP reliability and tweaking a few lines of code.
+Механізми керування перевантаженням і надійності тісно пов'язані. Як ми бачили, керування перевантаженням реалізували, взявши код надійності TCP і змінивши кілька рядків коду.
 
-We can also see this dependence in the algorithm itself. The window is updated on acks and timeouts because the reliability code was written to respond to those events. We detect loss with duplicate acks because the reliability implementation uses cumulative acks.
+Цю залежність видно й у самому алгоритмі. Вікно оновлюється за підтвердженнями й тайм-аутами, бо код надійності писали для реагування на ці події. Ми виявляємо втрати за дублікатами підтверджень, бо реалізація надійності використовує кумулятивні підтвердження.
 
-Combining reliability and congestion control is a design choice. One benefit is that congestion control was a small code patch that could be widely deployed in response to the 1980s congestion collapse. However, since then, the combination of the two features has complicated evolution of our algorithms. For example, if we wanted to change something about our congestion control algorithm, we'd likely have to change the code for reliability as well. Or, if we wanted to change the reliability implementation (e.g. change from cumulative to full-information acks), we'd have to update congestion control as well.
+Поєднання надійності й керування перевантаженням — проєктне рішення. Одна перевага полягає в тому, що керування перевантаженням було невеликою латкою коду, яку можна було широко розгорнути у відповідь на колапс через перевантаження в 1980-х. Однак відтоді поєднання цих двох функцій ускладнило еволюцію наших алгоритмів. Наприклад, якби ми захотіли щось змінити в алгоритмі керування перевантаженням, нам, імовірно, довелося б змінити й код надійності. Або якби ми захотіли змінити реалізацію надійності (наприклад, перейти від кумулятивних підтверджень до підтверджень із повною інформацією), нам довелося б оновити й керування перевантаженням.
 
-From a design perspective, this is a failure of modularity, not layering. Congestion control and reliability are operating at the correct layer of abstraction (transport layer). However, within the transport layer, we haven't cleanly separated different functionality into different parts of our code.
+З погляду проєктування це провал модульності, а не розбиття на рівні. Керування перевантаженням і надійність працюють на правильному рівні абстракції (транспортному рівні). Однак у межах транспортного рівня ми не розділили чітко різну функціональність на різні частини коду.
 
-Because congestion control relies on reliability, it's hard to achieve congestion control without reliability. Some applications (e.g. video streaming) might not want reliability, but still want congestion control. But there's no way to disable reliability and keep only congestion control.
+Оскільки керування перевантаженням спирається на надійність, складно отримати керування перевантаженням без надійності. Деяким застосункам (наприклад, потоковому відео) може не знадобитися надійність, але керування перевантаженням однаково потрібне. Але способу вимкнути надійність і залишити лише керування перевантаженням немає.
 
-Likewise, it's hard to achieve reliability without congestion control. For example, if we had a lightweight connection that sent one packet every 10 minutes, we probably don't need congestion control for this connection. But we can't easily disable congestion control for only some connections.
+Так само складно отримати надійність без керування перевантаженням. Наприклад, якби в нас було легке з'єднання, що надсилає один пакет кожні 10 хвилин, керування перевантаженням для такого з'єднання, найімовірніше, не потрібне. Але ми не можемо просто вимкнути керування перевантаженням лише для деяких з'єднань.

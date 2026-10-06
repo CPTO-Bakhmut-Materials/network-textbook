@@ -1,62 +1,62 @@
 ---
-title: Multicast
-parent: Beyond Client-Server
+title: Багатоадресна розсилка
+parent: За межами клієнт-сервер
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Multicast
+# Багатоадресна розсилка
 
-## Motivation: Multicast
+## Мотивація: багатоадресна розсилка
 
-In every topic we've seen so far, we've said that the goal of the Internet is to deliver data between hosts. In particular, we've assumed unicast delivery, which means that there is a single source, sending data to a single destination.
+У кожній темі, яку ми досі розглядали, ми казали, що мета Інтернету — доставляти дані між хостами. Зокрема, ми вважали доставку одноадресною (unicast), тобто є одне джерело, що надсилає дані одному адресатові.
 
-Many protocols we've seen (e.g. HTTP, DNS, TCP, TLS) rely on a client-server model, which relies on the unicast delivery model. In the client-server model, there is one client and one server exchanging data, which implies that they are sending unicast data between each other.
+Багато протоколів, які ми бачили (наприклад, HTTP, DNS, TCP, TLS), спираються на модель «клієнт–сервер», яка спирається на модель одноадресної доставки. У моделі «клієнт–сервер» один клієнт і один сервер обмінюються даними, тобто надсилають один одному дані одноадресно.
 
-Most of the traffic on the Internet is indeed unicast, but there are some exceptions. In particular, some applications involve groups of hosts communicating. For example, consider a multi-player game, or a live content delivery app (e.g. Zoom meeting, live-streaming a sports game), or a collaborative document (e.g. Google Docs). More exotic uses of group communication also exist, such as discovery (e.g. send a message to all Apple devices so that you can find the nearest speaker), or AI training (we'll study this later in these notes).
+Більшість трафіку в Інтернеті справді одноадресна, але є певні винятки. Зокрема, деякі застосунки передбачають спілкування груп хостів. Наприклад, згадайте багатокористувацьку гру, застосунок прямої доставки вмісту (наприклад, зустріч у Zoom, пряму трансляцію спортивного матчу) чи спільний документ (наприклад, Google Docs). Існують і екзотичніші застосування групового спілкування, як-от виявлення (наприклад, надіслати повідомлення всім пристроям Apple, щоб знайти найближчу колонку) чи навчання ШІ (ми вивчатимемо це пізніше в цих матеріалах).
 
-The client-server paradigm is not the most natural way to think about these situations. In a multi-player game or a video-conferencing app, there isn't a single client or a single server. How should the network support these applications, to make it easier for developers to write these types of applications?
+Парадигма «клієнт–сервер» — не найприродніший спосіб думати про такі ситуації. У багатокористувацькій грі чи застосунку відеоконференцій немає одного клієнта чи одного сервера. Як мережа має підтримувати ці застосунки, щоб розробникам було легше писати такі типи застосунків?
 
-One possible answer to this question is: The network should offer no support at all. Group communication can be implemented with unicast. For example, when you make an update to the collaborative document, you can send a separate unicast packet to everyone else in the group, so that they all know about your update.
+Одна можлива відповідь на це питання: мережа взагалі не повинна надавати жодної підтримки. Групове спілкування можна реалізувати за допомогою одноадресної передачі. Наприклад, коли ви вносите зміну до спільного документа, ви можете надіслати окремий одноадресний пакет кожному іншому учасникові групи, щоб усі дізналися про вашу зміну.
 
 <img width="500px" src="/assets/beyond-client-server/7-001-unicast-model.png">
 
-However, this unicast-only approach can be inefficient. Consider this network topology, where you are in the USA and all other group members are in Europe. If you send separate unicast packets to each group member, you're sending duplicate copies of the data across the expensive undersea cable. Also, this forces the sender to send many duplicate unicast packets, which scales poorly (e.g. imagine a single server streaming a sports game to millions of users).
+Однак такий підхід лише з одноадресною передачею може бути неефективним. Розгляньте цю мережеву топологію, де ви в США, а всі інші учасники групи в Європі. Якщо ви надсилаєте окремі одноадресні пакети кожному учасникові групи, ви надсилаєте дублікати даних дорогим підводним кабелем. Крім того, це змушує відправника надсилати багато дублікатів одноадресних пакетів, що погано масштабується (наприклад, уявіть, що один сервер транслює спортивний матч мільйонам користувачів).
 
-Intuitively, a more natural approach would be to send just a single packet across the undersea cable, and then let someone in Europe (e.g. a router or a host) distribute copies of the packet to the group members. Ideally, we would like to avoid sending duplicate copies of a packet along a link. In other words, each link should only carry the packet once (or possibly zero times, if there are no group members along that link).
+Інтуїтивно природнішим підходом було б надіслати підводним кабелем лише один пакет, а потім дозволити комусь у Європі (наприклад, маршрутизатору чи хосту) розповсюдити копії пакета учасникам групи. В ідеалі ми хотіли б уникати надсилання дублікатів пакета каналом. Іншими словами, кожен канал має переносити пакет лише один раз (або, можливо, нуль разів, якщо вздовж цього каналу немає учасників групи).
 
 <img width="500px" src="/assets/beyond-client-server/7-002-multicast-model.png">
 
-This approach requires extra support from the network, and requires developing some new protocols.
+Цей підхід потребує додаткової підтримки з боку мережі й розробки певних нових протоколів.
 
 
-## Multicast Definitions
+## Визначення багатоадресної розсилки
 
-Recall that we have seen four packet delivery models so far:
+Пригадайте, що досі ми бачили чотири моделі доставки пакетів:
 
-Unicast: Send a packet to exactly one destination.
+Одноадресна передача (unicast): надіслати пакет рівно одному адресатові.
 
-Anycast: Send a packet to anyone in a set of possible destinations. Only one member of the set needs to receive the packet.
+Anycast: надіслати пакет будь-кому з множини можливих адресатів. Пакет має отримати лише один член множини.
 
-Broadcast: Send a packet to all destinations. The definition of "all" depends on the context of the problem, but you can think of it as all hosts in a local network.
+Широкомовна розсилка (broadcast): надіслати пакет усім адресатам. Визначення «усіх» залежить від контексту задачі, але можна вважати, що це всі хости в локальній мережі.
 
-Multicast: Send a packet to all members in a group. Hosts can choose to join/leave groups at any time. Note that you can send a packet to a group, even if you yourself are not a member of that group.
+Багатоадресна розсилка (multicast): надіслати пакет усім членам групи. Хости можуть будь-коли приєднуватися до груп чи покидати їх. Зауважте, що надіслати пакет групі можна, навіть якщо ви самі не є членом цієї групи.
 
 <img width="900px" src="/assets/beyond-client-server/7-003-uni-any-multi-broadcast.png">
 
-The multicast paradigm can be used to think about the group communication problems from earlier. For example, all hosts interested in receiving the live-streamed sports game can join a multicast group. Then, the streaming service can multicast packets to the entire group.
+Парадигму багатоадресної розсилки можна використати, щоб міркувати про попередні задачі групового спілкування. Наприклад, усі хости, що хочуть отримувати пряму трансляцію спортивного матчу, можуть приєднатися до групи багатоадресної розсилки. Тоді сервіс трансляції може розсилати пакети всій групі.
 
-As another example, if we wanted to use multicast for discovery, we could have all printers in the building join a multicast group. Then, users can multicast packets to the entire group to find the printers that they can use.
+Як інший приклад, якби ми хотіли використати багатоадресну розсилку для виявлення, ми могли б змусити всі принтери в будівлі приєднатися до групи багатоадресної розсилки. Тоді користувачі можуть розсилати пакети всій групі, щоб знайти принтери, якими можуть скористатися.
 
 
-## IP vs. Overlay Multicast
+## Багатоадресна розсилка IP проти накладеної
 
-A perennial debate throughout the history of multicast is an architectural question: At what layer should we implement multicast?
+Одвічна дискусія впродовж усієї історії багатоадресної розсилки — архітектурне питання: на якому рівні слід реалізовувати багатоадресну розсилку?
 
-One option is to implement multicast in Layer 3, sometimes called **IP multicast**. In this approach, we add specialized support to routers so that they understand how to multicast packets. This option gives better performance, but is harder to implement.
+Один варіант — реалізувати багатоадресну розсилку на рівні 3; це іноді називають **багатоадресною розсилкою IP** (IP multicast). За цього підходу ми додаємо до маршрутизаторів спеціалізовану підтримку, щоб вони розуміли, як розсилати пакети багатоадресно. Цей варіант дає кращу продуктивність, але його складніше реалізувати.
 
-The other option is implement multicast in Layer 7, sometimes called **overlay multicast**. In this approach, applications handle any multicast functionality. This approach leaves Layer 3 untouched, so routers only need to understand unicast. This option gives worse performance, but is simpler to implement.
+Інший варіант — реалізувати багатоадресну розсилку на рівні 7; це іноді називають **накладеною багатоадресною розсилкою** (overlay multicast). За цього підходу будь-якою функціональністю багатоадресної розсилки займаються застосунки. Цей підхід залишає рівень 3 недоторканим, тож маршрутизаторам достатньо розуміти одноадресну передачу. Цей варіант дає гіршу продуктивність, але його простіше реалізувати.
 
-Neither option is strictly better. We'll study both options and analyze the trade-offs between them.
+Жоден варіант не є однозначно кращим. Ми вивчимо обидва варіанти й проаналізуємо компроміси між ними.
 
 <img width="500px" src="/assets/beyond-client-server/7-004-multicast-taxonomy.png">

@@ -1,91 +1,91 @@
 ---
-title: Links
-parent: Introduction
+title: "Канали зв'язку"
+parent: Вступ
 nav_order: 6
 layout: page-with-toc
 ---
 
-# Links
+# Канали зв'язку
 
-## Properties of Links
+## Властивості каналів
 
-Now that we have a picture of how the layers of the Internet are built, let's focus on how a packet is sent across a link.
+Тепер, коли ми уявляємо, як побудовано рівні Інтернету, зосередьмося на тому, як пакет передається каналом.
 
-There are three properties we can use to measure the performance of a link.
+Є три властивості, за якими можна вимірювати продуктивність каналу.
 
-The **bandwidth** of a link tells us how many bits we can send on the link per unit time. Intuitively, this is the speed of the link. If you think of a link as a pipe carrying water, the bandwidth is the width of the pipe. A wider pipe lets us feed more water into the pipe per second. We usually measure bandwidth in bits per second (e.g. 5 Gbps = 5 billion bits per second).
+**Пропускна здатність** (bandwidth) каналу показує, скільки бітів ми можемо надіслати каналом за одиницю часу. Інтуїтивно це швидкість каналу. Якщо уявляти канал як трубу, якою тече вода, пропускна здатність — це ширина труби. Ширша труба дає змогу подавати в неї більше води за секунду. Пропускну здатність зазвичай вимірюють у бітах за секунду (наприклад, 5 Гбіт/с = 5 мільярдів бітів за секунду).
 
-The **propagation delay** of a link tells us how long it takes for a bit to travel along the link. In the pipe analogy, this is the length of the link. A shorter pipe means that water spends less time in the pipe before arriving at the other end. Propagation delay is measured in time (e.g. nanoseconds, milliseconds).
+**Затримка поширення** (propagation delay) каналу показує, скільки часу потрібно біту, щоб пройти каналом. В аналогії з трубою це довжина каналу. Коротша труба означає, що вода проводить у ній менше часу, перш ніж дістатися іншого кінця. Затримку поширення вимірюють в одиницях часу (наприклад, наносекундах, мілісекундах).
 
-If we multiply the bandwidth and the propagation delay, we get the **bandwidth-delay product (BDP)**. Intuitively, this is the capacity of the link, or the number of bits that exist on the link at any given instant. In the pipe analogy, if we fill up the pipe and freeze time, the capacity of the pipe is how much water is in the pipe in that instant.
+Якщо помножити пропускну здатність на затримку поширення, ми отримаємо **добуток пропускної здатності на затримку** (bandwidth-delay product, BDP). Інтуїтивно це місткість каналу, тобто кількість бітів, які перебувають у каналі в будь-який момент. В аналогії з трубою: якщо заповнити трубу й зупинити час, місткість труби — це кількість води в трубі в цю мить.
 
 <img width="600px" src="/assets/intro/1-57-link-properties.png">
 
-Note: You might sometimes see the term **latency**. In the context of a link, the latency is its propagation delay, though this word can also be used in other contexts (e.g. the latency from end host to end host, across multiple links). Latency by itself is not formally defined, and is context-dependent.
+Примітка: іноді вам траплятиметься термін **латентність** (latency). У контексті каналу латентність — це його затримка поширення, хоча це слово може вживатися й в інших контекстах (наприклад, латентність від кінцевого хоста до кінцевого хоста через кілька каналів). Саме по собі поняття латентності формально не визначене й залежить від контексту.
 
 
-## Timing Diagram
+## Часова діаграма
 
-Suppose we have a link with bandwidth 1 Mbps = 1 million bits per second, and propagation delay of 1 ms = 0.001 seconds.
+Припустімо, у нас є канал із пропускною здатністю 1 Мбіт/с = 1 мільйон бітів за секунду і затримкою поширення 1 мс = 0,001 секунди.
 
-We want to send a 100 byte = 800 bit packet along this link. How long does it take to send this packet, from the time the first bit is sent, to the time the last bit is received?
+Ми хочемо надіслати цим каналом пакет розміром 100 байтів = 800 бітів. Скільки часу триває надсилання цього пакета — від моменту, коли надіслано перший біт, до моменту, коли отримано останній біт?
 
-To answer this question, we can draw a timing diagram. The left bar is the sender, and the right bar is the recipient. Time starts at 0 and increases as we move down the diagram.
+Щоб відповісти на це питання, можна намалювати часову діаграму (timing diagram). Ліва смуга — відправник, права — отримувач. Час починається з 0 і зростає, коли ми рухаємося діаграмою донизу.
 
 <img width="300px" src="/assets/intro/1-58-timing1.png">
 
-Let's focus on the first bit. We can put 1,000,000 bits on the link per second (bandwidth), so it takes 1/1,000,000 = 0.000001 seconds to put a single bit on the link. At time 0.000001 seconds, the link has a single bit on it, at the sender end.
+Зосередьмося на першому біті. Ми можемо поміщати в канал 1 000 000 бітів за секунду (пропускна здатність), тож, щоб помістити в канал один біт, потрібно 1/1 000 000 = 0,000001 секунди. У момент 0,000001 секунди в каналі є один біт — на боці відправника.
 
-It then takes 0.001 seconds for this bit to travel across the link (propagation delay), so at time 0.000001 + 0.001 seconds, the very first bit arrives at the recipient.
+Потім цьому біту потрібно 0,001 секунди, щоб пройти каналом (затримка поширення), тож у момент 0,000001 + 0,001 секунди найперший біт надходить до отримувача.
 
 <img width="900px" src="/assets/intro/1-59-timing2.png">
 
-Now let's think about the last bit. From before, it takes 0.000001 to put a bit on the link. We have 800 bits to send, so the last bit is placed on the link at time $$800 \cdot 0.000001 = 0.0008$$ seconds.
+Тепер подумаймо про останній біт. Як ми вже знаємо, щоб помістити біт у канал, потрібно 0,000001 секунди. Нам треба надіслати 800 бітів, тож останній біт буде поміщено в канал у момент $$800 \cdot 0.000001 = 0.0008$$ секунди.
 
-It then takes 0.001 seconds for the last bit to travel across the link, so at time 0.0008 + 0.001 seconds, the very last bit arrives at the recipient. This is the time when we can say the packet has arrived at the recipient.
+Потім останньому біту потрібно 0,001 секунди, щоб пройти каналом, тож у момент 0,0008 + 0,001 секунди найостанніший біт надходить до отримувача. Саме тоді можна сказати, що пакет надійшов до отримувача.
 
 <img width="900px" src="/assets/intro/1-60-timing3.png">
 
 
-## Packet Delay
+## Затримка пакета
 
-More generally, the **packet delay** is the time it takes for an entire packet to be sent, starting from the time the first bit is put on the wire, to the time the last bit is received at the other end. This delay is the sum of the transmission delay and the propagation delay.
+Загальніше, **затримка пакета** (packet delay) — це час, потрібний для надсилання всього пакета, від моменту, коли перший біт поміщено в дріт, до моменту, коли останній біт отримано на іншому кінці. Ця затримка є сумою затримки передачі та затримки поширення.
 
-The transmission delay tells us how long it takes to put the bits on the wire. In the example, this was $$800 \cdot (1/1{,}000{,}000)$$. In general, this is the packet size divided by the link bandwidth.
+Затримка передачі (transmission delay) показує, скільки часу потрібно, щоб помістити біти в дріт. У прикладі це було $$800 \cdot (1/1{,}000{,}000)$$. Загалом це розмір пакета, поділений на пропускну здатність каналу.
 
-Since the transmission delay is a function of bandwidth, we can calculate packet delay in terms of the two link properties of bandwidth and propagation delay.
-
-
-## Bandwidth and Propagation Delay Tradeoffs
-
-Consider two links:
-
-Link 1 has bandwidth 10 Mbps and propagation delay 10 ms.
-
-Link 2 has bandwidth 1 Mbps and propagation delay 1 ms.
-
-Which link is better? It depends on the packets you're sending.
-
-Suppose we wanted to send a single 10-byte packet. For both links, the time it takes to put one packet on the wire is negligible, and the propagation delay is the dominant source of delay. Link 2 has the shorter propagation delay, so it's the better choice.
-
-Suppose we instead wanted to send a single 10,000-byte packet. Now, the transmission delay is the dominant source of delay, and we prefer Link 1, which allows us to put the bytes on the wire faster (higher bandwidth). You could validate this intuition with formal packet delay calculations: Link 1 takes roughly 18 ms to send this packet, while Link 2 takes roughly 81 ms.
-
-For a real-world example, consider a video call. If the video quality is poor, you probably have insufficient bandwidth (and shortening propagation delay won't help). By contrast, if there's a delay between the time you speak and the time the other person answers, the propagation delay is probably too long (and more bandwidth won't help).
+Оскільки затримка передачі є функцією пропускної здатності, ми можемо обчислити затримку пакета через дві властивості каналу: пропускну здатність і затримку поширення.
 
 
-## Pipe Diagram
+## Компроміси між пропускною здатністю та затримкою поширення
 
-So far, we've been drawing timing diagrams to denote when network events happen (e.g. when the recipient gets the packet).
+Розгляньмо два канали:
 
-Another way to view packets being sent across the network is to draw the bits on the link at a frozen moment in time. Both views convey the same information, but depending on the context, one view might be more useful than the other.
+Канал 1 має пропускну здатність 10 Мбіт/с і затримку поширення 10 мс.
 
-To draw the link, we can imagine the link is a pipe (similar to the water analogy) and draw the pipe as a rectangle, where the width is the propagation delay, and the height is the bandwidth. The area of the pipe is the capacity of the link.
+Канал 2 має пропускну здатність 1 Мбіт/с і затримку поширення 1 мс.
+
+Який канал кращий? Це залежить від пакетів, які ви надсилаєте.
+
+Припустімо, ми хочемо надіслати один 10-байтовий пакет. Для обох каналів час, потрібний на поміщення одного пакета в дріт, незначний, і основним джерелом затримки є затримка поширення. Канал 2 має меншу затримку поширення, тож він кращий вибір.
+
+Припустімо натомість, що ми хочемо надіслати один пакет розміром 10 000 байтів. Тепер основним джерелом затримки є затримка передачі, і нам більше підходить канал 1, який дає змогу поміщати байти в дріт швидше (більша пропускна здатність). Цю інтуїцію можна перевірити формальними обчисленнями затримки пакета: каналу 1 потрібно приблизно 18 мс, щоб надіслати цей пакет, а каналу 2 — приблизно 81 мс.
+
+Як приклад із реального життя розгляньте відеодзвінок. Якщо якість відео погана, вам, найімовірніше, бракує пропускної здатності (і скорочення затримки поширення не допоможе). Натомість якщо між моментом, коли ви говорите, і моментом, коли співрозмовник відповідає, є затримка, то, найімовірніше, задовга затримка поширення (і більша пропускна здатність не допоможе).
+
+
+## Діаграма труби
+
+Досі ми малювали часові діаграми, щоб позначати, коли відбуваються мережеві події (наприклад, коли отримувач отримує пакет).
+
+Інший спосіб поглянути на пакети, що передаються мережею, — намалювати біти в каналі в застиглий момент часу. Обидва подання передають ту саму інформацію, але залежно від контексту одне з них може бути кориснішим за інше.
+
+Щоб намалювати канал, можна уявити його як трубу (подібно до аналогії з водою) і намалювати трубу як прямокутник, ширина якого — затримка поширення, а висота — пропускна здатність. Площа труби — місткість каналу.
 
 <img width="600px" src="/assets/intro/1-61-pipe1.png">
 
-Suppose we want to send a 50-byte packet across the link. In the pipe view, we can show a frozen moment in time with the packet being sent along the link.
+Припустімо, ми хочемо надіслати каналом 50-байтовий пакет. У поданні труби ми можемо показати застиглий момент часу, коли пакет передається каналом.
 
-The packet is arranged in a rectangle, where the height of the rectangle tells us how many bytes were placed on the wire in a single time step. At every time step, the packet slides right in the pipe. Eventually, the packet starts to exit the pipe, and at each time step, one column of the rectangle exits the pipe.
+Пакет розташовано у вигляді прямокутника, висота якого показує, скільки байтів було поміщено в дріт за один крок часу. На кожному кроці часу пакет зсувається в трубі праворуч. Зрештою пакет починає виходити з труби, і на кожному кроці часу з труби виходить один стовпчик прямокутника.
 
 <img width="900px" src="/assets/intro/1-62-pipe2.png">
 
@@ -93,71 +93,71 @@ The packet is arranged in a rectangle, where the height of the rectangle tells u
 
 <img width="900px" src="/assets/intro/1-64-pipe4.png">
 
-Non-obvious fact: The packet transmission delay in the timing diagram corresponds to the width of the rectangle.
+Неочевидний факт: затримка передачі пакета на часовій діаграмі відповідає ширині прямокутника.
 
-To see why, suppose we have a link that can send 5 bits per second, and we have a 20-bit packet. In the timing diagram, there are 11 seconds between the time of the first and last bit being sent.
+Щоб зрозуміти чому, припустімо, що в нас є канал, який може надсилати 5 бітів за секунду, і 20-бітовий пакет. На часовій діаграмі між моментами надсилання першого й останнього біта минає 11 секунд.
 
 <img width="900px" src="/assets/intro/1-65-packet-delay-1.png">
 
-In the pipe diagram, every second, a column of 5 bits marches into the pipe. We need 4 columns to enter the pipe, which takes 4 seconds. This means the width of the packet in the pipe is 4 columns of packets = 4 seconds.
+На діаграмі труби щосекунди в трубу входить стовпчик із 5 бітів. У трубу мають увійти 4 стовпчики, що займає 4 секунди. Це означає, що ширина пакета в трубі — 4 стовпчики = 4 секунди.
 
 <img width="900px" src="/assets/intro/1-66-packet-delay-2.png">
 
-The pipe diagram lets us view the packet transmission time on the same axis as the propagation delay, and compare the two terms.
+Діаграма труби дає змогу бачити час передачі пакета на тій самій осі, що й затримку поширення, і порівнювати ці два доданки.
 
-Pipe diagrams can be useful for comparing different links. Let's look at the exact same packets traveling through three different links.
+Діаграми труби можуть бути корисні для порівняння різних каналів. Подивімося, як ті самі пакети проходять трьома різними каналами.
 
 <img width="700px" src="/assets/intro/1-67-different-pipes.png">
 
-If we shorten the propagation delay, the pipe width gets shorter. The pipe height stays the same, and the shape of each rectangular packet is the same. (Remember, you can think of the packet height as the number of bits marching into the pipe at each time step, and the packet width as the time it takes to march all bits into the pipe.)
+Якщо скоротити затримку поширення, ширина труби зменшується. Висота труби залишається тією самою, і форма кожного прямокутного пакета теж. (Пам'ятайте: висоту пакета можна уявляти як кількість бітів, що входять у трубу за кожен крок часу, а ширину пакета — як час, потрібний, щоб усі біти увійшли в трубу.)
 
-Other observations here: The packet width staying the same means the transmission delay didn't change. Also, the area of the link decreased, which tells us that the link has less capacity.
+Інші спостереження: те, що ширина пакета не змінилася, означає, що затримка передачі не змінилася. Крім того, площа каналу зменшилася, а отже, місткість каналу стала меншою.
 
-When we increase the bandwidth, the pipe height gets taller, indicating that we can march more bits into the pipe per unit time.
+Коли ми збільшуємо пропускну здатність, труба стає вищою, тобто ми можемо подавати в трубу більше бітів за одиницю часу.
 
-Notice that the shape of the packets also changed. The packets are now taller, because we can march more bits into the pipe per unit time. As a result, we finish feeding the packet into the pipe much faster, so the width of the packets (transmission delay) decreases.
+Зверніть увагу, що форма пакетів теж змінилася. Пакети тепер вищі, бо ми можемо подавати в трубу більше бітів за одиницю часу. Як наслідок, ми значно швидше завершуємо подавати пакет у трубу, тож ширина пакетів (затримка передачі) зменшується.
 
 
-## Overloaded Links
+## Перевантажені канали
 
 <img width="700px" src="/assets/intro/1-68-link1.png">
 
-Consider this picture of packets arriving at a switch. The switch needs to forward all the packets along the outgoing link. In this case, there's no problem, because the switch has enough capacity to process every packet as it arrives.
+Розгляньте цю картинку пакетів, що надходять до комутатора. Комутатор має переслати всі пакети вихідним каналом. У цьому випадку проблеми немає, бо комутатор має достатньо пропускної здатності, щоб обробити кожен пакет у момент його надходження.
 
 <img width="700px" src="/assets/intro/1-69-link2.png">
 
-What about in this picture?
+А як щодо цієї картинки?
 
 <img width="700px" src="/assets/intro/1-70-transient1.png">
 
-In the long term, we have enough capacity to send all the outgoing packets, but at this very instant in time, we have two packets arriving simultaneously, and we can only send out one. This is called **transient overload**, and it's extremely common at switches in the Internet.
+У довгостроковій перспективі пропускної здатності достатньо, щоб надіслати всі вихідні пакети, але саме в цю мить у нас одночасно надходять два пакети, а надіслати ми можемо лише один. Це називається **тимчасовим перевантаженням** (transient overload), і воно надзвичайно поширене на комутаторах в Інтернеті.
 
-To cope with transient overload, the switch maintains a queue of packets. If two packets arrive simultaneously, the switch queues one of them and sends out the other one.
+Щоб упоратися з тимчасовим перевантаженням, комутатор підтримує чергу пакетів. Якщо два пакети надходять одночасно, комутатор ставить один із них у чергу, а інший надсилає.
 
 <img width="700px" src="/assets/intro/1-71-transient2.png">
 
-At any given time, the switch could choose to send a packet from one of the incoming links, or send a packet from the queue. This choice is determined by a **packet scheduling** algorithm, and there are lots of different designs that we'll look at.
+У будь-який момент комутатор може вирішити надіслати пакет з одного з вхідних каналів або пакет із черги. Цей вибір визначає алгоритм **планування пакетів** (packet scheduling), і є багато різних варіантів, які ми розглянемо.
 
 <img width="900px" src="/assets/intro/1-72-transient3.png">
 
-When there are no incoming packets, the switch can drain the queue and send out any queued packets. 
+Коли вхідних пакетів немає, комутатор може спорожнити чергу й надіслати всі пакети з черги.
 
 <img width="900px" src="/assets/intro/1-73-transient4.png">
 
-This allows queues to help us absorb transient bursts.
+Так черги допомагають нам поглинати тимчасові сплески.
 
 <img width="700px" src="/assets/intro/1-74-transient5.png">
 
-What if the incoming links looked like this?
+А що, як вхідні канали виглядали б так?
 
 <img width="700px" src="/assets/intro/1-75-persistent.png">
 
-Now we have **persistent overload**. There just isn't enough capacity on the outgoing link to support the level of incoming traffic.
+Тепер у нас **постійне перевантаження** (persistent overload). Вихідному каналу просто бракує пропускної здатності, щоб упоратися з рівнем вхідного трафіку.
 
-We could fill the queue up, but that still isn't enough to support the incoming load. One way or another, the switch will drop packets.
+Ми можемо заповнити чергу, але цього все одно недостатньо, щоб упоратися з вхідним навантаженням. Так чи інакше комутатор відкидатиме пакети.
 
-How do we account for persistent overload? Operators need to properly provision their links and switches. If they notice that a switch is frequently overloaded, they might decide to upgrade the link (which may require manual work).
+Як урахувати постійне перевантаження? Оператори мають належно забезпечувати свої канали й комутатори ресурсами. Якщо вони помічають, що комутатор часто перевантажений, вони можуть вирішити модернізувати канал (що може потребувати ручної роботи).
 
-One possible solution to overload is to have the router tell the senders to slow down. (We'll study this later when we look at congestion control.) Ultimately, there's not much we can do to solve overload, though, which is why the Internet is designed to only offer best-effort service.
+Одне з можливих рішень проблеми перевантаження — щоб маршрутизатор просив відправників сповільнитися. (Ми вивчатимемо це пізніше, коли розглядатимемо керування перевантаженням.) Утім, зрештою ми мало що можемо вдіяти, щоб розв'язати проблему перевантаження, — саме тому Інтернет спроєктовано так, щоб пропонувати лише обслуговування без гарантій.
 
-Now that we have a notion of queuing, we need to go back and update our packet delay formula. Now, packet delay is the sum of transmission delay, propagation delay, and queuing delay.
+Тепер, коли в нас є поняття черги, нам треба повернутися й оновити формулу затримки пакета. Тепер затримка пакета — це сума затримки передачі, затримки поширення та затримки в черзі (queuing delay).

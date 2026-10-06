@@ -1,274 +1,273 @@
 ---
-title: Topologies
-parent: Datacenters
+title: Топології
+parent: Дата-центри
 nav_order: 1
 layout: page-with-toc
 ---
 
-# Datacenter Topology
+# Топологія дата-центру
 
-## What is a Datacenter?
+## Що таке дата-центр?
 
-So far, in our model of the Internet, we've shown end hosts sending packets to each other. The end host might be a client machine (e.g. your local computer), or a server (e.g. YouTube). But, is YouTube really a single machine on the Internet serving videos to the entire world?
+Досі в нашій моделі Інтернету ми показували кінцеві хости, що надсилають пакети один одному. Кінцевим хостом може бути клієнтська машина (наприклад, ваш локальний комп'ютер) або сервер (наприклад, YouTube). Але чи справді YouTube — одна машина в Інтернеті, що надає відео всьому світові?
 
 <img width="800px" src="/assets/datacenter/6-001-single-server.png">
 
-In reality, YouTube is an entire building of interconnected machines, working together to serve videos to clients. All these machines are in the same local network, and can communicate with each other to fulfill requests (e.g. if the video you requested is stored across different machines).
+Насправді YouTube — ціла будівля взаємопов'язаних машин, що спільно надають відео клієнтам. Усі ці машини в тій самій локальній мережі й можуть спілкуватися між собою, щоб виконувати запити (наприклад, якщо запитане вами відео зберігається на різних машинах).
 
 <img width="800px" src="/assets/datacenter/6-002-many-servers.png">
 
-Recall that in the network-of-network model of the Internet, each operator is free to manage their local network however they want. In this section, we'll focus on local networks dedicated to connecting servers inside a datacenter (as opposed to users like your personal computer). We'll talk about challenges unique to these local networks, and specialized solutions to networking problems (e.g. congestion control and routing) that are specifically designed to work well in datacenter contexts.
+Пригадайте, що в моделі Інтернету як мережі мереж кожен оператор вільний керувати своєю локальною мережею як завгодно. У цьому розділі ми зосередимося на локальних мережах, призначених для з'єднання серверів усередині дата-центру (datacenter) (на відміну від користувачів на кшталт вашого персонального комп'ютера). Ми поговоримо про виклики, унікальні для цих локальних мереж, і спеціалізовані рішення мережевих задач (наприклад, керування перевантаженням і маршрутизації), спеціально спроєктовані для доброї роботи в контексті дата-центрів.
 
-In real life, a datacenter is housed in one physical location, often on dedicated properties. In addition to computing infrastructure (e.g. servers), datacenters also need supporting infrastructure like cooling systems and power supplies, though we'll be focusing on the local network that connects the servers.
+У реальному житті дата-центр розташований в одному фізичному місці, часто на спеціально виділеній території. Окрім обчислювальної інфраструктури (наприклад, серверів), дата-центрам також потрібна допоміжна інфраструктура на кшталт систем охолодження й живлення, хоча ми зосередимося на локальній мережі, що з'єднує сервери.
 
-Datacenters serve applications (e.g. YouTube videos, Google search results, etc.). This is the infrastructure for the end hosts that you might want to talk to. Note that this is different from Internet infrastructure we've seen so far. Previously, we saw carrier hotels, buildings where lots of networks (owned by different companies) connect to each other with heavy-duty routers. This is the infrastructure for routers forwarding your packets to various destinations, but applications are usually not hosted in carrier hotels.
+Дата-центри обслуговують застосунки (наприклад, відео YouTube, результати пошуку Google тощо). Це інфраструктура для кінцевих хостів, з якими ви можете хотіти спілкуватися. Зауважте, що це відрізняється від інфраструктури Інтернету, яку ми досі бачили. Раніше ми бачили операторські готелі — будівлі, де багато мереж (що належать різним компаніям) з'єднуються між собою потужними маршрутизаторами. Це інфраструктура для маршрутизаторів, що пересилають ваші пакети різним адресатам, але застосунки зазвичай не розміщують в операторських готелях.
 
-A datacenter is usually owned by a single organization (e.g. Google, Amazon), and that organization could host many different applications (e.g. Gmail, YouTube, etc.) in a single datacenter. This means that the organization has control over all the network infrastructure inside the datacenter's local network.
+Дата-центр зазвичай належить одній організації (наприклад, Google, Amazon), і ця організація може розміщувати в одному дата-центрі багато різних застосунків (наприклад, Gmail, YouTube тощо). Це означає, що організація контролює всю мережеву інфраструктуру всередині локальної мережі дата-центру.
 
-Our focus is on modern hyperscale datacenters, operated by tech giants like Google and Amazon. The large scale introduces some unique challenges, but the concepts we'll see also work at smaller scales.
+Ми зосередимося на сучасних гіпермасштабних (hyperscale) дата-центрах, які обслуговують технологічні гіганти на кшталт Google і Amazon. Великий масштаб створює певні унікальні виклики, але концепції, які ми побачимо, працюють і в менших масштабах.
 
 <img width="900px" src="/assets/datacenter/6-003-wan1.png">
 
-This map shows the wide area network (WAN) of all the networks owned by a tech giant like Google.
+Ця мапа показує глобальну мережу (wide area network, WAN) усіх мереж, що належать технологічному гіганту на кшталт Google.
 
-The peering locations connect Google to the rest of the Internet. These mainly consist of Google-operated routers that connect to other autonomous systems.
+Точки пірингу з'єднують Google з рештою Інтернету. Вони здебільшого складаються з маршрутизаторів, які обслуговує Google і які з'єднуються з іншими автономними системами.
 
 <img width="900px" class="real-photo" src="/assets/datacenter/6-004-peering.png">
 
-In addition to peering locations, Google also operates many datacenters. Applications in datacenters can communicate with the rest of the Internet via the peering locations. The datacenters and peering locations are all connected through Google-managed routers and links in Google's wide area network.
+Окрім точок пірингу, Google також обслуговує багато дата-центрів. Застосунки в дата-центрах можуть спілкуватися з рештою Інтернету через точки пірингу. Дата-центри й точки пірингу з'єднані маршрутизаторами й каналами глобальної мережі Google, якими керує Google.
 
 <img width="900px" class="real-photo" src="/assets/datacenter/6-005-datacenter-irl1.png">
 
-Datacenters and peering locations optimize for different performance goals, so they're often physically located in different places.
+Дата-центри й точки пірингу оптимізуються під різні цілі продуктивності, тож вони часто фізично розташовані в різних місцях.
 
-Peering locations care about being physically close to other companies and networks. As a result, carrier hotels are often located in cities to be physically closer to customers and other companies.
+Для точок пірингу важливо бути фізично близько до інших компаній і мереж. Як наслідок, операторські готелі часто розташовані в містах, щоб бути фізично ближче до клієнтів та інших компаній.
 
-By contrast, datacenters care less about being close to other companies, and instead prioritize requirements like physical space, power, and cooling. As a result, datacenters are often located in less-populated areas, sometimes with a nearby river (for cooling) or power station (datacenters might need hundreds of times more power than peering locations).
+Натомість для дата-центрів менш важливо бути близько до інших компаній, і вони натомість надають пріоритет таким вимогам, як фізичний простір, живлення й охолодження. Як наслідок, дата-центри часто розташовані в менш населених районах, іноді поруч із річкою (для охолодження) чи електростанцією (дата-центрам може знадобитися в сотні разів більше енергії, ніж точкам пірингу).
 
 <img width="800px" class="real-photo" src="/assets/datacenter/6-006-datacenter-irl2.png">
 
-## Why is the Datacenter Different?
+## Чим відрізняється дата-центр?
 
-What makes a datacenter's local network different from general-purpose (wide area) networks on the rest of the Internet?
+Що робить локальну мережу дата-центру відмінною від мереж (глобальних) загального призначення в решті Інтернету?
 
-The datacenter network is run by a single organization, which gives us more control over the network and hosts. Unlike in the general-purpose Internet, we can run our own custom hardware or software, and we can enforce that every machine follows the same custom protocol.
+Мережу дата-центру обслуговує одна організація, що дає нам більше контролю над мережею й хостами. На відміну від Інтернету загального призначення, ми можемо використовувати власне спеціальне обладнання чи програмне забезпечення і можемо вимагати, щоб кожна машина дотримувалася того самого спеціального протоколу.
 
-Datacenters are often homogeneous, where every server and switch is built and operated exactly the same. Unlike in the general-purpose Internet, we don't have to consider some links being wireless, and others being wired. In the general-purpose Internet, some computers might be newer than others, but in a datacenter, every computer is usually part of the same generation, and the entire datacenter is upgraded at the same time.
+Дата-центри часто однорідні: кожен сервер і комутатор побудовано й експлуатують точнісінько однаково. На відміну від Інтернету загального призначення, нам не треба враховувати, що одні канали бездротові, а інші дротові. В Інтернеті загального призначення одні комп'ютери можуть бути новішими за інші, але в дата-центрі кожен комп'ютер зазвичай належить до того самого покоління, і весь дата-центр модернізується одночасно.
 
-The datacenter network exists in a single physical location, so we don't have to think about long-distance links like undersea cables. Within that single location, we have to support extremely high bandwidth.
+Мережа дата-центру існує в одному фізичному місці, тож нам не треба думати про канали на великі відстані на кшталт підводних кабелів. У межах цього одного місця нам доводиться підтримувати надзвичайно високу пропускну здатність.
 
 
-## Datacenter Traffic Patterns
+## Шаблони трафіку в дата-центрі
 
-When you make a request to a datacenter application, your packet travels across routers in the general-purpose Internet, eventually reaching Google-operated router. That router forwards your packet to one of the datacenter's edge routers, which then forwards your packet to some individual server in the datacenter.
+Коли ви робите запит до застосунку в дата-центрі, ваш пакет проходить маршрутизаторами Інтернету загального призначення й зрештою доходить до маршрутизатора, який обслуговує Google. Цей маршрутизатор пересилає ваш пакет одному з граничних маршрутизаторів дата-центру, який потім пересилає ваш пакет якомусь окремому серверу в дата-центрі.
 
-This one server probably doesn't have all the information to process your request. For example, if you requested a Facebook feed, different servers might need to work together to combine ads, photos, posts, etc. It wouldn't be practical if every server had to know everything about Facebook to process your request by itself.
+Цей один сервер, найімовірніше, не має всієї інформації для обробки вашого запиту. Наприклад, якщо ви запитали стрічку Facebook, різні сервери можуть мати спільно поєднати рекламу, фотографії, дописи тощо. Було б непрактично, якби кожен сервер мав знати все про Facebook, щоб самостійно обробити ваш запит.
 
-In order for the different servers to coordinate, the first server triggers many backend requests to collect all the information needed in your request. A single user request could trigger hundreds of backend requests (521 on average, per a 2013 Facebook paper) before the response can be sent back to the user. In general, there's significantly more backend traffic between servers, and the external traffic with the user is very small in comparison.
+Щоб різні сервери координувалися, перший сервер ініціює багато внутрішніх (backend) запитів, щоб зібрати всю інформацію, потрібну для вашого запиту. Один запит користувача може ініціювати сотні внутрішніх запитів (у середньому 521, за статтею Facebook 2013 року), перш ніж відповідь можна буде надіслати назад користувачеві. Загалом внутрішнього трафіку між серверами значно більше, а зовнішній трафік із користувачем порівняно з ним дуже малий.
 
 <img width="900px" src="/assets/datacenter/6-007-nsew-traffic1.png">
 
-Most modern applications are dominated by internal traffic between machines. For example, if you run a distributed program like mapreduce, the different servers need to communicate to each other to collectively solve your large query. Some applications might even have no user-facing network traffic at all. For example, Google might run periodic backups, which requires servers communicating, but produces no visible result for the end user.
+У більшості сучасних застосунків переважає внутрішній трафік між машинами. Наприклад, якщо ви запускаєте розподілену програму на кшталт mapreduce, різні сервери мають спілкуватися між собою, щоб спільно розв'язати ваш великий запит. Деякі застосунки можуть навіть узагалі не мати мережевого трафіку, спрямованого до користувача. Наприклад, Google може виконувати періодичні резервні копіювання, що потребує спілкування серверів, але не дає видимого результату для кінцевого користувача.
 
-Connections that go outside the network (e.g. to end users or other datacenters) are described as **north-south** traffic. By contrast, connections between machines inside the network are described as **east-west** traffic. East-west traffic is several orders of magnitude larger than north-south traffic, and the volume of east-west traffic is increasing in recent years (e.g. with the growth of machine learning).
+З'єднання, що виходять за межі мережі (наприклад, до кінцевих користувачів чи інших дата-центрів), описують як трафік **«північ–південь»** (north-south). Натомість з'єднання між машинами всередині мережі описують як трафік **«схід–захід»** (east-west). Трафік «схід–захід» на кілька порядків більший за трафік «північ–південь», і обсяг трафіку «схід–захід» останніми роками зростає (наприклад, зі зростанням машинного навчання).
 
 <img width="300px" src="/assets/datacenter/6-008-nsew-traffic2.png">
 
 
-## Racks
+## Стійки
 
-A datacenter fundamentally consists of many servers. The servers are organized in physical racks, where each rack has 40-48 rack units (slots), and each rack unit can fit 1-2 servers.
+Дата-центр по суті складається з багатьох серверів. Сервери впорядковано у фізичні стійки (racks), де кожна стійка має 40–48 юнітів (слотів), і в кожен юніт можна вмістити 1–2 сервери.
 
 <img width="500px" class="real-photo" src="/assets/datacenter/6-009-rack1.png">
 
-We'd like all the servers in the datacenter to be able to communicate with each other, so we need to build a network to connect them all. What does this network look like? How do we efficiently install links and switches to meet our requirements?
+Ми хотіли б, щоб усі сервери в дата-центрі могли спілкуватися між собою, тож нам треба побудувати мережу, яка їх усіх з'єднає. Як виглядає ця мережа? Як ефективно встановити канали й комутатори, щоб задовольнити наші вимоги?
 
-First, we can connect all the servers within a single rack. Each rack has a single switch called a **top-of-rack (TOR) switch**, and every server in the rack has a link (called an **access link** or **uplink**) connecting to that switch. The TOR is a relatively small router, with a single forwarding chip, and physical ports connecting to all the servers on the rack. Each server uplink typically has a capacity of around 100 Gbps.
+Спершу ми можемо з'єднати всі сервери в межах однієї стійки. Кожна стійка має один комутатор під назвою **комутатор верхнього рівня стійки** (top-of-rack switch, TOR), і кожен сервер у стійці має канал (що називається **каналом доступу**, access link, або **висхідним каналом**, uplink), який з'єднує його з цим комутатором. TOR — відносно невеликий маршрутизатор з однією мікросхемою пересилання та фізичними портами, що з'єднуються з усіма серверами стійки. Кожен висхідний канал сервера зазвичай має пропускну здатність близько 100 Гбіт/с.
 
 <img width="500px" class="real-photo" src="/assets/datacenter/6-010-rack2.png">
 
-Next, we have to think about how to connect the racks together. Ideally, we'd like every server to talk to every other server at their full line rate (i.e. using the entire uplink bandwidth).
+Далі нам треба подумати, як з'єднати стійки між собою. В ідеалі ми хотіли б, щоб кожен сервер спілкувався з кожним іншим сервером на повній лінійній швидкості (тобто використовуючи всю пропускну здатність висхідного каналу).
 
 <img width="500px" src="/assets/datacenter/6-011-rack3.png">
 
 
-## Bisection Bandwidth
+## Бісекційна пропускна здатність
 
-Before thinking about how to connect racks, let's develop a metric for how connected a set of computers are.
+Перш ніж думати, як з'єднувати стійки, розробімо метрику того, наскільки зв'язна множина комп'ютерів.
 
 <img width="800px" src="/assets/datacenter/6-012-bisection1.png">
 
-Intuitively, even though all three networks are fully connected, the left network is the most connected, the middle network is less connected, and the right network is the least connected. For example, the left and middle networks could support 1-4 and 3-6 simultaneously communicating at full line rate, while the right network cannot.
+Інтуїтивно, хоча всі три мережі повністю зв'язні, ліва мережа найзв'язніша, середня — менш зв'язна, а права — найменш зв'язна. Наприклад, ліва й середня мережі можуть підтримувати одночасне спілкування 1–4 і 3–6 на повній лінійній швидкості, а права — ні.
 
-One way to argue that the left network is more connected is to say: We have to cut more links to disconnect the network. This indicates that there are lots of redundant links, which allows us to run many simultaneous high-bandwidth connections. Similarly, one way to argue that the right network is less connected is to say: We only have to cut the 2-5 link to connect the network, which indicates the existence of a bottleneck that prevents simultaneous high-bandwidth connections.
+Один спосіб аргументувати, що ліва мережа зв'язніша, — сказати: щоб роз'єднати мережу, треба перерізати більше каналів. Це вказує, що є багато надлишкових каналів, які дають змогу підтримувати багато одночасних з'єднань із високою пропускною здатністю. Аналогічно, один спосіб аргументувати, що права мережа менш зв'язна, — сказати: щоб роз'єднати мережу, достатньо перерізати лише канал 2–5, що вказує на наявність вузького місця, яке не дає підтримувати одночасні з'єднання з високою пропускною здатністю.
 
-**Bisection bandwidth** is a way to quantify how connected a network is. To compute bisection bandwidth, we compute the number of links we need to remove in order to partition the network into two disconnected halves of equal size. The bisection bandwidth is the sum of the bandwidths on the links that we cut.
+**Бісекційна пропускна здатність** (bisection bandwidth) — спосіб кількісно оцінити, наскільки зв'язна мережа. Щоб обчислити бісекційну пропускну здатність, ми рахуємо кількість каналів, які треба прибрати, щоб розділити мережу на дві незв'язні половини однакового розміру. Бісекційна пропускна здатність — сума пропускних здатностей перерізаних каналів.
 
 <img width="900px" src="/assets/datacenter/6-013-bisection2.png">
 
-In the rightmost structure, we only need to remove one link to partition the network, so the bisection bandwidth is just that one link. By contrast, in the leftmost structure, we need to remove 9 links to partition the network, so the bisection bandwidth is the combined bandwidth of all 9 links.
+У найправішій структурі, щоб розділити мережу, достатньо прибрати лише один канал, тож бісекційна пропускна здатність — це просто цей один канал. Натомість у найлівішій структурі, щоб розділити мережу, треба прибрати 9 каналів, тож бісекційна пропускна здатність — сукупна пропускна здатність усіх 9 каналів.
 
-An equivalent way of defining bisection bandwidth is: We divide the network into two halves, and each node in one half wants to simultaneously send data to a corresponding node in the other half. Among all possible partitions of nodes, what is the minimum bandwidth that the nodes can collectively send at? Considering the worst case (minimum bandwidth) forces us to think about bottlenecks.
+Рівнозначний спосіб визначити бісекційну пропускну здатність такий: ми ділимо мережу на дві половини, і кожна вершина в одній половині хоче одночасно надсилати дані відповідній вершині в іншій половині. Серед усіх можливих розбиттів вершин, з якою мінімальною сукупною пропускною здатністю можуть надсилати вершини? Розгляд найгіршого випадку (мінімальної пропускної здатності) змушує нас думати про вузькі місця.
 
 <img width="900px" src="/assets/datacenter/6-014-bisection3.png">
 
-The most-connected network has full bisection bandwidth. This means that there are no bottlenecks, and no matter how you assign nodes to partitions, all nodes in one partition can communicate simultaneously with all nodes in the other partition at full rate. If there are N nodes, and all N/2 nodes in the left partition are sending data at full rate R, then the full bisection bandwidth is N/2 times R.
+Найзв'язніша мережа має повну бісекційну пропускну здатність (full bisection bandwidth). Це означає, що вузьких місць немає, і хоч як розподіляти вершини між частинами, усі вершини однієї частини можуть одночасно спілкуватися з усіма вершинами іншої частини на повній швидкості. Якщо вершин N і всі N/2 вершин лівої частини надсилають дані на повній швидкості R, то повна бісекційна пропускна здатність дорівнює N/2, помноженому на R.
 
-**Oversubscription** is a measure of how far from the full bisection bandwidth we are, or equivalently, how overloaded the bottleneck part of the network is. It's a ratio of the bisection bandwidth to the full bisection bandwidth (the bandwidth if all hosts sent at full rate).
+**Перепідписка** (oversubscription) — міра того, наскільки ми далекі від повної бісекційної пропускної здатності, або, рівнозначно, наскільки перевантажена частина мережі, що є вузьким місцем. Це відношення бісекційної пропускної здатності до повної бісекційної пропускної здатності (пропускної здатності, якби всі хости надсилали на повній швидкості).
 
 <img width="900px" src="/assets/datacenter/6-015-bisection4.png">
 
-In the rightmost example, assuming all links are 1 Gbps, then the bisection bandwidth is 2 Gbps (to split the left four hosts with the right four hosts). The full bisection bandwidth, achieved when all four left hosts were simultaneously sending data, is 4 Gbps. Therefore, the ratio 2/4 tells us that the hosts can only send at 50% of their full rate. In other words, our network is 2x oversubscribed, because if the hosts all sent at full rate, the bottleneck links would be 2x overloaded (4 Gbps on 2 Gbps of links).
+У найправішому прикладі, якщо всі канали мають 1 Гбіт/с, бісекційна пропускна здатність становить 2 Гбіт/с (щоб відокремити ліві чотири хости від правих чотирьох). Повна бісекційна пропускна здатність, що досягається, коли всі чотири ліві хости одночасно надсилають дані, становить 4 Гбіт/с. Тому відношення 2/4 каже нам, що хости можуть надсилати лише на 50% своєї повної швидкості. Іншими словами, наша мережа має перепідписку 2x, бо якби всі хости надсилали на повній швидкості, канали — вузькі місця були б перевантажені вдвічі (4 Гбіт/с на 2 Гбіт/с каналів).
 
 
-## Datacenter Topology
+## Топологія дата-центру
 
-We've now defined bisection bandwidth, a measure of connectedness that's a function of the network topology. In a datacenter, we can choose our topology (e.g. choose where to install cables). What topology should we build to maximize bisection bandwidth?
+Тепер ми визначили бісекційну пропускну здатність — міру зв'язності, що є функцією топології мережі. У дата-центрі ми можемо обирати свою топологію (наприклад, обирати, де прокладати кабелі). Яку топологію слід побудувати, щоб максимізувати бісекційну пропускну здатність?
 
-One possible approach is to connect every rack to a giant cross-bar switch. All the racks on the left side can simultaneously send data at full rate into the switch, which forwards all that data to the right side at full rate. This would allow us to achieve full bisection bandwidth.
+Один можливий підхід — під'єднати кожну стійку до гігантського комутатора з перехресною матрицею (cross-bar switch). Усі стійки з лівого боку можуть одночасно надсилати дані на повній швидкості в комутатор, який пересилає всі ці дані правому боку на повній швидкості. Це дало б змогу досягти повної бісекційної пропускної здатності.
 
 <img width="500px" src="/assets/datacenter/6-016-topology1.png">
 
-What are some problems with this approach? The switch will need one physical port for every rack (potentially up to 2500 ports). We sometimes refer to the number of external ports as the **radix** of the switch, so this switch would need a large radix. Also, this switch would need to have enormous capacity (potentially petabits per second) to support all the racks. Unsurprisingly, this switch is impractical to build (even if we could, it would be prohibitively expensive).
+Які проблеми має цей підхід? Комутаторові знадобиться по одному фізичному порту на кожну стійку (потенційно до 2500 портів). Кількість зовнішніх портів іноді називають **радиксом** (radix) комутатора, тож цьому комутаторові знадобився б великий радикс. Крім того, цей комутатор мав би мати величезну пропускну здатність (потенційно петабіти на секунду), щоб підтримувати всі стійки. Не дивно, що такий комутатор непрактично будувати (навіть якби ми змогли, він був би непомірно дорогим).
 
-Fun fact: In the 2000s, Google tried asking switch vendors to build a 10,000-port switch. The vendors declined, saying it's not possible to build this, and even if we could, nobody is asking for this except you (so there's no profit to be made in building it).
+Цікавий факт: у 2000-х роках Google намагалася попросити постачальників комутаторів побудувати комутатор на 10 000 портів. Постачальники відмовилися, сказавши, що побудувати таке неможливо, а навіть якби вдалося, ніхто, крім вас, цього не просить (тож заробити на його побудові не вийде).
 
-Another problem is that this switch is a single point of failure, and the entire datacenter network stops working if this switch breaks.
+Ще одна проблема в тому, що цей комутатор — єдина точка відмови, і вся мережа дата-центру перестає працювати, якщо цей комутатор зламається.
 
-Another possible approach is to arrange switches in a tree topology. This can help us reduce the radix and the bandwidth of each link.
+Ще один можливий підхід — розташувати комутатори в деревоподібній топології. Це може допомогти зменшити радикс і пропускну здатність кожного каналу.
 
 <img width="500px" src="/assets/datacenter/6-017-topology2.png">
 
-What are some problems with this approach? The bisection bandwidth is lower. A single link is the bottleneck between the two halves of the tree.
+Які проблеми має цей підхід? Бісекційна пропускна здатність нижча. Один канал — вузьке місце між двома половинами дерева.
 
-To increase bisection bandwidth, we could install higher-bandwidth links at higher layers.
+Щоб збільшити бісекційну пропускну здатність, можна встановити канали з вищою пропускною здатністю на вищих рівнях.
 
 <img width="500px" src="/assets/datacenter/6-018-topology3.png">
 
-In this case, if the four lower links are 100 Gbps, and the two higher links are 300 Gbps, then we've removed the bottleneck and restored full bisection bandwidth.
+У цьому випадку, якщо чотири нижні канали мають 100 Гбіт/с, а два верхні — 300 Гбіт/с, ми прибрали вузьке місце й відновили повну бісекційну пропускну здатність.
 
-This topology can be used, although we still haven't solved the problem where the top switch is expensive and scales poorly.
+Цю топологію можна використовувати, хоча ми досі не розв'язали проблему того, що верхній комутатор дорогий і погано масштабується.
 
+## Мережі Клоза
 
-## Clos Networks
-
-So far, we've tried building networks using custom-built switches, potentially with very high bandwidth or radix. These switches are still expensive to build. Could we instead design a topology that gives high bisection bandwidth, using cheap commodity elements? In particular, we'd like to use a large number of cheap off-the-shelf switches, where all the switches have the same number of ports, each switch has a low number of ports, and all link speeds are the same.
+Досі ми намагалися будувати мережі зі спеціально виготовлених комутаторів, можливо, з дуже високою пропускною здатністю чи радиксом. Такі комутатори однаково дорого будувати. Чи можна натомість спроєктувати топологію, що дає високу бісекційну пропускну здатність, використовуючи дешеві серійні (commodity) елементи? Зокрема, ми хотіли б використовувати велику кількість дешевих готових комутаторів, де всі комутатори мають однакову кількість портів, кожен комутатор має невелику кількість портів і всі канали мають однакову швидкість.
 
 <img width="600px" src="/assets/datacenter/6-019-clos1.png">
 
-A **Clos network** achieves high bandwidth with commodity parts by introducing a huge number of paths between nodes in the network. Because there are so many links and paths through the network, we can achieve high bisection bandwidth by having each node send data along a different path.
+**Мережа Клоза** (Clos network) досягає високої пропускної здатності із серійних компонентів, запроваджуючи величезну кількість шляхів між вершинами мережі. Оскільки в мережі так багато каналів і шляхів, ми можемо досягти високої бісекційної пропускної здатності, змушуючи кожну вершину надсилати дані іншим шляхом.
 
 <img width="600px" src="/assets/datacenter/6-020-clos2.png">
 
-Unlike custom-built switches, where we scaled the network by building a bigger switch, we can scale Clos networks by simply adding more of the same switches. This solution is cost-effective and scalable!
+На відміну від спеціально виготовлених комутаторів, де ми масштабували мережу, будуючи більший комутатор, мережі Клоза можна масштабувати, просто додаючи більше тих самих комутаторів. Це рішення економічно вигідне й масштабоване!
 
-Clos networks have been used in other applications too, and are named for their inventor (Charles Clos, 1952).
+Мережі Клоза використовувалися й в інших застосуваннях і названі на честь їхнього винахідника (Шарль Клоз, Charles Clos, 1952).
 
-In a classic Clos network, we'd have all the racks on the left send data to the racks on the right. In datacenters, racks can both send and receive data, so instead of having a separate layer of senders and recipients, we can have a single layer with all the racks (acting as either sender or recipient). Then, data travels along one of the many paths deeper into the network, and then back out to reach the recipient. This result is called a **folded Clos network**, because we've "folded" the sender and recipient layers into one.
+У класичній мережі Клоза всі стійки зліва надсилали б дані стійкам справа. У дата-центрах стійки можуть і надсилати, і отримувати дані, тож замість окремих рівнів відправників і отримувачів у нас може бути один рівень з усіма стійками (що діють або як відправник, або як отримувач). Тоді дані йдуть одним із багатьох шляхів углиб мережі, а потім назад назовні, щоб дістатися отримувача. Результат називається **згорнутою мережею Клоза** (folded Clos network), бо ми «згорнули» рівні відправників і отримувачів в один.
 
 <img width="900px" src="/assets/datacenter/6-021-clos3.png">
 
 
-## Fat-Tree Clos Topology
+## Топологія Клоза fat-tree
 
-The fat-tree topology has low radix per switch, and achieves full bisection bandwidth. However, the switch at the top of the tree is expensive, scales poorly, and still represents a single point of failure.
+Топологія «товстого дерева» (fat-tree) має малий радикс на комутатор і досягає повної бісекційної пропускної здатності. Однак комутатор на верхівці дерева дорогий, погано масштабується й однаково є єдиною точкою відмови.
 
-The Clos topology allows us to use commodity switches to scale up our network. If we combine the Clos topology with the fat-tree topology, we can build a scalable topology out of commodity switches!
+Топологія Клоза дає змогу використовувати серійні комутатори для масштабування мережі. Якщо поєднати топологію Клоза з топологією fat-tree, можна побудувати масштабовану топологію із серійних комутаторів!
 
-The topology presented here was introduced in a 2008 SIGCOMM paper titled "A Scalable, Commodity Data Center Network Architecture" (Mohammad Al-Fares, Alexander Loukissas, Amin Vahdat).
+Наведену тут топологію запропоновано в статті SIGCOMM 2008 року під назвою «A Scalable, Commodity Data Center Network Architecture» (Mohammad Al-Fares, Alexander Loukissas, Amin Vahdat).
 
-In a k-ary fat tree, we create k pods. Each pod has k switches.
+У k-арному fat-tree ми створюємо k подів (pods). Кожен под має k комутаторів.
 
-Within a pod, k/2 switches are in the upper aggregation layer, and the other k/2 switches are in the lower edge layer.
+У межах пода k/2 комутаторів розташовані на верхньому рівні агрегації (aggregation layer), а інші k/2 комутаторів — на нижньому граничному рівні (edge layer).
 
-(Note: This topology is defined for even k, so that we can split up the switches evenly between the aggregation layer and edge layer).
+(Примітка: ця топологія визначена для парних k, щоб можна було порівну розподілити комутатори між рівнем агрегації та граничним рівнем.)
 
 <img width="900px" src="/assets/datacenter/6-022-pods1.png">
 
-Each switch in the pod has k links. Half of the links (k/2) connect upwards, and the other half (k/2) connect downwards.
+Кожен комутатор у поді має k каналів. Половина каналів (k/2) з'єднується вгору, а інша половина (k/2) — униз.
 
-Consider a switch in the upper aggregation layer. Half (k/2) of its links connect up to the core layer (which connects the pods, discussed more below). The other half (k/2) of its links connect downwards to the k/2 switches in the edge layer.
+Розгляньмо комутатор на верхньому рівні агрегації. Половина (k/2) його каналів з'єднується вгору з рівнем ядра (core layer; він з'єднує поди, докладніше нижче). Інша половина (k/2) його каналів з'єднується вниз із k/2 комутаторами граничного рівня.
 
-Similarly, consider a switch in the lower edge layer. Half (k/2) of its links connect upwards to the k/2 switches in the aggregation layer. The other half (k/2) of its links connect downwards to k/2 hosts in this pod.
+Аналогічно розгляньмо комутатор на нижньому граничному рівні. Половина (k/2) його каналів з'єднується вгору з k/2 комутаторами рівня агрегації. Інша половина (k/2) його каналів з'єднується вниз із k/2 хостами цього пода.
 
 <img width="900px" src="/assets/datacenter/6-023-pods2.png">
 
 
-Next, let's look at the core layer, which connects the pods together. Each core switch has k links, connecting to each of the k pods.
+Далі розгляньмо рівень ядра, що з'єднує поди між собою. Кожен комутатор ядра має k каналів, що з'єднують його з кожним із k подів.
 
-There are $$(k/2)^2$$ core switches. How did we derive this number? There are k pods, and each pod has k/2 switches in the upper aggregation layer, for a total of $$k^2/2$$ switches in the aggregation layer. Each aggregation-layer switch has k/2 links pointing upwards, for a total of $$k^2/2 \times k/2 = k^3/4$$ links pointing upwards. This means that the core layer will need to have a total of $$k^3/4$$ links pointing downwards, to match the number of upwards links from the aggregation layer.
+Комутаторів ядра $$(k/2)^2$$. Як ми вивели це число? Є k подів, і кожен под має k/2 комутаторів на верхньому рівні агрегації, разом $$k^2/2$$ комутаторів на рівні агрегації. Кожен комутатор рівня агрегації має k/2 каналів, спрямованих угору, разом $$k^2/2 \times k/2 = k^3/4$$ каналів, спрямованих угору. Це означає, що рівень ядра має мати загалом $$k^3/4$$ каналів, спрямованих униз, щоб відповідати кількості каналів, спрямованих угору з рівня агрегації.
 
-Each core layer switch has k links pointing downwards, so we need $$k^2/4$$ core layer swiches (each with k links) to create $$k^3/4$$ links pointing towards. This allows the number of links up from the aggregation layer to match the number of links down from the core layer.
+Кожен комутатор рівня ядра має k каналів, спрямованих униз, тож нам потрібно $$k^2/4$$ комутаторів рівня ядра (кожен із k каналами), щоб створити $$k^3/4$$ каналів, спрямованих униз. Це дає змогу кількості каналів угору з рівня агрегації збігатися з кількістю каналів униз із рівня ядра.
 
-We can also compute that there are $$(k/2)^2$$ hosts per pod in this topology. How did we derive this number? There are k/2 switches at the edge layer of each pod. Each edge-layer switch has k/2 downwards links to hosts, for a total of $$k/2 \times k/2 = (k/2)^2$$ hosts per pod. Note that each host is only connected to one edge-layer switch (a host is not connected to multiple switches in this topology). Since there are k pods in total, we can also deduce that there are $$(k/2)^2 \times k$$ hosts in total in this topology.
+Можна також обчислити, що в цій топології на под припадає $$(k/2)^2$$ хостів. Як ми вивели це число? На граничному рівні кожного пода k/2 комутаторів. Кожен комутатор граничного рівня має k/2 каналів униз до хостів, разом $$k/2 \times k/2 = (k/2)^2$$ хостів на под. Зауважте, що кожен хост під'єднано лише до одного комутатора граничного рівня (у цій топології хост не під'єднано до кількох комутаторів). Оскільки загалом подів k, можна також вивести, що в цій топології загалом $$(k/2)^2 \times k$$ хостів.
 
 <img width="900px" src="/assets/datacenter/6-024-pods3.png">
 
 
-k = 4, the smallest example, is unfortunately a little confusing because some of the numbers coincidentally end up the same (e.g. $$(k/2)^2 = k = 4$$). For a clearer example, we can look at k = 6.
+k = 4, найменший приклад, на жаль, трохи заплутаний, бо деякі числа випадково збігаються (наприклад, $$(k/2)^2 = k = 4$$). Для яснішого прикладу можна розглянути k = 6.
 
-Each pod has k = 6 switches. k/2 = 3 switches are in the upper aggregation layer, and k/2 = 3 switches are in the lower edge layer.
+Кожен под має k = 6 комутаторів. k/2 = 3 комутатори на верхньому рівні агрегації, і k/2 = 3 комутатори на нижньому граничному рівні.
 
-An edge layer switch has k/2 = 3 links downwards to 3 hosts, and k/2 = 3 links upwards to the 3 aggregation switches in the same pod.
+Комутатор граничного рівня має k/2 = 3 канали вниз до 3 хостів і k/2 = 3 канали вгору до 3 комутаторів агрегації в тому самому поді.
 
-An aggregation layer switch has k/2 = 3 links upwards to the core layer (specifically, to 3 different core layer switches), and k/2 = 3 links downwards to the 3 edge layer switches in the same pod.
+Комутатор рівня агрегації має k/2 = 3 канали вгору до рівня ядра (конкретно, до 3 різних комутаторів рівня ядра) і k/2 = 3 канали вниз до 3 комутаторів граничного рівня в тому самому поді.
 
-Each pod has k/2 = 3 edge switches, each connected to k/2 = 3 hosts, so each pod has a total of $$(k/2)^2 = 9$$ hosts. The topology has k pods in total, for a total of $$k \times (k/2)^2 = 54$$ hosts.
+Кожен под має k/2 = 3 граничні комутатори, кожен з'єднаний із k/2 = 3 хостами, тож кожен под має загалом $$(k/2)^2 = 9$$ хостів. Топологія має загалом k подів, тобто загалом $$k \times (k/2)^2 = 54$$ хости.
 
-At the core layer, we have $$(k/2)^2 = 9$$ core switches. Each switch has k = 6 links, connecting downwards to each of the k = 6 pods.
+На рівні ядра в нас $$(k/2)^2 = 9$$ комутаторів ядра. Кожен комутатор має k = 6 каналів, що з'єднуються вниз із кожним із k = 6 подів.
 
-In total, the core layer has $$(k/2)^2 \times k$$ links pointing downwards (number of core switches, times number of links per switch). The aggregation layer has $$k \times (k/2) \times (k/2)$$ links pointing upwards (number of pods, times number of aggregation switches per pod, times number of upwards links per aggregation switch). These two expressions match (and evaluate to 54 for k = 6), allowing the core layer to be fully-connected to the aggregation layer.
+Загалом рівень ядра має $$(k/2)^2 \times k$$ каналів, спрямованих униз (кількість комутаторів ядра, помножена на кількість каналів на комутатор). Рівень агрегації має $$k \times (k/2) \times (k/2)$$ каналів, спрямованих угору (кількість подів, помножена на кількість комутаторів агрегації в поді, помножена на кількість каналів угору на комутатор агрегації). Ці два вирази збігаються (і для k = 6 дають 54), що дає змогу повністю з'єднати рівень ядра з рівнем агрегації.
 
 <img width="900px" src="/assets/datacenter/6-025-pods4.png">
 
-This topology achieves full bisection bandwidth. If you split the pods into two halves (e.g. left half and right half), then every host in the left half has a dedicated path to a corresponding host in the right half. This allows all the hosts to pair up (one in left half, one in right half), and for each pair to communicate along a dedicated path, with no bottlenecks.
+Ця топологія досягає повної бісекційної пропускної здатності. Якщо розділити поди на дві половини (наприклад, ліву й праву), то кожен хост у лівій половині має виділений шлях до відповідного хоста в правій половині. Це дає змогу всім хостам розбитися на пари (один у лівій половині, один у правій) і кожній парі спілкуватися виділеним шляхом без вузьких місць.
 
-Also, notice that this topology can be built out of commodity switches. Every switch has a radix of k links, regardless of which layer the switch is in. Also, every link can have the same bandwidth (e.g. 1 Gbps), and the scalability comes from the fact that we've created a dedicated path between any pair of hosts.
+Крім того, зверніть увагу, що цю топологію можна побудувати із серійних комутаторів. Кожен комутатор має радикс у k каналів, незалежно від того, на якому рівні він розташований. Крім того, кожен канал може мати однакову пропускну здатність (наприклад, 1 Гбіт/с), а масштабованість досягається тим, що ми створили виділений шлях між будь-якою парою хостів.
 
 <img width="900px" src="/assets/datacenter/6-026-pods5.png">
 
 
-Another way to see the full bisection bandwidth is to delete links until the network is partitioned into two halves (pods in the left half, and pods in the right half).
+Ще один спосіб побачити повну бісекційну пропускну здатність — видаляти канали, доки мережу не буде розділено на дві половини (поди в лівій половині й поди в правій).
 
-Each core layer switch has k links, one to each of the pods. This also means that each core layer switch has k/2 links to the left side, and k/2 links to the right side.
+Кожен комутатор рівня ядра має k каналів, по одному до кожного пода. Це також означає, що кожен комутатор рівня ядра має k/2 каналів до лівого боку й k/2 каналів до правого.
 
-In order to fully isolate one side (e.g. fully isolate the left side), then for each core switch, we'd have to cut k/2 links to the left side. There are $$(k/2)^2$$ core switches, and we have to cut k/2 links per switch, for a total of $$(k/2)^3$$ links cut. This means our bisection bandwidth is $$(k/2)^3$$ links (assuming every link has identical bandwidth).
+Щоб повністю ізолювати один бік (наприклад, повністю ізолювати лівий бік), для кожного комутатора ядра нам довелося б перерізати k/2 каналів до лівого боку. Комутаторів ядра $$(k/2)^2$$, і на кожен комутатор треба перерізати k/2 каналів, разом $$(k/2)^3$$ перерізаних каналів. Це означає, що наша бісекційна пропускна здатність становить $$(k/2)^3$$ каналів (за умови, що кожен канал має однакову пропускну здатність).
 
-There are $$(k/2)^2$$ hosts per pod, and k/2 pods in the left side, for a total of $$(k/2)^3$$ links in the left side. Similarly, there are $$(k/2)^3$$ links in the right side. If every host in the left side wanted to communicate with every host in the right side, then $$(k/2)^3$$ links' worth of bandwidth would be needed. Our bisection bandwidth matches this number, which means that full bisection bandwidth is achieved.
+На под припадає $$(k/2)^2$$ хостів, і в лівому боці k/2 подів, разом $$(k/2)^3$$ каналів у лівому боці. Аналогічно в правому боці $$(k/2)^3$$ каналів. Якби кожен хост у лівому боці хотів спілкуватися з кожним хостом у правому, знадобилася б пропускна здатність $$(k/2)^3$$ каналів. Наша бісекційна пропускна здатність збігається з цим числом, а отже, повна бісекційна пропускна здатність досягається.
 
 <img width="900px" src="/assets/datacenter/6-027-pods6.png">
 
-How does this Clos fat-tree topology relate to the idea of racks and top-of-rack switches from earlier?
+Як ця топологія Клоза fat-tree пов'язана з ідеєю стійок і комутаторів верхнього рівня стійки, яку ми розглядали раніше?
 
-For specific nice values of k, we can arrange the hosts and switches inside a pod into separate racks, and connect the racks to to each other.
+Для певних зручних значень k можна розташувати хости й комутатори всередині пода в окремих стійках і з'єднати стійки між собою.
 
-For example, consider k = 48, the example value used in the original paper. This means that inside a pod, there are k/2 = 24 aggregation layer switches, k/2 = 24 edge layer switches, and $$(k/2)^2$$ = 576 hosts per pod.
+Наприклад, розгляньмо k = 48 — значення, використане в оригінальній статті. Це означає, що всередині пода k/2 = 24 комутатори рівня агрегації, k/2 = 24 комутатори граничного рівня і $$(k/2)^2$$ = 576 хостів на под.
 
-We can arrange the switches and hosts such that all 48 switches live in a rack that we place in the middle. Then, we can surround that rack of switches with 12 racks, each holding 48 hosts. This helps us fit all switches and hosts into identically-sized racks (48 machines per rack). Placing the switches in the middle rack also reduces the amount of physical wiring needed to build this topology.
+Можна розташувати комутатори й хости так, щоб усі 48 комутаторів були в стійці, яку ми розміщуємо посередині. Потім цю стійку комутаторів можна оточити 12 стійками, у кожній із яких по 48 хостів. Це допомагає вмістити всі комутатори й хости в стійки однакового розміру (48 машин на стійку). Розміщення комутаторів у середній стійці також зменшує обсяг фізичної проводки, потрібної для побудови цієї топології.
 
-The middle rack has k = 48 switches. Each switch has k = 48 ports, for a total of $$48^2 = 2304$$ ports in this rack.
+Середня стійка має k = 48 комутаторів. Кожен комутатор має k = 48 портів, разом $$48^2 = 2304$$ порти в цій стійці.
 
-Of these $$k^2 = 2304$$ ports, half of them ($$k^2/2 = 1152$$) connect switches inside the rack to each other. How did we derive $$k^2/2$$? It might help to look at some of the conceptual diagrams from earlier. Each of the k/2 aggregation layer switches has k/2 downward links, for a total of $$(k/2)^2$$ ports used. Similarly, each of the k/2 edge layer switches has k/2 upward links, for a total of $$(k/2)^2$$ ports used. This gives a total of $$2 \times (k/2)^2 = k^2/2$$ ports used.
+З цих $$k^2 = 2304$$ портів половина ($$k^2/2 = 1152$$) з'єднує комутатори всередині стійки між собою. Як ми вивели $$k^2/2$$? Можливо, допоможе поглянути на деякі попередні концептуальні діаграми. Кожен із k/2 комутаторів рівня агрегації має k/2 каналів униз, разом використано $$(k/2)^2$$ портів. Аналогічно кожен із k/2 комутаторів граничного рівня має k/2 каналів угору, разом використано $$(k/2)^2$$ портів. Це дає загалом $$2 \times (k/2)^2 = k^2/2$$ використаних портів.
 
-Note that the links between aggregation and edge switches are connecting switches inside the same rack. Therefore, two ports are needed for each link (one from an aggregation switch, and one from an edge switch), and that's why we doubled the $$(k/2)^2$$ value (or equivalently, accounted for that value twice at both the aggregation and edge layers).
+Зауважте, що канали між комутаторами агрегації та граничними комутаторами з'єднують комутатори всередині тієї самої стійки. Тому на кожен канал потрібно два порти (один від комутатора агрегації й один від граничного комутатора), і саме тому ми подвоїли значення $$(k/2)^2$$ (або, рівнозначно, врахували це значення двічі — і на рівні агрегації, і на граничному рівні).
 
-Of the $$k^2 = 2304$$ ports, another quarter of them ($$k^2/4 = 576$$) connect switches to hosts inside the same pod. How did we derive this number? Remember that there are $$(k/2)^2$$ hosts within a pod, and each host is connected to exactly one switch. Therefore, we need $$(k/2)^2 = k^2/4$$ ports on the switches to connect to hosts.
+З $$k^2 = 2304$$ портів ще чверть ($$k^2/4 = 576$$) з'єднує комутатори з хостами всередині того самого пода. Як ми вивели це число? Пам'ятайте, що в поді $$(k/2)^2$$ хостів, і кожен хост під'єднано рівно до одного комутатора. Тому нам потрібно $$(k/2)^2 = k^2/4$$ портів на комутаторах для під'єднання хостів.
 
-Finally, of the $$k^2 = 2304$$ ports, the remaining quarter ($$k^2/4 = 576$$) connect the pod to the core layer. How did we derive this number? Remember that there are $$(k/2)^2$$ core switches, and each core switch has a link to each pod. In other words, a pod has a single link to each of the $$(k/2)^2$$ core switches. Therefore, we need $$(k/2)^2 = k^2/4$$ ports on the switches to connect to the core switches.
+Нарешті, з $$k^2 = 2304$$ портів решта чверть ($$k^2/4 = 576$$) з'єднує под із рівнем ядра. Як ми вивели це число? Пам'ятайте, що комутаторів ядра $$(k/2)^2$$, і кожен комутатор ядра має канал до кожного пода. Іншими словами, под має по одному каналу до кожного з $$(k/2)^2$$ комутаторів ядра. Тому нам потрібно $$(k/2)^2 = k^2/4$$ портів на комутаторах для під'єднання до комутаторів ядра.
 
-In summary: Out of $$k^2$$ total ports, half of them are used to interconnect aggregation/edge switches in the same layer (connections happen entirely within the middle rack). Another quarter of them are used to connect edge switches to hosts in the pod (connections between the middle rack and the 12 surrounding racks with hosts). The last quarter of them are used to connect aggregation switches to the core layer (connections between the middle rack and other core-layer racks).
+Підсумуємо: з $$k^2$$ портів загалом половина використовується для взаємного з'єднання комутаторів агрегації/граничних комутаторів (з'єднання відбуваються повністю в межах середньої стійки). Ще чверть використовується для з'єднання граничних комутаторів із хостами пода (з'єднання між середньою стійкою і 12 навколишніми стійками з хостами). Остання чверть використовується для з'єднання комутаторів агрегації з рівнем ядра (з'єднання між середньою стійкою та іншими стійками рівня ядра).
 
 <img width="600px" src="/assets/datacenter/6-028-pods7.png">
 
 
-## Real-World Topologies
+## Реальні топології
 
 <img width="900px" class="real-photo" src="/assets/datacenter/6-029-irl-topology1.png">
 
-In this example (2008), there are many different paths between any two end hosts.
+У цьому прикладі (2008) між будь-якими двома кінцевими хостами є багато різних шляхів.
 
 <img width="900px" class="real-photo" src="/assets/datacenter/6-030-irl-topology2.png">
 
-In this paper (2015), various topologies were explored.
+У цій статті (2015) досліджувалися різні топології.
 
-Many specifics variants exist (2009, 2015), but they all share the same goal of achieving high bandwidth between any two servers.
+Існує багато конкретних варіантів (2009, 2015), але всі вони мають спільну мету — досягти високої пропускної здатності між будь-якими двома серверами.

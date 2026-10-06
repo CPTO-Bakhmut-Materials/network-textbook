@@ -1,203 +1,203 @@
 ---
-title: TCP Implementation
-parent: Transport
+title: Реалізація TCP
+parent: Транспортний рівень
 nav_order: 3
 layout: page-with-toc
 ---
 
-# TCP Implementation
+# Реалізація TCP
 
-## TCP Segments
+## Сегменти TCP
 
-So far, we've been talking about TCP conceptually, in terms of individual packets being sent. But the application doesn't provide us with pre-made packets that we can directly send into the Layer 3 network. The application is relying on a bytestream abstraction, and is instead sending us a continuous stream of bytes. In order to fully implement TCP, we'll need to rethink all of our previous ideas (e.g. sequence numbers, window size, etc.) in terms of bytes, not packets. (You should still be able to reason about the design choices in terms of both bytes or packets, though.)
+Досі ми говорили про TCP концептуально, у термінах окремих пакетів, що надсилаються. Але застосунок не надає нам готових пакетів, які можна безпосередньо надіслати в мережу рівня 3. Застосунок спирається на абстракцію потоку байтів і натомість надсилає нам неперервний потік байтів. Щоб повністю реалізувати TCP, нам доведеться переосмислити всі наші попередні ідеї (наприклад, порядкові номери, розмір вікна тощо) у термінах байтів, а не пакетів. (Утім, ви однаково маєте вміти міркувати про проєктні рішення як у термінах байтів, так і в термінах пакетів.)
 
 <img width="900px" src="/assets/transport/3-035-segment1.png">
 
-In order to form packets out of bytes in the bytestream, we'll introduce a unit of data called a **TCP segment**. The TCP implementation at the sender will collect bytes from the bytestream, one by one, and place those bytes into a TCP segment. When the TCP segment is full (reaches a fixed maximum segment size), we send that TCP segment, and then start a new TCP segment.
+Щоб формувати пакети з байтів потоку, ми запровадимо одиницю даних під назвою **сегмент TCP** (TCP segment). Реалізація TCP на боці відправника збиратиме байти з потоку один за одним і поміщатиме їх у сегмент TCP. Коли сегмент TCP заповнено (він досягає фіксованого максимального розміру сегмента), ми надсилаємо цей сегмент TCP і починаємо новий.
 
-Sometimes, the sender wants to send less data than the maximum segment size. In that case, we wouldn't want the TCP segment to be waiting forever for more bytes that never come. To fix this, we'll start a timer every time we start filling a new empty segment. If the timer expires, we'll send the TCP segment, even if it is not full yet.
+Іноді відправник хоче надіслати менше даних, ніж максимальний розмір сегмента. У такому разі ми не хотіли б, щоб сегмент TCP вічно чекав на додаткові байти, які так і не надійдуть. Щоб це виправити, ми запускатимемо таймер щоразу, коли починаємо заповнювати новий порожній сегмент. Якщо таймер спливає, ми надсилаємо сегмент TCP, навіть якщо він ще не заповнений.
 
 <img width="900px" src="/assets/transport/3-036-segment2.png">
 
-Before sending the data in a TCP segment, the sender's TCP implementation will add a TCP header with relevant metadata (e.g. sequence number, port numbers). Then, the segment and header are passed down to the IP layer, which will attach an IP header and send the packet through the network.
+Перш ніж надіслати дані в сегменті TCP, реалізація TCP відправника додасть заголовок TCP з відповідними метаданими (наприклад, порядковим номером, номерами портів). Потім сегмент і заголовок передаються донизу рівню IP, який додасть заголовок IP і надішле пакет мережею.
 
-The TCP segment, with a TCP header and IP header on top, is sometimes called a **TCP/IP packet**. Equivalently, this is an IP packet whose payload consists of a TCP header and data.
+Сегмент TCP із заголовками TCP та IP зверху іноді називають **пакетом TCP/IP** (TCP/IP packet). Рівнозначно, це IP-пакет, корисне навантаження якого складається із заголовка TCP і даних.
 
 <img width="600px" src="/assets/transport/3-037-segment3.png">
 
-How should the **maximum segment size (MSS)** be set? Recall that the size of an IP packet is limited by the maximum transmission unit (MTU) along each link. However, the IP packet must also contain the IP and TCP header, so the TCP maximum segment size is going to be slightly smaller than the IP maximum transmission unit. Specifically:
+Як слід встановлювати **максимальний розмір сегмента** (maximum segment size, MSS)? Пригадайте, що розмір IP-пакета обмежений максимальним розміром блоку передачі (MTU) на кожному каналі. Однак IP-пакет також має містити заголовки IP і TCP, тож максимальний розмір сегмента TCP буде дещо меншим за максимальний розмір блоку передачі IP. Конкретно:
 
-MSS (TCP segment limit) = MTU (IP packet limit) - IP header size - TCP header size
+MSS (межа сегмента TCP) = MTU (межа IP-пакета) - розмір заголовка IP - розмір заголовка TCP
 
 
-## Sequence Numbers
+## Порядкові номери
 
-So far, we've been labeling each packet with a number, so that the recipient can receive packets in the correct order.
+Досі ми позначали кожен пакет номером, щоб отримувач міг отримувати пакети в правильному порядку.
 
-In practice, instead of numbering individual segments, we assign a number to every byte in the bytestream. Each segment's header will contain a **sequence number** corresponding to the number of the first byte in that segment. The recipient can still use sequence numbers to figure out where each segment fits in the bytestream, and reassemble the segments in the correct order.
+На практиці замість нумерувати окремі сегменти ми призначаємо номер кожному байту в потоці байтів. Заголовок кожного сегмента міститиме **порядковий номер** (sequence number), що відповідає номеру першого байта в цьому сегменті. Отримувач однаково може використовувати порядкові номери, щоб з'ясувати, де кожен сегмент розташований у потоці байтів, і зібрати сегменти в правильному порядку.
 
-Each bytestream starts with an **initial sequence number (ISN)**. The sender chooses an ISN and labels the first byte with number ISN+1, the next byte with number ISN+2, the next byte with ISN+3, and so on.
+Кожен потік байтів починається з **початкового порядкового номера** (initial sequence number, ISN). Відправник обирає ISN і позначає перший байт номером ISN+1, наступний байт — номером ISN+2, наступний — ISN+3 і так далі.
 
 <img width="900px" src="/assets/transport/3-038-seq-num1.png">
 
-Since we're now numbering bytes instead of packets, acknowledgement numbers will also now be in terms of bytes, not packets. Specifically, the acknowledgement number says, I have received all bytes up to, but not including, this number. Equivalently, the acknowledgement number represents the next byte it expects to receive (but has not received yet). Note that TCP is using the cumulative ack model (as opposed to full-information acks or individual byte acks).
+Оскільки тепер ми нумеруємо байти, а не пакети, номери підтверджень тепер теж будуть у термінах байтів, а не пакетів. Конкретно, номер підтвердження каже: я отримав усі байти до цього номера, не включаючи його. Рівнозначно, номер підтвердження позначає наступний байт, який отримувач очікує отримати (але ще не отримав). Зауважте, що TCP використовує модель кумулятивних підтверджень (на відміну від підтверджень із повною інформацією чи підтверджень окремих байтів).
 
-As an example, suppose the ISN has randomly been chosen to be 50. Then the first few bytes have numbers 51, 52, 53, etc. A specific TCP segment might contain the bytes 140 to 219, inclusive. The sequence number of this segment is 140 (representing the first byte in the segment). If the recipient has received everything so far, the recipient can acknowledge this segment by sending an ack number of 220, which is the next byte that has not been received yet.
+Як приклад, припустімо, ISN випадково обрано рівним 50. Тоді перші кілька байтів мають номери 51, 52, 53 тощо. Конкретний сегмент TCP може містити байти від 140 до 219 включно. Порядковий номер цього сегмента — 140 (що відповідає першому байту сегмента). Якщо отримувач досі отримав усе, він може підтвердити цей сегмент, надіславши номер підтвердження 220 — наступний байт, який ще не отримано.
 
 <img width="900px" src="/assets/transport/3-039-seq-num2.png">
 
-More generally, suppose we have a packet where the first byte has sequence number X, and the packet has B bytes. This packet has the bytes X, X+1, X+2, ..., X+B-1. If this packet (and all prior data) is received, the ack will acknowledge X+B (the next expected byte). If this packet is not received, or this packet is received but some prior packet was not received, then the ack will acknowledge some smaller number (because TCP uses cumulative acks).
+Загальніше, припустімо, у нас є пакет, перший байт якого має порядковий номер X, і пакет має B байтів. Цей пакет містить байти X, X+1, X+2, ..., X+B-1. Якщо цей пакет (і всі попередні дані) отримано, підтвердження підтвердить X+B (наступний очікуваний байт). Якщо цей пакет не отримано або його отримано, але якийсь попередній пакет не отримано, то підтвердження підтвердить якесь менше число (бо TCP використовує кумулятивні підтвердження).
 
-More generally, suppose we had many packets, all B bytes long. The ISN is X, and the window size is 1 (stop-and-wait protocol, only one packet or ack being sent at once). Assume that no packets are dropped. Then, the sequence and ack numbers would proceed as follows: The first packet has sequence number X. The first ack has ack number X+B. The second packet has sequence number X+B. The second ack has ack number X+2B. The third packet has sequence number X+2B, and so on. In particular, note that when there's no loss, the ack number corresponds to the next packet's sequence number.
+Ще загальніше, припустімо, у нас багато пакетів, кожен завдовжки B байтів. ISN дорівнює X, а розмір вікна — 1 (протокол «зупинись і чекай», одночасно надсилається лише один пакет чи підтвердження). Припустімо, що жоден пакет не відкидається. Тоді порядкові номери й номери підтверджень ітимуть так: перший пакет має порядковий номер X. Перше підтвердження має номер підтвердження X+B. Другий пакет має порядковий номер X+B. Друге підтвердження має номер підтвердження X+2B. Третій пакет має порядковий номер X+2B і так далі. Зокрема, зауважте, що коли втрат немає, номер підтвердження відповідає порядковому номеру наступного пакета.
 
 <img width="500px" src="/assets/transport/3-040-seq-num3.png">
 
-Historically, the ISN was chosen to be random because the designers were concerned about ambiguous sequence numbers if all bytestreams started numbering at 0. Specifically, suppose a TCP connection sends some data starting at ISN 0, and then the sender crashes. If the sender restarts a new connection, and the ISN starts at 0 again, the recipient might get confused if it sees a packet with sequence number 0. Is this packet from the first connection before the crash, or the second connection after the crash?
+Історично ISN обирали випадково, бо розробники побоювалися неоднозначності порядкових номерів, якби всі потоки байтів починали нумерацію з 0. Конкретно, припустімо, з'єднання TCP надсилає певні дані, починаючи з ISN 0, а потім відправник аварійно завершує роботу. Якщо відправник запускає нове з'єднання і ISN знову починається з 0, отримувач може заплутатися, побачивши пакет із порядковим номером 0. Цей пакет із першого з'єднання до збою чи з другого з'єднання після збою?
 
-In practice, the ISN is chosen to be random for security reasons. If the ISN is chosen in a predictable way, attackers can deduce the ISN and send spoofed packets that look like they're coming from the sender. When the ISN is chosen randomly, it's harder for the attacker to deduce the ISN and send spoofed packets.
-
-
-## TCP State
-
-In TCP, both the sender and recipient need to maintain state. The state is maintained at the end hosts implementing TCP, not in the network.
-
-The sender has to remember which bytes have been sent but not acknowledged yet. The sender also has to keep track of various timers, e.g. a timer for when to send a less-than-full segment, and a timer for when to resend bytes.
-
-The recipient has to remember the out-of-order bytes that can't be delivered to the application yet.
-
-Because TCP requires storing state, each bytestream is called a **connection** or **session**, and TCP is a connection-oriented protocol. Unlike Layer 3, where every packet could be considered separately, TCP requires both parties to establish a connection and initialize state before data can be sent. TCP also needs a mechanism to tear down connections to free up the memory allocated for state on both end hosts.
+На практиці ISN обирають випадково з міркувань безпеки. Якщо ISN обирається передбачувано, зловмисники можуть вивести ISN і надсилати підроблені пакети, що виглядають так, ніби вони надходять від відправника. Коли ISN обирається випадково, зловмисникові важче вивести ISN і надсилати підроблені пакети.
 
 
-## TCP is Full Duplex
+## Стан TCP
 
-So far, we've seen TCP as a bytestream from one end host (the sender) to the other end host (recipient). In practice, the two end hosts often want to send messages in both directions.
+У TCP і відправник, і отримувач мають підтримувати стан. Стан підтримується на кінцевих хостах, що реалізують TCP, а не в мережі.
 
-To support sending messages in both directions, TCP connections are **full duplex**. Instead of designating one sender and one recipient, both end hosts in the connection can send and receive data simultaneously, in the same connection.
+Відправник має пам'ятати, які байти надіслано, але ще не підтверджено. Відправник також має відстежувати різні таймери, наприклад таймер для надсилання неповного сегмента й таймер для повторного надсилання байтів.
+
+Отримувач має пам'ятати байти, що надійшли не по порядку й ще не можуть бути доставлені застосункові.
+
+Оскільки TCP вимагає зберігати стан, кожен потік байтів називають **з'єднанням** (connection) або **сеансом** (session), а TCP — протоколом, орієнтованим на з'єднання. На відміну від рівня 3, де кожен пакет можна було розглядати окремо, TCP вимагає, щоб обидві сторони встановили з'єднання й ініціалізували стан, перш ніж можна буде надсилати дані. TCP також потребує механізму розірвання з'єднань, щоб звільняти пам'ять, виділену для стану на обох кінцевих хостах.
+
+
+## TCP — повнодуплексний
+
+Досі ми розглядали TCP як потік байтів від одного кінцевого хоста (відправника) до іншого (отримувача). На практиці два кінцеві хости часто хочуть надсилати повідомлення в обох напрямках.
+
+Щоб підтримувати надсилання повідомлень в обох напрямках, з'єднання TCP є **повнодуплексними** (full duplex). Замість призначати одного відправника й одного отримувача, обидва кінцеві хости з'єднання можуть одночасно надсилати й отримувати дані в тому самому з'єднанні.
 
 <img width="900px" src="/assets/transport/3-041-duplex.png">
 
-To support sending data in both directions, each TCP connection has two bytestreams: one containing data from A to B, and the other containing data from B to A. Each packet can contain both data and acknowledgement information. The sequence number would correspond to the sender's bytestream (the bytes I am sending), and the acknowledgement number would correspond to the recipient's bytestream (the bytes I received from you).
+Щоб підтримувати надсилання даних в обох напрямках, кожне з'єднання TCP має два потоки байтів: один містить дані від A до B, а інший — дані від B до A. Кожен пакет може містити і дані, і інформацію підтвердження. Порядковий номер відповідатиме потоку байтів відправника (байтам, які надсилаю я), а номер підтвердження — потоку байтів отримувача (байтам, які я отримав від вас).
 
 
-## TCP Handshake
+## Рукостискання TCP
 
-Recall that TCP is connection-oriented, so connections must be explicitly created and destroyed. Also, recall that bytestreams start at a randomly-selected initial sequence number (ISN), and that each TCP connection is full-duplex (two bytestreams, one in each direction). When we create a new connection, we need both sides to agree on two starting ISNs (one per direction).
+Пригадайте, що TCP орієнтований на з'єднання, тож з'єднання мають явно створюватися й знищуватися. Також пригадайте, що потоки байтів починаються з випадково обраного початкового порядкового номера (ISN) і що кожне з'єднання TCP повнодуплексне (два потоки байтів, по одному в кожному напрямку). Створюючи нове з'єднання, нам потрібно, щоб обидві сторони погодили два початкові ISN (по одному на напрямок).
 
-To establish a TCP connection, the two hosts perform a **three-way handshake** to agree on the ISNs in each direction.
+Щоб встановити з'єднання TCP, два хости виконують **тристороннє рукостискання** (three-way handshake), щоб погодити ISN у кожному напрямку.
 
 <img width="500px" src="/assets/transport/3-042-handshake.png">
 
-The first packet (from A to B) is the **SYN** message. This message contains A's ISN (data from A to B will start counting at this ISN), in the sequence number.
+Перший пакет (від A до B) — повідомлення **SYN**. Це повідомлення містить у порядковому номері ISN хоста A (дані від A до B рахуватимуться від цього ISN).
 
-The second packet (from B to A) is the **SYN-ACK** message. This message contains B's ISN (data from B to A will start counting at this ISN), in the sequence number. This message also acknowledges that B has received of A's ISN, in the ack number.
+Другий пакет (від B до A) — повідомлення **SYN-ACK**. Це повідомлення містить у порядковому номері ISN хоста B (дані від B до A рахуватимуться від цього ISN). Це повідомлення також у номері підтвердження підтверджує, що B отримав ISN хоста A.
 
-The third packet (from A to B again) is the **ACK** message. This message acknowledges that A has received B's ISN, in the ack number.
+Третій пакет (знову від A до B) — повідомлення **ACK**. Це повідомлення в номері підтвердження підтверджує, що A отримав ISN хоста B.
 
-This handshake is why bytestreams start counting at ISN+1. When I send an ISN, the ack is ISN+1, indicating that the ISN was received, and the next (first) byte expected is ISN+1.
+Саме через це рукостискання потоки байтів починають рахунок з ISN+1. Коли я надсилаю ISN, підтвердженням є ISN+1, що вказує, що ISN отримано, а наступний (перший) очікуваний байт — ISN+1.
 
-After the three-way handshake concludes, B can start sending data.
+Після завершення тристороннього рукостискання B може почати надсилати дані.
 
 
-## Ending Connections
+## Завершення з'єднань
 
-There are two ways to end a connection.
+Є два способи завершити з'єднання.
 
-In normal cases, when I am done sending messages, I can send a special FIN packet, which says: I will not send any more data, but I will continue to receive data if you have any more to send. At this point, the connection is half-closed. This packet will be acked, just like any other packet.
+У звичайних випадках, коли я закінчив надсилати повідомлення, я можу надіслати спеціальний пакет FIN, який каже: я більше не надсилатиму даних, але й далі отримуватиму дані, якщо ви маєте ще щось надіслати. На цьому етапі з'єднання напівзакрите. Цей пакет буде підтверджено, як і будь-який інший пакет.
 
-Eventually, the other side will also finish sending data and send a FIN packet. When this FIN packet is acked, the connection is closed.
+Зрештою інша сторона теж закінчить надсилати дані й надішле пакет FIN. Коли цей пакет FIN підтверджено, з'єднання закрите.
 
 <img width="500px" src="/assets/transport/3-043-fin.png">
 
-Sometimes, we have to terminate a connection abruptly, without the agreement of the other side. To unilaterally end a connection, I can send a special RST packet, which says: I will not send or receive any more data. This packet does not have to be acked, and I can tear down my connection as soon as I send this data.
+Іноді доводиться завершити з'єднання раптово, без згоди іншої сторони. Щоб завершити з'єднання в односторонньому порядку, я можу надіслати спеціальний пакет RST, який каже: я більше не надсилатиму й не отримуватиму даних. Цей пакет не потрібно підтверджувати, і я можу розірвати своє з'єднання щойно надішлю його.
 
-RST packets are often used when a host encounters an error and is unable to continue sending or receiving packets. Note that any in-flight data is lost if a RST occurs and the end host crashes and loses its state.
+Пакети RST часто використовуються, коли хост стикається з помилкою і не може продовжувати надсилати чи отримувати пакети. Зауважте, що будь-які дані в дорозі втрачаються, якщо стається RST і кінцевий хост аварійно завершує роботу й втрачає свій стан.
 
-If I sent a RST, and someone continues sending me data, if I am able, I will continue to send copies of the RST packet to repeatedly try and terminate the connection.
+Якщо я надіслав RST, а хтось і далі надсилає мені дані, то, якщо можу, я й далі надсилатиму копії пакета RST, раз у раз намагаючись завершити з'єднання.
 
-RST packets can also be used by attackers to censor connections. An attacker can spoof and inject a RST packet, which causes the entire connection to terminate.
+Пакети RST також можуть використовувати зловмисники для цензурування з'єднань. Зловмисник може підробити й впровадити пакет RST, що призведе до завершення всього з'єднання.
 
 <img width="500px" src="/assets/transport/3-044-rst.png">
 
-The full TCP state diagram is quite complicated, with many intermediate states in the process of opening or closing a connection. Examples of intermediate states include: I have sent a SYN, and am waiting for a SYN-ACK. Or, I have received a FIN, sent my FIN, but am waiting for my FIN to be acked. Most TCP connections spend most of their time in the Established state, where the connection has started (but not ended), and data is being exchanged back-and-forth. You don't need to understand this full state diagram for these notes.
+Повна діаграма станів TCP доволі складна, з багатьма проміжними станами в процесі відкриття чи закриття з'єднання. Приклади проміжних станів: я надіслав SYN і чекаю на SYN-ACK. Або: я отримав FIN, надіслав свій FIN, але чекаю, поки мій FIN підтвердять. Більшість з'єднань TCP проводять більшу частину часу в стані Established (встановлено), коли з'єднання розпочалося (але не завершилося) і дані передаються туди й назад. Для цих матеріалів розуміти повну діаграму станів не потрібно.
 
 <img width="900px" src="/assets/transport/3-045-state-diagram.png">
 
-In the simplified state diagram, we start in the closed state (no connection in progress). To start a connection, we send a SYN. Eventually, we receive a SYN-ACK and reply with an ACK, moving to an established connection. When we're done sending data, we send a FIN, and receive an ACK. Eventually, we receive a FIN, and the connection is closed again.
+У спрощеній діаграмі станів ми починаємо в закритому стані (з'єднання немає). Щоб розпочати з'єднання, ми надсилаємо SYN. Зрештою ми отримуємо SYN-ACK і відповідаємо ACK, переходячи до встановленого з'єднання. Коли ми закінчили надсилати дані, ми надсилаємо FIN і отримуємо ACK. Зрештою ми отримуємо FIN, і з'єднання знову закрите.
 
 <img width="900px" src="/assets/transport/3-046-simplified-state.png">
 
 
-## Piggybacking
+## Попутне підтвердження
 
-Because TCP is full duplex, it's possible for a packet to both acknowledge some data and send new data.
+Оскільки TCP повнодуплексний, пакет може водночас і підтверджувати певні дані, і надсилати нові дані.
 
-When the recipient gets a packet, if it has no data to send, the recipient has two choices. The recipient could either immediately send the ack, with no data to send. Or, the recipient could wait until it has some data to send, and then send the ack with the new data. This latter approach is called **piggybacking**.
+Коли отримувач отримує пакет, а даних для надсилання не має, у нього є два варіанти. Отримувач може одразу надіслати підтвердження без даних. Або отримувач може зачекати, доки в нього з'являться дані для надсилання, і тоді надіслати підтвердження разом із новими даними. Другий підхід називається **попутним підтвердженням** (piggybacking).
 
-In practice, one reason we might not piggyback is because TCP is implemented in the operating system, separate from the application.
+На практиці одна з причин, чому ми можемо не використовувати попутне підтвердження, — те, що TCP реалізовано в операційній системі, окремо від застосунку.
 
-Consider the operating system, which has no idea what the application code is doing. When the operating system receives a packet, it doesn't know when the sender will have more data to send (or if the sender will ever have more data to send), so it might be stuck waiting a long time before it's able to piggyback the ack with some new data.
+Розгляньте операційну систему, яка гадки не має, що робить код застосунку. Коли операційна система отримує пакет, вона не знає, коли відправник матиме ще дані для надсилання (і чи матиме взагалі), тож може довго чекати, перш ніж зможе відправити підтвердження попутно з новими даними.
 
-On the other side, consider the application, which has no idea what the operating system is doing. The application is running on the bytestream abstraction, and isn't thinking about packets at all, so it has no way to think about piggybacking at all.
+З іншого боку, розгляньте застосунок, який гадки не має, що робить операційна система. Застосунок працює з абстракцією потоку байтів і взагалі не думає про пакети, тож він ніяк не може думати про попутне підтвердження.
 
-Piggybacking is further complicated by the fact that the operating system isn't running every program simultaneously. Thinking back to a computer architecture course (like CS 61C at UC Berkeley), the CPU is constantly switching between different processes on your computer, depending on what needs attention. It would be pretty silly if, every time a TCP packet arrived, the CPU interrupted what it was doing to pass that packet to the application, and gave the application some time to respond. Instead, when a TCP packet arrives, the operating system might send out the ack, before the application gets a chance to piggyback new data on the ack.
+Попутне підтвердження ще більше ускладнюється тим, що операційна система не виконує всі програми одночасно. Згадуючи курс архітектури комп'ютерів (як-от CS 61C в UC Berkeley), процесор постійно перемикається між різними процесами на вашому комп'ютері залежно від того, що потребує уваги. Було б доволі безглуздо, якби щоразу, коли надходить пакет TCP, процесор переривав свою роботу, щоб передати пакет застосункові й дати застосункові трохи часу на відповідь. Натомість, коли надходить пакет TCP, операційна система може надіслати підтвердження раніше, ніж застосунок матиме змогу додати до нього нові дані.
 
-One case where data is always piggybacked is the SYN-ACK packet in the handshake. In addition to the ack, we're piggybacking our own initial sequence number. This doesn't have the problem discussed above, since the TCP handshake is entirely performed by the operating system. (The application isn't thinking about SYN or SYN-ACK packets at all.)
+Один випадок, коли дані завжди надсилаються попутно, — пакет SYN-ACK у рукостисканні. На додачу до підтвердження ми попутно надсилаємо власний початковий порядковий номер. Тут немає описаної вище проблеми, бо рукостискання TCP повністю виконує операційна система. (Застосунок узагалі не думає про пакети SYN чи SYN-ACK.)
 
 
-## Sliding Window
+## Ковзне вікно
 
-When we discussed packets, we defined the window as the number of packets that could be in flight at any given time. Now that we're implementing TCP in terms of bytes, we'll define the **sliding window** as the maximum number of contiguous bytes that can be in flight at any given time.
+Обговорюючи пакети, ми визначали вікно як кількість пакетів, які можуть бути в дорозі в будь-який момент. Тепер, коли ми реалізуємо TCP у термінах байтів, ми визначимо **ковзне вікно** (sliding window) як максимальну кількість суміжних байтів, які можуть бути в дорозі в будь-який момент.
 
-The restriction of the in-flight bytes being contiguous is different from before. Our packet-based window definition allowed for non-contiguous packets (e.g. 5, 7, 8) to be in-flight. However, the bytes in flight are required to be consecutive, with no gaps. This requirement creates a window (range of bytes) in the byte stream.
+Обмеження, що байти в дорозі мають бути суміжними, — це відмінність від попереднього. Наше визначення вікна на основі пакетів дозволяло, щоб у дорозі були несуміжні пакети (наприклад, 5, 7, 8). Однак байти в дорозі мусять іти поспіль, без розривів. Ця вимога створює вікно (діапазон байтів) у потоці байтів.
 
-The left side of the window is the first unacknowledged byte (as determined by the ack number from the recipient). Starting at this byte, the next W bytes, up to the right side of the window, can be in-flight.
+Лівий край вікна — перший непідтверджений байт (визначений номером підтвердження від отримувача). Починаючи з цього байта, наступні W байтів, аж до правого краю вікна, можуть бути в дорозі.
 
 <img width="900px" src="/assets/transport/3-047-window1.png">
 
-Note that even if some of the intermediate bytes in this window were acknowledged, we still cannot send more bytes beyond the window. The only way we can send more bytes is if the window slides to the right, i.e. when the ack number increases (bytes on the left side of the window are acknowledged).
+Зауважте, що навіть якщо деякі проміжні байти в цьому вікні підтверджено, ми однаково не можемо надсилати байти за межами вікна. Єдиний спосіб надіслати більше байтів — щоб вікно зсунулося праворуч, тобто щоб номер підтвердження збільшився (байти на лівому краї вікна підтверджено).
 
 <img width="900px" src="/assets/transport/3-048-window2.png">
 
-Recall that the window size (which determines the right edge of the window) is limited by flow control and congestion control. In the case of flow control, the window size is decided by the window advertised by the recipient. The recipient decides the advertised window based on the amount of buffer space available on the receiver end.
+Пригадайте, що розмір вікна (який визначає правий край вікна) обмежено керуванням потоком і керуванням перевантаженням. У випадку керування потоком розмір вікна визначається вікном, оголошеним отримувачем. Отримувач визначає оголошене вікно на основі обсягу вільного місця в буфері на своєму боці.
 
 
-## Detecting Loss and Re-Sending Data
+## Виявлення втрат і повторне надсилання даних
 
-There are two conditions for data to be re-sent. Only one condition (not both) needs to be true to trigger a re-send.
+Є дві умови повторного надсилання даних. Щоб ініціювати повторне надсилання, достатньо, щоб виконалася лише одна умова (а не обидві).
 
 <img width="900px" src="/assets/transport/3-049-window3.png">
 
-The first trigger for retransmission is a timer (data not acknowledged after some time). In packet-based TCP, every packet had a timer, and when the timer expired without that packet being acked, we would re-send that packet.
+Перший тригер повторної передачі — таймер (дані не підтверджено протягом певного часу). У TCP на основі пакетів кожен пакет мав таймер, і коли таймер спливав, а пакет не було підтверджено, ми надсилали цей пакет повторно.
 
-In byte-based TCP, instead of one timer per byte or per packet, we will only have a single timer, corresponding to the first unacknowledged byte (left side of the window). If the timer expires, we will re-send the left-most unacknowledged segment. Recall that the timer length is based on the RTT, and the RTT is estimated using measurements of the time between sending data and receiving an ack. Also, recall that the timer is reset every time a new ack arrives (and the window changes).
+У TCP на основі байтів замість одного таймера на байт чи на пакет у нас буде лише один таймер, що відповідає першому непідтвердженому байту (лівому краю вікна). Якщо таймер спливає, ми повторно надсилаємо крайній лівий непідтверджений сегмент. Пригадайте, що довжина таймера ґрунтується на RTT, а RTT оцінюється вимірюваннями часу між надсиланням даних і отриманням підтвердження. Також пригадайте, що таймер перезапускається щоразу, коли надходить нове підтвердження (і вікно змінюється).
 
-The second trigger for retransmission is assuming that data is lost when we receive acks for subsequent packets. In packet-based TCP with cumulative acks (which is what TCP uses), we would re-send a packet if we received K duplicate acks (K=3 is common), which indicated that three subsequent packets were acknowledged.
+Другий тригер повторної передачі — припущення, що дані втрачено, коли ми отримуємо підтвердження для наступних пакетів. У TCP на основі пакетів із кумулятивними підтвердженнями (які використовує TCP) ми повторно надсилали пакет, якщо отримували K дублікатів підтверджень (поширене значення K=3), що вказувало на підтвердження трьох наступних пакетів.
 
-In byte-based TCP, if we receive K duplicate acks, we will re-send the left-most unacknowledged segment.
+У TCP на основі байтів, якщо ми отримуємо K дублікатів підтверджень, ми повторно надсилаємо крайній лівий непідтверджений сегмент.
 
 
-## TCP Header
+## Заголовок TCP
 
 <img width="800px" src="/assets/transport/3-050-tcp-header.png">
 
-The TCP header has 16-bit source and destination ports.
+Заголовок TCP має 16-бітові порти джерела й призначення.
 
-The TCP header has a 32-bit sequence number (byte offset of the first byte in this packet), and a 32-bit acknowledgement number (highest contiguous sequence number received, plus one).
+Заголовок TCP має 32-бітовий порядковий номер (зсув у байтах першого байта цього пакета) і 32-бітовий номер підтвердження (найбільший отриманий порядковий номер без розривів плюс один).
 
-The TCP header has a checksum over the entire data (not just the header), to detect corrupt data.
+Заголовок TCP має контрольну суму по всіх даних (а не лише по заголовку), щоб виявляти пошкоджені дані.
 
-The TCP header has the advertised window, which is used to support flow control and congestion control.
+Заголовок TCP має оголошене вікно, яке використовується для підтримки керування потоком і керування перевантаженням.
 
-The header length specifies the number of 4-byte words in the TCP header. Assuming there are no additional options, this length is 5.
+Довжина заголовка вказує кількість 4-байтових слів у заголовку TCP. Якщо додаткових параметрів немає, ця довжина дорівнює 5.
 
-The flags are a sequence of bits that can be set to 1 or 0. When a bit is set to 1, the corresponding flag is enabled. Everybody understands the semantics of the header, so they know which bits correspond to which flags. There are four relevant flags for these notes.
+Прапорці (flags) — це послідовність бітів, які можна встановлювати в 1 або 0. Коли біт встановлено в 1, відповідний прапорець увімкнено. Усі розуміють семантику заголовка, тож знають, які біти відповідають яким прапорцям. Для цих матеріалів важливі чотири прапорці.
 
-The SYN (synchronize) flag is turned on when the host is sending its ISN. This flag is usually only enabled in the first two messages of the three-way handshake.
+Прапорець SYN (synchronize, синхронізувати) вмикається, коли хост надсилає свій ISN. Зазвичай цей прапорець увімкнено лише в перших двох повідомленнях тристороннього рукостискання.
 
-The ACK (acknowledge) flag is turned on when the acknowledgment number is relevant and being used to ack data. If I want to send data, but didn't receive any data that needs to be acked, I can turn this flag off, which tells the other host to ignore the ack number.
+Прапорець ACK (acknowledge, підтвердити) вмикається, коли номер підтвердження має значення й використовується для підтвердження даних. Якщо я хочу надіслати дані, але не отримував жодних даних, які треба підтвердити, я можу вимкнути цей прапорець, що підкаже іншому хосту ігнорувати номер підтвердження.
 
-There are 6 reserved bits after the header length that are always set to 0. You can safely ignore these.
+Після довжини заголовка є 6 зарезервованих бітів, що завжди дорівнюють 0. Їх можна спокійно ігнорувати.
 
-The urgent pointer can be used to mark certain bytes as urgent, which tells the recipient to send this data to the application as soon as possible. This is a historical field that we won't cover any further.
+Вказівник терміновості (urgent pointer) можна використати, щоб позначити певні байти як термінові, що підкаже отримувачеві якомога швидше передати ці дані застосункові. Це історичне поле, яке ми далі не розглядатимемо.
 
-The TCP header can have additional options appended to the end (which would make the header longer), but we'll ignore options for this class. For example, if you wanted to implement full-information acks, there is an option called selective acknowledgements (SACK) that can be added to the header.
+До кінця заголовка TCP можна додавати додаткові параметри (що зробить заголовок довшим), але в цьому курсі ми ігноруватимемо параметри. Наприклад, якби ви хотіли реалізувати підтвердження з повною інформацією, існує параметр під назвою вибіркові підтвердження (selective acknowledgements, SACK), який можна додати до заголовка.

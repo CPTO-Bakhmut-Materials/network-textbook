@@ -1,295 +1,294 @@
 ---
-title: TCP Design
-parent: Transport
+title: Проєктування TCP
+parent: Транспортний рівень
 nav_order: 2
 layout: page-with-toc
 ---
 
-# TCP Design
+# Проєктування TCP
 
-## Reliably Delivering a Single Packet
+## Надійна доставка одного пакета
 
-The time it takes for a packet to travel from sender to receiver is the **one-way delay**. The time it takes for a packet to travel from sender to receiver, plus the time for a reply packet to travel from receiver to sender, is the **round-trip time (RTT)**.
+Час, за який пакет доходить від відправника до отримувача, — це **одностороння затримка** (one-way delay). Час, за який пакет доходить від відправника до отримувача, плюс час, за який пакет-відповідь доходить від отримувача до відправника, — це **час кругового обертання** (round-trip time, RTT).
 
 <img width="800px" src="/assets/transport/3-008-tcpdemo1.png">
 
-Let's build intuition by designing a simplified protocol for reliably sending a single packet.
+Набудьмо інтуїції, спроєктувавши спрощений протокол надійного надсилання одного пакета.
 
-The sender tries to send a packet. How does the sender know if the packet was successfully received?
+Відправник намагається надіслати пакет. Як відправник дізнається, чи пакет успішно отримано?
 
 <img width="800px" src="/assets/transport/3-009-tcpdemo2.png">
 
-The receiver can send an **acknowledgment (ack)** message, confirming that the packet was received.
+Отримувач може надіслати повідомлення-**підтвердження** (acknowledgment, ack), яке підтверджує, що пакет отримано.
 
-What happens if the packet gets dropped?
+Що станеться, якщо пакет буде відкинуто?
 
-We can re-send the packet if it's dropped. How do we know when to re-send the packet?
+Якщо пакет відкинуто, ми можемо надіслати його повторно. Як дізнатися, коли надсилати пакет повторно?
 
 <img width="600px" src="/assets/transport/3-010-tcpdemo3.png">
 
-The sender can maintain a timer. When the timer expires, we can re-send the packet.
+Відправник може підтримувати таймер. Коли таймер спливає, ми можемо повторно надіслати пакет.
 
-When the sender receives an ack, the sender can cancel the timer and does not need to re-send the packet.
+Коли відправник отримує підтвердження, він може скасувати таймер, і повторно надсилати пакет не потрібно.
 
-What happens if the ack is dropped?
+Що станеться, якщо буде відкинуто підтвердження?
 
 <img width="600px" src="/assets/transport/3-011-tcpdemo4.png">
 
-The protocol still works without modification. The sender will time out (no ack received) and re-send the packet until the ack is successfully sent. In this case, the destination received two copies of the same packet, but that's okay. The destination can notice the duplicate and discard it.
+Протокол і без змін однаково працює. У відправника спливе тайм-аут (підтвердження не отримано), і він повторно надсилатиме пакет, доки підтвердження не буде успішно надіслано. У цьому разі адресат отримав дві копії того самого пакета, але це нормально. Адресат може помітити дублікат і відкинути його.
 
-How should the timer be set? If the timer is too long, the packet might take longer than needed to be sent. If the timer is too short, the packet might be re-sent when it didn't need to be. Getting the timer wrong can affect our efficiency goals.
+Як слід налаштувати таймер? Якщо таймер задовгий, надсилання пакета може тривати довше, ніж потрібно. Якщо таймер закороткий, пакет може бути надісланий повторно, коли в цьому не було потреби. Неправильний таймер може зашкодити нашим цілям ефективності.
 
-A good timer length would be the round-trip time. This is when the sender expects to receive the ack, so if an ack hasn't arrived by then, the sender should re-send the packet at that time.
+Доброю довжиною таймера був би час кругового обертання. Саме тоді відправник очікує отримати підтвердження, тож якщо до цього часу підтвердження не надійшло, відправник має в цей момент повторно надіслати пакет.
 
-In practice, estimating RTT can be difficult. RTTs can vary depending on what path the packet takes through the network, and even along a specific path, the RTT can be affected by the load and congestion along that path.
+На практиці оцінити RTT може бути складно. RTT може змінюватися залежно від того, яким шляхом пакет проходить мережею, і навіть на конкретному шляху на RTT може впливати навантаження й перевантаження на цьому шляху.
 
-One way to estimate RTT is to measure the time between sending a packet and receiving an ack for that packet. We can get an estimated RTT measurement from every packet sent, and apply some algorithm (e.g. exponential moving average) to combine these measurements into one RTT estimate. Our algorithm would also have to account for messages being re-sent (variance in the measurements).
+Один зі способів оцінити RTT — виміряти час між надсиланням пакета й отриманням підтвердження для нього. Ми можемо отримувати оцінку RTT з кожного надісланого пакета й застосовувати певний алгоритм (наприклад, експоненційне ковзне середнє), щоб об'єднати ці вимірювання в одну оцінку RTT. Нашому алгоритму також довелося б враховувати повторно надіслані повідомлення (дисперсію вимірювань).
 
-In practice, operators usually err on the side of setting the timer to be longer. If the timer is too short, and timeouts are constantly happening, your connection is probably behaving poorly (constantly re-sending packets).
+На практиці оператори зазвичай схильні встановлювати довший таймер. Якщо таймер закороткий і тайм-аути трапляються постійно, ваше з'єднання, найімовірніше, поводиться погано (постійно повторно надсилає пакети).
 
-What if the bits are corrupted?
+Що, як біти пошкоджено?
 
 <img width="600px" src="/assets/transport/3-012-tcpdemo5.png">
 
-We can add a checksum in the transport layer header (different from the IP layer checksum). When the receiver sees a corrupt packet, it can do two things: Either the receiver can explicitly re-send a **negative acknowledgement (nack)**, telling the sender to re-send the packet.
+Ми можемо додати контрольну суму в заголовок транспортного рівня (відмінну від контрольної суми рівня IP). Коли отримувач бачить пошкоджений пакет, він може зробити одне з двох. Отримувач може явно надіслати **негативне підтвердження** (negative acknowledgement, nack), повідомивши відправникові, що пакет треба надіслати повторно.
 
-Or, the receiver can drop the corrupt packet and do nothing (don't send an ack or nack). Then, the sender will time out and re-send the packet.
+Або отримувач може відкинути пошкоджений пакет і нічого не робити (не надсилати ні ack, ні nack). Тоді у відправника спливе тайм-аут, і він повторно надішле пакет.
 
 <img width="600px" src="/assets/transport/3-013-tcpdemo6.png">
 
-Both approaches (nack or wait for timeout) work, though TCP uses the latter (wait for timeout) and does not implement nacks.
+Обидва підходи (nack або очікування тайм-ауту) працюють, але TCP використовує другий (очікування тайм-ауту) і не реалізує nack.
 
-What if the packets are delayed?
+Що, як пакети затримуються?
 
 <img width="500px" src="/assets/transport/3-014-tcpdemo7.png">
 
-No modifications are needed. If the delay is very long, the sender might time out before the ack arrives. The sender will re-send the packet (so the recipient might get two duplicates), and the sender might get two acks, but that's okay.
+Змін не потрібно. Якщо затримка дуже велика, тайм-аут у відправника може спливти раніше, ніж надійде підтвердження. Відправник повторно надішле пакет (тож отримувач може отримати два дублікати), і відправник може отримати два підтвердження, але це нормально.
 
-What if the sender sends one packet, but it's duplicated in the network, and the recipient receives two copies?
+Що, як відправник надсилає один пакет, але в мережі його дублюється, і отримувач отримує дві копії?
 
 <img width="500px" src="/assets/transport/3-015-tcpdemo8.png">
 
-No modifications are needed. The recipient would send two acks, but both the sender and the recipient can safely handle duplicates.
+Змін не потрібно. Отримувач надішле два підтвердження, але і відправник, і отримувач можуть безпечно обробляти дублікати.
 
-Note: From this simplified protocol, we can see that sometimes the recipient receives two copies of the packet. If a specific link was implementing a reliability protocol, the recipient side of the link might receive two copies. Normally, the duplicate would get dropped and only one packet would be forwarded to the destination. But, if the router crashes and restarts in between the two copies arriving, the router might forward both copies to the destination.
+Примітка: з цього спрощеного протоколу видно, що отримувач іноді отримує дві копії пакета. Якби конкретний канал реалізовував протокол надійності, сторона-отримувач каналу могла б отримати дві копії. Зазвичай дублікат відкидався б і до адресата пересилався б лише один пакет. Але якщо маршрутизатор аварійно завершить роботу й перезапуститься між надходженням двох копій, він може переслати адресатові обидві копії.
 
-In summary, the single-packet reliability protocol is:
+Підсумуємо: протокол надійності для одного пакета такий:
 
-If you are the sender: Send the packet, and set a timer. If no ack arrives before the timer goes off, re-send the packet and reset the timer. Stop and cancel the timer when the ack arrives.
+Якщо ви відправник: надішліть пакет і встановіть таймер. Якщо до спрацювання таймера підтвердження не надійшло, повторно надішліть пакет і перезапустіть таймер. Коли надійде підтвердження, зупиніть і скасуйте таймер.
 
-If you are the recipient: If you receive the uncorrupted packet, send an ack. (You might send multiple acks if you receive the packet multiple times.)
+Якщо ви отримувач: якщо ви отримали непошкоджений пакет, надішліть підтвердження. (Ви можете надіслати кілька підтверджень, якщо отримали пакет кілька разів.)
 
-The core ideas in this example will apply to later protocols as well: checksums (for corruption), acknowledgements, re-sending packets, and timeouts.
+Ключові ідеї цього прикладу застосовуватимуться й до подальших протоколів: контрольні суми (для пошкоджень), підтвердження, повторне надсилання пакетів і тайм-аути.
 
-Note that this protocol guarantees at-least-once delivery, since duplicates may exist.
+Зауважте, що цей протокол гарантує доставку щонайменше один раз, бо можуть існувати дублікати.
 
 
-## Reliably Delivering Multiple Packets
+## Надійна доставка кількох пакетів
 
-How would this protocol be extended to multiple packets?
+Як поширити цей протокол на кілька пакетів?
 
 <img width="500px" src="/assets/transport/3-016-tcpdemo9.png">
 
-We could follow the same transmission rules (re-send when timer expires) for every single packet. To distinguish packets, we can attach a unique **sequence number** to every packet. Each ack will be related to a specific packet. Sequence numbers can also help us reorder packets if they arrive out of order.
+Ми можемо дотримуватися тих самих правил передавання (повторно надсилати, коли спливає таймер) для кожного пакета. Щоб розрізняти пакети, можна додати до кожного пакета унікальний **порядковий номер** (sequence number). Кожне підтвердження стосуватиметься конкретного пакета. Порядкові номери також можуть допомогти переупорядкувати пакети, якщо вони надходять не по порядку.
 
-When does the sender send each packet? The simplest approach is the **stop and wait** protocol, where the sender waits for packet i to be acknowledged before sending packet i+1. This will correctly provide reliability, but it is very slow. Each packet takes at least one RTT to be sent (more if a packet is dropped or corrupted).
+Коли відправник надсилає кожен пакет? Найпростіший підхід — протокол **«зупинись і чекай»** (stop and wait), де відправник чекає підтвердження пакета i, перш ніж надіслати пакет i+1. Він правильно забезпечить надійність, але дуже повільний. Надсилання кожного пакета займає щонайменше один RTT (більше, якщо пакет відкинуто чи пошкоджено).
 
 <img width="600px" src="/assets/transport/3-017-tcpdemo10.png">
 
-This protocol might work in smaller settings where efficiency is less of  a concern, but this is too slow for the Internet. How can we make this faster?
+Цей протокол може працювати в менших умовах, де ефективність не така важлива, але для Інтернету він заповільний. Як зробити його швидшим?
 
 <img width="600px" src="/assets/transport/3-018-tcpdemo11.png">
 
-We can send packets in parallel. More specifically, we can send more packets while waiting for acks to arrive. When a packet is sent, but its corresponding ack has not been received, we call that packet **in flight**.
+Ми можемо надсилати пакети паралельно. Конкретніше, ми можемо надсилати більше пакетів, поки чекаємо на підтвердження. Коли пакет надіслано, але відповідне підтвердження ще не отримано, ми кажемо, що пакет **у дорозі** (in flight).
 
-The simplest approach would be to send all packets immediately, but this could overwhelm the network (e.g. the link to your computer might have a limited bandwidth).
+Найпростішим підходом було б надіслати всі пакети одразу, але це може перевантажити мережу (наприклад, канал до вашого комп'ютера може мати обмежену пропускну здатність).
 
 
-## Window-Based Algorithms
+## Віконні алгоритми
 
-Sending packets one at a time is too slow, but sending all packets at once overwhelms the network. To account for this, we will set a limit W and say that only W packets can be in flight at any given time. This is the key idea behind **window-based protocols**, where W is the size of the window.
+Надсилати пакети по одному заповільно, а надсилати всі пакети одразу — означає перевантажити мережу. Щоб це врахувати, ми встановимо обмеження W і скажемо, що в будь-який момент у дорозі може бути лише W пакетів. Це ключова ідея **віконних протоколів** (window-based protocols), де W — розмір вікна.
 
-If W is the maximum number of in-flight packets, then the sender can start by sending W packets. When an ack arrives, we send the next packet in line.
+Якщо W — максимальна кількість пакетів у дорозі, то відправник може почати з надсилання W пакетів. Коли надходить підтвердження, ми надсилаємо наступний пакет у черзі.
 
 <img width="500px" src="/assets/transport/3-019-window1.png">
 
-How should W be selected?
+Як слід обирати W?
 
-We want to fully use our available network capacity ("fill the pipe"). If W is too low, we are not using all of the bandwidth available to us.
+Ми хочемо повністю використовувати доступну пропускну здатність мережі («заповнити трубу»). Якщо W замале, ми не використовуємо всю доступну нам пропускну здатність.
 
-However, we don't want to overload links, since other people may be using that link (congestion control). We also don't want to overload the receiver, who needs to receive and process all the packets from the sender (flow control).
+Однак ми не хочемо перевантажувати канали, бо цим каналом можуть користуватися інші (керування перевантаженням). Ми також не хочемо перевантажувати отримувача, який має отримати й обробити всі пакети від відправника (керування потоком).
 
 
-## Window Size: Filling the Pipe
+## Розмір вікна: заповнення труби
 
-Let's focus on just the first RTT, from the time the first packet is sent, to the time the first ack arrives. Suppose this time is 5 seconds (not a realistic number, just for example). Also, suppose that the outgoing link allows the sender to send 10 packets per second (also not a realistic number). In total, during this first RTT time, the sender should be able to send 50 packets in total. Therefore, 50 would be a reasonable window size, so that the sender is always sending packets and never sitting idle.
+Зосередьмося лише на першому RTT — від моменту надсилання першого пакета до моменту надходження першого підтвердження. Припустімо, цей час становить 5 секунд (не реалістичне число, лише для прикладу). Також припустімо, що вихідний канал дає відправникові змогу надсилати 10 пакетів на секунду (теж не реалістичне число). Загалом протягом цього першого RTT відправник має змогу надіслати 50 пакетів. Тому 50 було б розумним розміром вікна, щоб відправник завжди надсилав пакети й ніколи не простоював.
 
-If we set W to be lower than 50, then the sender would finish sending all the initial packets before the first ack arrives. Then, the sender would be forced to sit idling while waiting for acks to arrive, and some network bandwidth would be wasted. More generally, we want the sender to be sending packets during the entire RTT.
+Якщо встановити W менше за 50, відправник закінчить надсилати всі початкові пакети раніше, ніж надійде перше підтвердження. Тоді відправник буде змушений простоювати, чекаючи на підтвердження, і частина пропускної здатності мережі марнуватиметься. Загальніше, ми хочемо, щоб відправник надсилав пакети протягом усього RTT.
 
 <img width="600px" src="/assets/transport/3-020-window2.png">
 
-In this example, W is 4. But, after sending 4 packets, the sender is idling and wasting bandwidth while waiting for the first ack to arrive.
+У цьому прикладі W дорівнює 4. Але, надіславши 4 пакети, відправник простоює й марнує пропускну здатність, чекаючи на перше підтвердження.
 
 <img width="600px" src="/assets/transport/3-021-window3.png">
 
-In this example, W is increased so that the sender is constantly sending packets. As the first ack arrives, the sender is just about to reach the limit of W packets in flight, and is able to immediately continue sending packets as more acks arrive.
+У цьому прикладі W збільшено так, щоб відправник постійно надсилав пакети. Коли надходить перше підтвердження, відправник якраз майже досягає межі W пакетів у дорозі й може одразу продовжувати надсилати пакети в міру надходження нових підтверджень.
 
-The route to the destination might have multiple links, with different capacities. Let B be the minimum (bottleneck) link bandwidth along the path. We shouldn't send packets faster than B, to avoid overloading the link. We also don't want to send packets any slower than B (i.e. we want to be using the rate B at all times).
+Маршрут до пункту призначення може мати кілька каналів із різною пропускною здатністю. Нехай B — мінімальна (вузьке місце, bottleneck) пропускна здатність каналу на шляху. Ми не повинні надсилати пакети швидше за B, щоб не перевантажити канал. Ми також не хочемо надсилати пакети повільніше за B (тобто хочемо постійно використовувати швидкість B).
 
-Also, suppose that R is the round-trip time between sender and recipient. We can multiply R times B to get the total number of packets that can be sent during the RTT. (We can send B packets per second, for R seconds.) This tells us the window size, in packets.
+Крім того, припустімо, що R — час кругового обертання між відправником і отримувачем. Помноживши R на B, ми отримаємо загальну кількість пакетів, які можна надіслати протягом RTT. (Ми можемо надсилати B пакетів на секунду протягом R секунд.) Це дає нам розмір вікна в пакетах.
 
-In reality, B is measured in bits per second, not in packets per second. When we multiply R times B, we get the number of bits that can be sent during the RTT. (B bits per second, for R seconds.) This tells us the window size, in bytes. In total, we can write:
+Насправді B вимірюється в бітах за секунду, а не в пакетах за секунду. Помноживши R на B, ми отримаємо кількість бітів, які можна надіслати протягом RTT. (B бітів за секунду протягом R секунд.) Це дає нам розмір вікна в байтах. Загалом можна записати:
 
-W times packet size = R times B
+W помножити на розмір пакета = R помножити на B
 
-The left-hand-side tells us the number of bytes sent during the window (W packets, times number of bytes per packet), and the right-hand-side tells us the number of bytes that can be sent during the RTT.
+Ліва частина показує кількість байтів, надісланих у межах вікна (W пакетів, помножене на кількість байтів у пакеті), а права — кількість байтів, які можна надіслати протягом RTT.
 
-For a concrete example, we can set RTT = 1 second, and B = 8 Mbits/second. Then, R times B is 8 Mbits, or 1 megabyte, or 1,000,000 bytes.
+Як конкретний приклад, візьмімо RTT = 1 секунда і B = 8 Мбіт/секунду. Тоді R помножити на B — це 8 Мбіт, або 1 мегабайт, або 1 000 000 байтів.
 
-If our packet size is 100 bytes, then we want W = 10,000 packets, so that we are fully using the bandwidth and sending 1,000,000 bytes during the RTT.
+Якщо розмір нашого пакета — 100 байтів, то ми хочемо W = 10 000 пакетів, щоб повністю використовувати пропускну здатність і надсилати 1 000 000 байтів протягом RTT.
 
 <img width="900px" src="/assets/transport/3-022-window4.png">
 
 <img width="900px" src="/assets/transport/3-023-window5.png">
 
-We can also draw the window size in terms of the link itself. In this picture, we are showing the outgoing and incoming directions of a specific link. As the sender pushes packets through the link at maximum capacity, the first ack will arrive immediately after the 6th packet is sent. Therefore, our window size should be 6.
+Розмір вікна можна також зобразити в термінах самого каналу. На цьому рисунку показано вихідний і вхідний напрямки конкретного каналу. Коли відправник проштовхує пакети каналом на максимальній швидкості, перше підтвердження надійде одразу після надсилання 6-го пакета. Тому розмір нашого вікна має дорівнювати 6.
 
-Note that the window size is not 3. When packet 6 is sent, 3 packets are being sent, but there are 3 more packets whose acks have not arrived, so there are a total of 6 packets in flight.
+Зауважте, що розмір вікна не 3. Коли надсилається пакет 6, у дорозі туди перебувають 3 пакети, але є ще 3 пакети, підтвердження яких не надійшли, тож загалом у дорозі 6 пакетів.
 
-If we set the window size to 3, the outgoing pipe would have been unused while the acks for 1, 2, 3 are in flight.
+Якби ми встановили розмір вікна 3, вихідна труба не використовувалася б, поки підтвердження для 1, 2, 3 перебувають у дорозі.
 
 <img width="900px" src="/assets/transport/3-024-window6.png">
 
-Note that the acks don't fill up the entire incoming pipe because the packets don't contain any actual data besides acknowledging receipt of a packet.
+Зауважте, що підтвердження не заповнюють усієї вхідної труби, бо ці пакети не містять жодних реальних даних, окрім підтвердження отримання пакета.
 
+## Розмір вікна: керування потоком
 
-## Window Size: Flow Control
+Розгляньте протокол транспортного рівня в операційній системі отримувача. Отримувач може отримувати пакети не по порядку, але абстракція потоку байтів вимагає, щоб пакети доставлялися по порядку. Це означає, що реалізація транспортного рівня мусить утримувати пакети, що надійшли не по порядку, **буферизуючи** (buffering) їх (зберігаючи в пам'яті), доки не настане їхня черга бути доставленими.
 
-Consider the transport layer protocol in the recipient's operating system. The recipient might receive packets out-of-order, but the bytestream abstraction requires that packets are delivered in-order. This means that the transport layer implementation must hold on to the out-of-order packets by **buffering** them (keeping them in memory) until it's their turn to be delivered.
-
-For example, suppose the recipient has received and processed packets 1 and 2. Then, the recipient sees packets 4 and 5. The transport layer implementation cannot deliver 4 and 5 to the application yet. Instead, we have to wait for packet 3 to arrive, and in the meantime, we have to keep packets 4 and 5 stored in the transport layer implementation's memory.
+Наприклад, припустімо, отримувач отримав і обробив пакети 1 і 2. Потім отримувач бачить пакети 4 і 5. Реалізація транспортного рівня ще не може доставити 4 і 5 застосункові. Натомість нам треба чекати на надходження пакета 3, а тим часом зберігати пакети 4 і 5 у пам'яті реалізації транспортного рівня.
 
 <img width="900px" src="/assets/transport/3-025-buffer1.png">
 
-However, memory is not unlimited, and the recipient's buffer size for storing out-of-order packets is finite. The recipient has to store every out-of-order packet in memory until the missing packets in between arrive. If the connection has a lot of packet loss and reordering, the recipient might run out of memory.
+Однак пам'ять не безмежна, і розмір буфера отримувача для зберігання пакетів, що надійшли не по порядку, скінченний. Отримувач має зберігати в пам'яті кожен пакет, що надійшов не по порядку, доки не надійдуть пропущені проміжні пакети. Якщо в з'єднанні багато втрат і переупорядкувань пакетів, отримувачеві може забракнути пам'яті.
 
-**Flow control** ensures that the recipient's buffer does not run out of memory. To achieve this, we have the recipient tell the sender how much space is left in the buffer. The amount of space left in the recipient buffer is called the **advertised window**. In the acknowledgment, the recipient says "I have received these packets, and I have X bytes of space left to hold packets."
+**Керування потоком** (flow control) гарантує, що буферу отримувача не забракне пам'яті. Для цього отримувач повідомляє відправникові, скільки місця залишилося в буфері. Обсяг місця, що залишився в буфері отримувача, називається **оголошеним вікном** (advertised window). У підтвердженні отримувач каже: «Я отримав ці пакети, і в мене залишилося X байтів місця для зберігання пакетів».
 
 <img width="900px" src="/assets/transport/3-026-buffer2.png">
 
-When the sender learns about the advertised window, the sender adjusts its window accordingly. Specifically, the number of packets in flight cannot exceed the recipient's advertised window. If the recipient says "my buffer has enough space for 5 packets," the sender must set the window to be at most 5 packets (even if the bandwidth might allow for more packets to be in flight).
+Коли відправник дізнається про оголошене вікно, він відповідно коригує своє вікно. Конкретно, кількість пакетів у дорозі не може перевищувати оголошеного вікна отримувача. Якщо отримувач каже: «у моєму буфері достатньо місця для 5 пакетів», відправник має встановити вікно щонайбільше в 5 пакетів (навіть якщо пропускна здатність дозволяла б мати в дорозі більше пакетів).
 
 
-## Window Size: Congestion Control
+## Розмір вікна: керування перевантаженням
 
-Recall that in order to make the most use of bandwidth, the sender sets the window size to fully consume the bottleneck link bandwidth. For example, if the bottleneck link has bandwidth of 1Gbps, we will set the window size such that the sender is constantly sending data at 1Gbps for the entirety of the RTT (no idling).
+Пригадайте, що для максимального використання пропускної здатності відправник встановлює розмір вікна так, щоб повністю використовувати пропускну здатність каналу — вузького місця. Наприклад, якщо канал — вузьке місце має пропускну здатність 1 Гбіт/с, ми встановимо розмір вікна так, щоб відправник постійно надсилав дані зі швидкістю 1 Гбіт/с протягом усього RTT (без простоїв).
 
-In practice, it's unlikely that the 1Gbps link is only being used by a single connection. Other connections could also be using the capacity along that link. Instead of consuming the entire bandwidth on that link, the sender should only consume its own share of that bandwidth capacity.
+На практиці малоймовірно, що канал на 1 Гбіт/с використовує лише одне з'єднання. Пропускну здатність цього каналу можуть використовувати й інші з'єднання. Замість споживати всю пропускну здатність цього каналу, відправник має споживати лише свою частку цієї пропускної здатності.
 
 <img width="600px" src="/assets/transport/3-027-cc.png">
 
-But, what share of the bandwidth goes to each connection?
+Але яка частка пропускної здатності припадає на кожне з'єднання?
 
-Suppose we had two connections using 400MBps and 250MBps, respectively. If another connection then tries to use that same link, maybe the sender's share is the remaining 350MBps. But another argument is that the bandwidth is not being shared fairly, so perhaps everybody should adjust to use 333MBps.
+Припустімо, у нас два з'єднання, що використовують 400 МБ/с і 250 МБ/с відповідно. Якщо потім ще одне з'єднання намагається використовувати той самий канал, можливо, частка цього відправника — решта 350 МБ/с. Але можна заперечити, що пропускна здатність розподіляється несправедливо, тож, можливо, усі мають підлаштуватися й використовувати по 333 МБ/с.
 
-Determining and computing the exact amount of bandwidth that each connection gets to use is the goal of congestion control. Algorithms for congestion control are its own entire topic (covered in the next section). For now, we'll abstract away congestion control and say that as part of the transport layer, the sender is implementing a congestion control algorithm, whose job is to dynamically compute the sender's share of the bottleneck link on the connection.
+Визначення й обчислення точного обсягу пропускної здатності, який може використовувати кожне з'єднання, — мета керування перевантаженням. Алгоритми керування перевантаженням — окрема велика тема (розглядається в наступному розділі). Поки що ми абстрагуємося від керування перевантаженням і скажемо, що в межах транспортного рівня відправник реалізує алгоритм керування перевантаженням, завдання якого — динамічно обчислювати частку відправника в каналі — вузькому місці з'єднання.
 
-The result of running the algorithm is the sender's congestion window (cwnd). For now, all you need to know is that the algorithm outputs this number, which represents a bandwidth that maximizes performance, without overloading a link, while fairly sharing bandwidth with other connections.
+Результат роботи алгоритму — вікно перевантаження (congestion window, cwnd) відправника. Поки що вам достатньо знати, що алгоритм видає це число, яке відповідає пропускній здатності, що максимізує продуктивність, не перевантажуючи канал і справедливо розподіляючи пропускну здатність з іншими з'єднаннями.
 
-We now know how to set the window to achieve our three goals from earlier. To fully utilize network capacity, we will set the window size according to the RTT and the bottleneck link bandwidth. 
+Тепер ми знаємо, як встановлювати вікно, щоб досягти трьох наших попередніх цілей. Щоб повністю використовувати пропускну здатність мережі, ми встановимо розмір вікна відповідно до RTT і пропускної здатності каналу — вузького місця.
 
-To avoid overloading the receiver, we will limit the window size according to the recipient's advertised window. To avoid overloading links, we will limit the window size according to the sender's congestion window (some number outputted by the sender running a congestion control algorithm).
+Щоб не перевантажувати отримувача, ми обмежимо розмір вікна відповідно до оголошеного вікна отримувача. Щоб не перевантажувати канали, ми обмежимо розмір вікна відповідно до вікна перевантаження відправника (певного числа, яке видає алгоритм керування перевантаженням, що його виконує відправник).
 
-In order to meet all three goals, we'll set the window size to the minimum of all three values. In practice, note that the congestion window (third goal) is always less than or equal to the window size from fully using bandwidth (first goal). If there's no congestion, we'd be fully using all of the bottleneck bandwidth, so the two numbers would be equal. In most cases, congestion will force us to use less than all of the bottleneck bandwidth, so the third number would be less than the first number. There is no case where the congestion window bandwidth would be greater than the bottleneck bandwidth.
+Щоб виконати всі три цілі, ми встановимо розмір вікна рівним мінімуму з усіх трьох значень. На практиці зауважте, що вікно перевантаження (третя ціль) завжди менше або дорівнює розміру вікна для повного використання пропускної здатності (перша ціль). Якщо перевантаження немає, ми повністю використовували б усю пропускну здатність вузького місця, тож ці два числа були б рівні. У більшості випадків перевантаження змусить нас використовувати менше, ніж усю пропускну здатність вузького місця, тож третє число буде меншим за перше. Не буває випадку, коли пропускна здатність вікна перевантаження більша за пропускну здатність вузького місця.
 
-Also, in practice, it's difficult to discover the bottleneck bandwidth. The sender would have to somehow traverse the network topology and learn about each link's bandwidth. Because the first number is hard to learn, and is always greater than or equal to the third number, we can set our window size to the minimum of the latter two numbers (ignoring the first number). The window size is the minimum of the sender's congestion window, and the receiver's advertised window.
+Крім того, на практиці виявити пропускну здатність вузького місця складно. Відправникові довелося б якось обійти топологію мережі й дізнатися пропускну здатність кожного каналу. Оскільки перше число важко дізнатися і воно завжди більше або дорівнює третьому, ми можемо встановити розмір вікна рівним мінімуму з двох останніх чисел (ігноруючи перше). Розмір вікна — це мінімум із вікна перевантаження відправника та оголошеного вікна отримувача.
 
 
-## Smarter Acknowledgments
+## Розумніші підтвердження
 
-So far, every ack packet corresponds to a single packet. Can we do better than acknowledging one packet at a time? What are some issues with acknowledging one packet at a time?
+Досі кожен пакет підтвердження відповідав одному пакету. Чи можна зробити краще, ніж підтверджувати пакети по одному? Які проблеми має підтвердження пакетів по одному?
 
 <img width="600px" src="/assets/transport/3-028-ack1.png">
 
-In this example, one of the acks is dropped, even though the recipient successfully received all 4 packets. This would force the sender to re-send packet 2, even though this re-sending was unnecessary.
+У цьому прикладі одне з підтверджень відкинуто, хоча отримувач успішно отримав усі 4 пакети. Це змусить відправника повторно надіслати пакет 2, хоча таке повторне надсилання було непотрібним.
 
-Instead of sending an acknowledgement for a specific packet, each time we send an acknowledgement, we can actually list every packet we have received. This is called a **full information ack**.
+Замість надсилати підтвердження для конкретного пакета, щоразу, надсилаючи підтвердження, ми можемо перелічувати всі отримані пакети. Це називається **підтвердженням із повною інформацією** (full information ack).
 
 <img width="600px" src="/assets/transport/3-029-ack2.png">
 
-In this example, the acks now say: "I received 1," and "I received 1 and 2", and "I received 1, 2, 3", and "I received 1, 2, 3, 4."
+У цьому прикладі підтвердження тепер кажуть: «Я отримав 1», «Я отримав 1 і 2», «Я отримав 1, 2, 3» і «Я отримав 1, 2, 3, 4».
 
-Even though the second ack was dropped, the third and fourth acks help the sender confirm that packet 2 was received, and packet 2 no longer needs to be re-sent.
+Хоча друге підтвердження відкинуто, третє й четверте підтвердження допомагають відправникові переконатися, що пакет 2 отримано, і пакет 2 більше не потрібно надсилати повторно.
 
-As more packets are sent, the list of all packets received is going to get very long. Full information acks can abbreviate this information by saying: "I have received all packets up to #12. Also, I received #14 and #15." Formally, we give the highest cumulative ack (all packets less than or equal to this number have been received), plus a list of any additional packets received.
+Що більше пакетів надсилається, то довшим стає список усіх отриманих пакетів. Підтвердження з повною інформацією можуть скорочувати цю інформацію, кажучи: «Я отримав усі пакети до №12. Крім того, я отримав №14 і №15». Формально ми повідомляємо найбільше кумулятивне підтвердження (усі пакети з номером, меншим або рівним цьому, отримано) плюс список будь-яких додатково отриманих пакетів.
 
-Even with this abbreviation, full information acks can get long. For example, if all even-numbered packets are dropped, then the highest cumulative ack will always be 1 (we can only say all packets up to 1 have been received, since 2 is dropped). The rest of the received packets will have to be in a list like [1, 3, 5, 7, 9, ...] which can get very long.
+Навіть з таким скороченням підтвердження з повною інформацією можуть бути довгими. Наприклад, якщо відкидаються всі пакети з парними номерами, найбільше кумулятивне підтвердження завжди дорівнюватиме 1 (ми можемо сказати лише, що отримано всі пакети до 1, бо 2 відкинуто). Решту отриманих пакетів доведеться перелічувати в списку на кшталт [1, 3, 5, 7, 9, ...], який може стати дуже довгим.
 
 <img width="600px" src="/assets/transport/3-030-ack3.png">
 
-A compromise between individual acks (every ack drop forces re-sending) and full information acks (acks can get long) is **cumulative acks**, where we provide only the highest cumulative ack, and discard the additional list. Formally, the ack encodes the highest sequence number for which all previous packets have been received.
+Компромісом між окремими підтвердженнями (кожне відкинуте підтвердження змушує повторно надсилати) і підтвердженнями з повною інформацією (підтвердження можуть ставати довгими) є **кумулятивні підтвердження** (cumulative acks), де ми повідомляємо лише найбільше кумулятивне підтвердження й відкидаємо додатковий список. Формально підтвердження кодує найбільший порядковий номер, для якого отримано всі попередні пакети.
 
 <img width="900px" src="/assets/transport/3-031-ack4.png">
 
-In this example, where even-numbered packets are dropped, every cumulative ack would say: "I received all packets up to and including 1." Even though 3 and 5 were received, the cumulative ack will not encode this information, because it only confirms receipts of consecutive packets starting from 1.
+У цьому прикладі, де відкидаються пакети з парними номерами, кожне кумулятивне підтвердження казатиме: «Я отримав усі пакети до 1 включно». Хоча 3 і 5 отримано, кумулятивне підтвердження не кодуватиме цієї інформації, бо воно підтверджує лише отримання послідовних пакетів, починаючи з 1.
 
-Cumulative acks no longer have scaling issues (we're always sending one number, not a list of numbers). However, they can be more ambiguous, as in the case above. The sender sees three acknowledgements all saying "I received everything up to and including 1," and can deduce that 3 packets were received (packet 1, and two other packets), but cannot deduce what those other two packets are.
+Кумулятивні підтвердження більше не мають проблем із масштабуванням (ми завжди надсилаємо одне число, а не список чисел). Однак вони можуть бути менш однозначними, як у випадку вище. Відправник бачить три підтвердження, що всі кажуть «Я отримав усе до 1 включно», і може зробити висновок, що отримано 3 пакети (пакет 1 і ще два пакети), але не може визначити, які це два інші пакети.
 
 
-## Detecting Loss Early
+## Раннє виявлення втрат
 
-Can we do better than waiting for timeouts, and use other information that we receive to detect loss earlier and re-send packets sooner? For example, in our individual ack model, if we receive acks for packets 1, 3, 4, 5, 6, we might deduce that packet 2 is lost and re-send it, even before packet 2's timer expires.
+Чи можна зробити краще, ніж чекати тайм-аутів, і використати іншу отримувану інформацію, щоб раніше виявляти втрати й швидше повторно надсилати пакети? Наприклад, у нашій моделі окремих підтверджень, якщо ми отримуємо підтвердження для пакетів 1, 3, 4, 5, 6, ми можемо зробити висновок, що пакет 2 втрачено, і повторно надіслати його ще до того, як сплине таймер пакета 2.
 
-More formally, we can set a value K (not related to the window), and say that if K subsequent packets are acked after the missing packet, we'll consider the packet lost (even if the timer hasn't expired). For example, if K=3, we're waiting on packet 5's ack, and we get acks for 6, 7, and 8, then we can consider packet 5 lost.
+Формальніше, ми можемо встановити значення K (не пов'язане з вікном) і сказати, що якщо після пропущеного пакета підтверджено K наступних пакетів, ми вважатимемо пакет втраченим (навіть якщо таймер не сплив). Наприклад, якщо K=3, ми чекаємо підтвердження пакета 5 і отримуємо підтвердження для 6, 7 і 8, то можна вважати пакет 5 втраченим.
 
 <img width="900px" src="/assets/transport/3-032-fast-retransmit1.png">
 
-In practice, detecting loss from subsequent acks is much faster than waiting for a timeout. If our timeout is calculated from the RTT, it could be on the order of seconds. On the other hand, modern bandwidths can allow for acks to arrive once every few microseconds.
+На практиці виявлення втрат за наступними підтвердженнями набагато швидше, ніж очікування тайм-ауту. Якщо наш тайм-аут обчислюється з RTT, він може становити секунди. Натомість сучасна пропускна здатність може дозволяти підтвердженням надходити кожні кілька мікросекунд.
 
-This strategy for detecting loss looks different depending on our strategy for sending acks. The above examples assume that we're sending individual acks, but what about the other two ack models?
+Ця стратегія виявлення втрат виглядає по-різному залежно від нашої стратегії надсилання підтверджень. Приклади вище припускають, що ми надсилаємо окремі підтвердження, а як щодо двох інших моделей підтверджень?
 
-If we use full-information acks, the strategy is pretty similar, and the acks will actually show the missing packet more clearly.
+Якщо ми використовуємо підтвердження з повною інформацією, стратегія доволі схожа, і підтвердження насправді показуватимуть пропущений пакет ще чіткіше.
 
 <img width="900px" src="/assets/transport/3-033-fast-retransmit2.png">
 
-If packet 5 is lost, the acks might say "up to 4", then "up to 4, plus 6", then "up to 4, plus 6, 7", then "up to 4, plus 6, 7, 8." At this point, if K=3, then K packets after 5 have been acked, so we can declare that packet 5 is lost.
+Якщо пакет 5 втрачено, підтвердження можуть казати «до 4», потім «до 4, плюс 6», потім «до 4, плюс 6, 7», потім «до 4, плюс 6, 7, 8». На цьому етапі, якщо K=3, після 5 підтверджено K пакетів, тож можна оголосити пакет 5 втраченим.
 
-If we use cumulative acks, this strategy can be more ambiguous. If packet 5 is lost, then the acks might say "up to 4" (acking 4), "up to 4" (acking 6), "up to 4" (acking 7), "up to 4" (acking 8). The sender is seeing **duplicate acks** because of the gap in consecutive packets. If K=3, then we can declare packet 5 lost after receiving 3 duplicate packets (corresponding to 3 more packets acked after the gap), for a total of 4 duplicates.
+Якщо ми використовуємо кумулятивні підтвердження, ця стратегія може бути менш однозначною. Якщо пакет 5 втрачено, підтвердження можуть казати «до 4» (підтвердження 4), «до 4» (підтвердження 6), «до 4» (підтвердження 7), «до 4» (підтвердження 8). Відправник бачить **дублікати підтверджень** (duplicate acks) через розрив у послідовних пакетах. Якщо K=3, ми можемо оголосити пакет 5 втраченим після отримання 3 дублікатів (що відповідають 3 пакетам, підтвердженим після розриву), тобто загалом 4 однакових підтверджень.
 
 <img width="900px" src="/assets/transport/3-034-fast-retransmit3.png">
 
-When we had individual and full-information acks, we could clearly see which packet needed to be re-sent. There was one packet missing the ack (and K subesquent acks arriving). However, the decision for which packet to re-send is more ambiguous with cumulative acks, especially when multiple packets are lost.
+Коли в нас були окремі підтвердження й підтвердження з повною інформацією, ми чітко бачили, який пакет треба надіслати повторно. Був один пакет без підтвердження (і K наступних підтверджень, що надійшли). Однак з кумулятивними підтвердженнями рішення, який пакет надіслати повторно, менш однозначне, особливо коли втрачено кілька пакетів.
 
-As an example, consider a sender with window size W=6, and K=3. So far, packets 1 and 2 have been acked, and packets 3-8 are in flight. Suppose packets 3 and 5 have been dropped. Let's first walk through this example with individual ACKs.
+Як приклад розгляньте відправника з розміром вікна W=6 і K=3. Досі пакети 1 і 2 підтверджено, а пакети 3–8 у дорозі. Припустімо, пакети 3 і 5 відкинуто. Спершу розберімо цей приклад з окремими підтвердженнями.
 
-4 arrives, and the recipient sends an ack for 4. The sender can now send 9.
+Надходить 4, і отримувач надсилає підтвердження для 4. Тепер відправник може надіслати 9.
 
-6 arrives, and the recipient sends an ack for 6. The sender can now send 10.
+Надходить 6, і отримувач надсилає підтвердження для 6. Тепер відправник може надіслати 10.
 
-7 arrives, and the recipient sends an ack for 7. The sender can now send 11.
+Надходить 7, і отримувач надсилає підтвердження для 7. Тепер відправник може надіслати 11.
 
-At this point, the sender notices that K=3 packets after packet 3 (namely 4, 6, and 7) have been acked. The sender can declare 3 lost, and re-send 3 as well.
+На цьому етапі відправник помічає, що після пакета 3 підтверджено K=3 пакети (а саме 4, 6 і 7). Відправник може оголосити 3 втраченим і повторно надіслати й 3.
 
-Note that even though the sender re-sent 3 and sent 11 as a response to the ack for 7, there are still a total of 6 packets in flight with this re-sending, so the window is not violated. This is because 3 was already one of the in-flight packets when we re-sent it.
+Зауважте, що хоча у відповідь на підтвердження для 7 відправник повторно надіслав 3 і надіслав 11, з цим повторним надсиланням у дорозі однаково загалом 6 пакетів, тож вікно не порушено. Це тому, що 3 уже був одним із пакетів у дорозі, коли ми надіслали його повторно.
 
-8 arrives, and the recipient sends an ack for 8. The sender can now send 12.
+Надходить 8, і отримувач надсилає підтвердження для 8. Тепер відправник може надіслати 12.
 
-Also, the sender notices that K=3 packets after packet 5 (namely 6, 7, and 8) have been acked, so the sender can re-send 5 as well.
+Крім того, відправник помічає, що після пакета 5 підтверджено K=3 пакети (а саме 6, 7 і 8), тож відправник може повторно надіслати й 5.
 
-9 arrives, and the recipient sends an ack for 9. The sender can now send 13.
+Надходить 9, і отримувач надсилає підтвердження для 9. Тепер відправник може надіслати 13.
 
-Now, let's redo this example with cumulative ACKs.
+Тепер повторімо цей приклад з кумулятивними підтвердженнями.
 
-4 arrives, and the recipient sends an ack for 4, which says "ack everything up to 2." At this point, the sender knows a packet must have arrived, but does not know that it's 4. Still, the sender can send 9 next. Note that the window is not violated, because even though the sender seemingly has 7 un-acked packets, one of them did get acked by the duplicate "ack everything up to 2," so there are only 6 packets in flight.
+Надходить 4, і отримувач надсилає підтвердження для 4, яке каже «підтверджую все до 2». На цьому етапі відправник знає, що якийсь пакет мав надійти, але не знає, що це 4. Утім, відправник може надіслати наступним 9. Зауважте, що вікно не порушено, бо хоча в відправника, здавалося б, 7 непідтверджених пакетів, один із них таки підтверджено дублікатом «підтверджую все до 2», тож у дорозі лише 6 пакетів.
 
-6 arrives, and the recipient sends an ack for 6, which still says "ack everything up to 2." Again, the sender deduces that another packet arrived, and can send 10 next.
+Надходить 6, і отримувач надсилає підтвердження для 6, яке однаково каже «підтверджую все до 2». Знову відправник робить висновок, що надійшов ще один пакет, і може надіслати наступним 10.
 
-7 arrives, and the recipient sends an ack for 7, which still says "ack everything up to 2." The sender deduces that another packet arrived, and can send 10.
+Надходить 7, і отримувач надсилає підтвердження для 7, яке однаково каже «підтверджую все до 2». Відправник робить висновок, що надійшов ще один пакет, і може надіслати 10.
 
-At this point, the sender notices that "ack everything up to 2" has arrived 3 duplicate times (in addition to the initial ack for 2). The next un-acked packet is 3, so the sender will re-send 3.
+На цьому етапі відправник помічає, що «підтверджую все до 2» надійшло 3 рази як дублікат (на додачу до початкового підтвердження для 2). Наступний непідтверджений пакет — 3, тож відправник повторно надішле 3.
 
-This is when things get ambiguous. When 8, 9, and 10 arrive at the recipient, the sender will receive three more copies of "ack everything up to 2." (We're assuming the recipient hasn't received 3 yet, since it was re-sent after 9 and 10).
+Саме тут усе стає неоднозначним. Коли 8, 9 і 10 надійдуть до отримувача, відправник отримає ще три копії «підтверджую все до 2». (Ми вважаємо, що отримувач ще не отримав 3, бо його повторно надіслано після 9 і 10.)
 
-The sender can now send 12, 13, and 14, since three more acks have arrived, but which packet should be re-sent next? Should the sender re-send 3, 4, 5, or something else?
+Тепер відправник може надіслати 12, 13 і 14, бо надійшло ще три підтвердження, але який пакет слід надіслати повторно наступним? Чи має відправник повторно надіслати 3, 4, 5 чи щось інше?
 
-This example shows that cumulative acks don't always indicate exactly which packets were received. However, the number of acks (possibly including duplicates) can be used to determine how many packets were received (without knowing exactly which packets were received), which allows us to keep sending according to the window size. However, ambiguity arises when we receive too many duplicate acks and cannot tell which packet to re-send.
+Цей приклад показує, що кумулятивні підтвердження не завжди точно вказують, які пакети отримано. Однак за кількістю підтверджень (можливо, включно з дублікатами) можна визначити, скільки пакетів отримано (не знаючи точно, які саме), що дає нам змогу й далі надсилати відповідно до розміру вікна. Проте неоднозначність виникає, коли ми отримуємо забагато дублікатів підтверджень і не можемо визначити, який пакет надіслати повторно.

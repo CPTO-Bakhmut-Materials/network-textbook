@@ -1,79 +1,79 @@
 ---
-title: IP Multicast
-parent: Beyond Client-Server
+title: Багатоадресна розсилка IP
+parent: За межами клієнт-сервер
 nav_order: 2
 layout: page-with-toc
 ---
 
-# IP Multicast
+# Багатоадресна розсилка IP
 
-## Brief History of IP Multicast
+## Коротка історія багатоадресної розсилки IP
 
-IP multicast was actively researched and developed in the 1990s and 2000s. The development was motivated by the expectation that the killer application for the Internet would be live-streamed TV or radio. (Fun fact: One of the earliest live-streamed concerts was the Rolling Stones in 1994.)
+Багатоадресну розсилку IP активно досліджували й розробляли в 1990-х і 2000-х роках. Розробку мотивувало очікування, що «вбивчим застосунком» (killer application) Інтернету стане пряма трансляція телебачення чи радіо. (Цікавий факт: одним із перших концертів, що транслювалися наживо, був концерт Rolling Stones у 1994 році.)
 
-Looking back, the IP multicast protocols developed in the 1990s and 2000s had mixed success in terms of adoption. Modern routers do offer support for the IP multicast protocols we'll see, but network operators don't always enable these protocols on the routers. (Disabling the protocol on the router essentially means that the router doesn't understand or support that protocol.)
+Озираючись назад, протоколи багатоадресної розсилки IP, розроблені в 1990-х і 2000-х, мали неоднозначний успіх у впровадженні. Сучасні маршрутизатори таки підтримують протоколи багатоадресної розсилки IP, які ми побачимо, але мережеві оператори не завжди вмикають ці протоколи на маршрутизаторах. (Вимкнення протоколу на маршрутизаторі фактично означає, що маршрутизатор не розуміє й не підтримує цього протоколу.)
 
-IP multicast protocols are sometimes used within individual domains (e.g. inside a datacenter network). However, IP multicast protocols are rarely/never deployed across different domains. This means that users cannot expect to use IP multicast at the global Internet level, e.g. if a group of users around the world joined a multicast group, the modern Internet would not automatically support multicasting packets to that group.
+Протоколи багатоадресної розсилки IP іноді використовуються в межах окремих доменів (наприклад, усередині мережі дата-центру). Однак протоколи багатоадресної розсилки IP рідко (або ніколи) не розгортаються між різними доменами. Це означає, що користувачі не можуть розраховувати на використання багатоадресної розсилки IP на рівні глобального Інтернету: наприклад, якби група користувачів по всьому світу приєдналася до групи багатоадресної розсилки, сучасний Інтернет не підтримував би автоматично багатоадресну розсилку пакетів цій групі.
 
-Although these protocols were not globally deployed, the techniques used in these protocols can be applied to solve different networking problems. In particular, these techniques have become relevant again for solving problems related to AI training (we'll study this when we discuss collectives).
+Хоча ці протоколи не набули глобального розгортання, методи, використані в цих протоколах, можна застосовувати для розв'язання різних мережевих задач. Зокрема, ці методи знову стали актуальними для розв'язання задач, пов'язаних із навчанням ШІ (ми вивчатимемо це, коли обговорюватимемо колективні операції).
 
 
-## IP Multicast Service Model
+## Модель обслуговування багатоадресної розсилки IP
 
-How do we define a group? Each multicast group is defined by an IP address. The addresses from 224.0.0.0 to 239.255.255.255 are multicast addresses, and everyone knows that addresses in this hard-coded range are multicast addresses.
+Як визначити групу? Кожна група багатоадресної розсилки визначається IP-адресою. Адреси від 224.0.0.0 до 239.255.255.255 — адреси багатоадресної розсилки, і всі знають, що адреси в цьому жорстко заданому діапазоні — адреси багатоадресної розсилки.
 
 <img width="500px" src="/assets/beyond-client-server/7-005-multicast-addresses.png">
 
-To join a group, you will announce the multicast address of the group you want to join. At least one router should hear your message (e.g. your home router), and then the routers will coordinate amongst themselves to spread this information (e.g. with a routing protocol). Eventually, all the routers will have learned that you are part of that group.
+Щоб приєднатися до групи, ви оголошуєте адресу багатоадресної розсилки групи, до якої хочете приєднатися. Щонайменше один маршрутизатор має почути ваше повідомлення (наприклад, ваш домашній маршрутизатор), а потім маршрутизатори координуватимуться між собою, щоб поширити цю інформацію (наприклад, за допомогою протоколу маршрутизації). Зрештою всі маршрутизатори дізнаються, що ви входите до цієї групи.
 
 <img width="900px" src="/assets/beyond-client-server/7-006-join-message.png">
 
-Similarly, you can announce that you are leaving a group, and you again use the multicast address to identify which group you are talking about.
+Аналогічно ви можете оголосити, що покидаєте групу, і знову використовуєте адресу багатоадресної розсилки, щоб вказати, про яку групу йдеться.
 
 <img width="900px" src="/assets/beyond-client-server/7-007-leave-message.png">
 
-To send a packet to a group, all you need to do is fill in the multicast group address as the IP destination field. Then, the routers will use that group address to forward the packet to all group members. Notice that as the sender, you don't need to worry about who belongs to the group, because the routers will figure that out for you.
+Щоб надіслати пакет групі, вам достатньо вписати адресу групи багатоадресної розсилки в поле IP-адреси призначення. Тоді маршрутизатори використають цю адресу групи, щоб переслати пакет усім членам групи. Зверніть увагу, що як відправникові вам не треба перейматися тим, хто входить до групи, бо маршрутизатори з'ясують це за вас.
 
 <img width="900px" src="/assets/beyond-client-server/7-008-multicast-forwarding.png">
 
-In summary, the IP multicast service model defines three operations for end hosts: You can send packets to a group (even if you are not a part of that group yourself). You can announce that you are joining a group. You can announce that you are leaving a group. In all three operations, your job is just to send out packets. The routers will process those packets, coordinate with each other (e.g. run a routing protocol), and decide how to route multicast packets accordingly.
+Підсумуємо: модель обслуговування багатоадресної розсилки IP визначає для кінцевих хостів три операції. Ви можете надсилати пакети групі (навіть якщо самі до неї не входите). Ви можете оголосити, що приєднуєтеся до групи. Ви можете оголосити, що покидаєте групу. В усіх трьох операціях ваше завдання — лише надсилати пакети. Маршрутизатори оброблятимуть ці пакети, координуватимуться між собою (наприклад, виконуватимуть протокол маршрутизації) і відповідно вирішуватимуть, як маршрутизувати пакети багатоадресної розсилки.
 
-Now that we know how hosts interact with IP multicasting (sending, joining, and leaving), we can think about how routers deliver multicast packets.
+Тепер, коли ми знаємо, як хости взаємодіють із багатоадресною розсилкою IP (надсилання, приєднання й вихід), можна подумати про те, як маршрутизатори доставляють пакети багатоадресної розсилки.
 
-In the unicast model, a router receives a packet and forwards the packet along a single next-hop. Now, in the IP multicast model, when a router receives a multicast packet (i.e. destination is a multicast group address), the router will forward the packet along zero, one, or multiple outgoing links, so that the packet reaches all group members.
+В одноадресній моделі маршрутизатор отримує пакет і пересилає його одному наступному переходу. Тепер у моделі багатоадресної розсилки IP, коли маршрутизатор отримує пакет багатоадресної розсилки (тобто пунктом призначення є адреса групи багатоадресної розсилки), маршрутизатор пересилає пакет нулем, одним чи кількома вихідними каналами, щоб пакет дістався всіх членів групи.
 
-To implement multicast, the router needs some additional state to keep track of group membership, so that the router can forward the packet to only the next-hops that lead toward the group members. If a next-hop doesn't lead to any group members, there's no need to send the packet along that next-hop. As users join and leave the group, a router's next-hops for that group might change.
+Щоб реалізувати багатоадресну розсилку, маршрутизаторові потрібен певний додатковий стан для відстеження членства в групах, щоб маршрутизатор міг пересилати пакет лише тим наступним переходам, що ведуть до членів групи. Якщо наступний перехід не веде до жодних членів групи, немає потреби надсилати пакет цим наступним переходом. Коли користувачі приєднуються до групи й покидають її, наступні переходи маршрутизатора для цієї групи можуть змінюватися.
 
 
-## Implementing Multicast
+## Реалізація багатоадресної розсилки
 
-With our service model defined, we are now ready to implement IP multicasting in routers. Remember our end goal here: Users interact with the network by sending packets, announcing joins, and announcing leaves. The routers must take this information and use it to correctly forward multicast packets to all members of that group (as defined by the multicast address).
+Визначивши модель обслуговування, ми готові реалізувати багатоадресну розсилку IP у маршрутизаторах. Пам'ятайте про нашу кінцеву мету: користувачі взаємодіють із мережею, надсилаючи пакети, оголошуючи приєднання й оголошуючи вихід. Маршрутизатори мають узяти цю інформацію й використати її, щоб правильно пересилати пакети багатоадресної розсилки всім членам цієї групи (визначеної адресою багатоадресної розсилки).
 
-We can divide this problem into two parts:
+Цю задачу можна поділити на дві частини:
 
-1. How do routers know what groups their directly-connected hosts belong to? We'll use a protocol called IGMP to solve this.
+1. Як маршрутизатори дізнаються, до яких груп належать безпосередньо під'єднані до них хости? Щоб розв'язати це, ми використаємо протокол під назвою IGMP.
 
     <img width="900px" src="/assets/beyond-client-server/7-009-igmp-taxonomy.png">
 
-2. How do routers forward packets through the network to reach the destination group members? We'll look at two protocols for solving this: DVMRP and CBT. Both protocols achieve the same goal, so you can pick either one for your implementation (the same way you can pick either distance-vector or link-state, but not both).
+2. Як маршрутизатори пересилають пакети мережею, щоб дістатися членів групи-адресата? Ми розглянемо два протоколи для розв'язання цього: DVMRP і CBT. Обидва протоколи досягають тієї самої мети, тож для своєї реалізації можна обрати будь-який (так само, як можна обрати або дистанційно-векторний протокол, або протокол стану каналів, але не обидва).
 
     <img width="900px" src="/assets/beyond-client-server/7-010-dvmrp-cbt-taxonomy.png">
 
 
-## IGMP: Directly-Connected Hosts
+## IGMP: безпосередньо під'єднані хости
 
-Before we solve the larger problem of multicast routing, let's start with a smaller problem. Suppose a router is directly connected to many hosts. The router needs some way to know which group(s) each host belongs to. We'll use a protocol called IGMP (Internet Group Management Protocol) to achieve this.
+Перш ніж розв'язувати більшу задачу маршрутизації багатоадресної розсилки, почнімо з меншої. Припустімо, маршрутизатор безпосередньо під'єднаний до багатьох хостів. Маршрутизатору потрібен певний спосіб дізнатися, до яких груп належить кожен хост. Щоб цього досягти, ми використаємо протокол під назвою IGMP (Internet Group Management Protocol, протокол керування групами в Інтернеті).
 
-At a high level, the router and the hosts exchange messages so that the router is informed about everybody's group membership(s). Some types of messages that can be exchanged:
+На високому рівні маршрутизатор і хости обмінюються повідомленнями, щоб маршрутизатор був поінформований про членство кожного в групах. Деякі типи повідомлень, якими можна обмінюватися:
 
-**Queries:** The router periodically sends Queries to the hosts. These messages ask: What group(s) do you belong to?
+**Запити** (Queries): маршрутизатор періодично надсилає хостам запити. Ці повідомлення питають: до яких груп ви належите?
 
-**Reports:** In response, hosts send Reports back to the router. Reports answer the question: These are the group(s) I belong to. Hosts can also send unsolicited Reports (i.e. without waiting for a Query).
+**Звіти** (Reports): у відповідь хости надсилають маршрутизатору звіти. Звіти відповідають на питання: ось групи, до яких я належу. Хости також можуть надсилати незапитані звіти (тобто не чекаючи запиту).
 
 <img width="900px" src="/assets/beyond-client-server/7-011-igmp-queries-reports.png">
 
-By periodically exchanging Queries and Reports, the router stays informed about the latest group membership(s). If the router doesn't receive a Report about a membership for a long time, the router will assume that membership has expired and invalidate it.
+Періодично обмінюючись запитами й звітами, маршрутизатор залишається поінформованим про найактуальніше членство в групах. Якщо маршрутизатор довго не отримує звіту про членство, він вважатиме, що термін дії цього членства сплив, і анулює його.
 
-IGMP helps routers learn about directly-connected hosts. However, routers still don't know anything about other hosts elsewhere in the network, so we'll need routing algorithms for those.
+IGMP допомагає маршрутизаторам дізнаватися про безпосередньо під'єднані хости. Однак маршрутизатори однаково нічого не знають про інші хости деінде в мережі, тож для них нам знадобляться алгоритми маршрутизації.
 
-To draw a comparison to distance-vector routing, you can think of IGMP as the multicast version of static routing, where a router learns about its directly-connected hosts (but not other hosts elsewhere in the network).
+Якщо проводити порівняння з дистанційно-векторною маршрутизацією, IGMP можна вважати версією статичної маршрутизації для багатоадресної розсилки, коли маршрутизатор дізнається про безпосередньо під'єднані до нього хости (але не про інші хости деінде в мережі).

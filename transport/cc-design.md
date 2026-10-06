@@ -1,230 +1,230 @@
 ---
-title: Congestion Control Design
-parent: Transport
+title: Проєктування керування перевантаженням
+parent: Транспортний рівень
 nav_order: 5
 layout: page-with-toc
 ---
 
-# Congestion Control Design
+# Проєктування керування перевантаженням
 
-## Host-Based Algorithm Sketch
+## Ескіз алгоритму на основі хоста
 
-Most host-based algorithms follow the same general approach, and the differences arise in three key choice points.
+Більшість алгоритмів на основі хоста дотримуються того самого загального підходу, а відмінності виникають у трьох ключових точках вибору.
 
-Each source independently runs the following logic repeatedly, in a loop: Try sending at a rate R for some period of time. Then, ask: Did I experience congestion in this time period? If yes, then reduce R. If no, then increase R.
+Кожне джерело незалежно раз у раз виконує в циклі таку логіку: спробувати надсилати зі швидкістю R протягом певного часу. Потім запитати: чи зіткнувся я з перевантаженням за цей період? Якщо так, зменшити R. Якщо ні, збільшити R.
 
-One missing piece is: what rate do we initially start sending at? We'll need some way to pick the initial rate R.
+Одного елемента бракує: з якою швидкістю ми починаємо надсилати спочатку? Нам знадобиться спосіб обрати початкову швидкість R.
 
-The three key choice points are: How do we pick the initial rate? How do we detect congestion? By how much should we increase and decrease each time?
+Три ключові точки вибору такі: як обрати початкову швидкість? Як виявляти перевантаження? Наскільки збільшувати й зменшувати швидкість щоразу?
 
 
-## Detecting Congestion
+## Виявлення перевантаження
 
-How does the sender detect if the network is congested? There are two common approaches.
+Як відправник виявляє, що мережа перевантажена? Є два поширені підходи.
 
-The sender could check for packet loss. This is the approach commonly used by TCP. This approach is good because the signal is unambiguous. Every packet is either marked as lost (timeout or duplicate ack), or not lost. Also, TCP already detects lost packets in order to re-send them, so we don't need to re-implement this from scratch.
+Відправник може перевіряти втрату пакетів. Саме цей підхід зазвичай використовує TCP. Цей підхід добрий, бо сигнал однозначний. Кожен пакет або позначається як втрачений (тайм-аут чи дублікат підтвердження), або ні. Крім того, TCP уже виявляє втрачені пакети, щоб повторно їх надсилати, тож нам не треба реалізовувати це з нуля.
 
-This approach can be bad because sometimes, packet loss is due to corruption (bad checksum), not congestion. In fact, TCP gets confused and behaves poorly when a link is not congested, but frequently corrupts packets. Also, TCP could be confused by packets being reordered. A packet arriving late could be mistakenly considered lost.
+Цей підхід може бути поганим, бо іноді втрата пакетів спричинена пошкодженням (неправильна контрольна сума), а не перевантаженням. Насправді TCP плутається й погано поводиться, коли канал не перевантажений, але часто пошкоджує пакети. Крім того, TCP можуть заплутати переупорядковані пакети. Пакет, що надійшов пізно, можуть помилково вважати втраченим.
 
-Another key downside to this approach is, we detect congestion late. By the time packets are being dropped, router queues are already full and packets are being delayed.
+Ще один ключовий недолік цього підходу — ми виявляємо перевантаження пізно. На момент, коли пакети починають відкидатися, черги маршрутизаторів уже заповнені, і пакети затримуються.
 
-Instead of checking for packet loss, the sender could instead detect congestion by checking packet delay. The sender can measure the time between sending a packet and receiving an ack for that packet. If the sender notices that the delay is increasing, that could be a sign of congestion.
+Замість перевіряти втрату пакетів, відправник натомість може виявляти перевантаження, перевіряючи затримку пакетів. Відправник може вимірювати час між надсиланням пакета й отриманням підтвердження для нього. Якщо відправник помічає, що затримка зростає, це може бути ознакою перевантаження.
 
-Historically, accurately measuring delay has been considered difficult. Packet delay can vary depending on queue size and other traffic. For many years, packet delay was not widely deployed, though in recent years, Google's BBR protocol (2016) has shown that delay-based algorithms is possible, and some services (e.g. Google services) have adopted delay-based algorithms.
+Історично точне вимірювання затримки вважалося складним. Затримка пакетів може змінюватися залежно від розміру черги та іншого трафіку. Багато років підходи на основі затримки пакетів не набували широкого розгортання, хоча останніми роками протокол BBR від Google (2016) показав, що алгоритми на основі затримки можливі, і деякі сервіси (наприклад, сервіси Google) прийняли алгоритми на основі затримки.
 
 <img width="600px" src="/assets/transport/3-059-taxonomy2.png">
 
 
-## Discovering Initial Rate
+## Визначення початкової швидкості
 
-When a connection first starts out, we have to figure out an initial rate for sending packets. We can learn an initial rate using a discovery process, where we try a few different rates to get a estimate of the available bandwidth.
+Коли з'єднання щойно починається, нам треба визначити початкову швидкість надсилання пакетів. Початкову швидкість можна дізнатися за допомогою процесу виявлення, коли ми пробуємо кілька різних швидкостей, щоб оцінити доступну пропускну здатність.
 
-We want this discovery process to be safe, so we should start with slow rates. We don't want to immediately flood the network with packets.
+Ми хочемо, щоб цей процес виявлення був безпечним, тож слід починати з низьких швидкостей. Ми не хочемо одразу засипати мережу пакетами.
 
-At the same time, we want the discovery process to quickly discover the available bandwidth, for efficiency. To achieve this, we will quickly increase the rate on each subsequent try. If the discovery process takes a long time, we've wasted time that we could have spent sending packets at the optimal rate. As an example, suppose we add 0.5 Mbps to the rate every 100ms, until we detect congestion (loss). If the available bandwidth is 1 Mbps, the discovery phase would take 2 iterations = 200 ms. However, if the available bandwidth is 1 Gbps = 1000 Mbps, then the discovery phase would take 2000 iterations = 200 seconds before we ramp up to a good rate, which is far too long. The Internet has a wide variety of link speeds, so both possibilities could occur in real life.
+Водночас ми хочемо, щоб процес виявлення швидко визначав доступну пропускну здатність, заради ефективності. Для цього ми швидко збільшуватимемо швидкість з кожною наступною спробою. Якщо процес виявлення триває довго, ми марнуємо час, який могли б витратити на надсилання пакетів з оптимальною швидкістю. Як приклад, припустімо, ми додаємо до швидкості 0,5 Мбіт/с кожні 100 мс, доки не виявимо перевантаження (втрату). Якщо доступна пропускна здатність становить 1 Мбіт/с, фаза виявлення займе 2 ітерації = 200 мс. Однак якщо доступна пропускна здатність становить 1 Гбіт/с = 1000 Мбіт/с, то фаза виявлення займе 2000 ітерацій = 200 секунд, перш ніж ми розженемося до доброї швидкості, а це занадто довго. Інтернет має дуже різноманітні швидкості каналів, тож у реальному житті можуть трапитися обидва варіанти.
 
-In order to support a slow start but a fast ramp-up, we'll increase the bandwidth by a multiplicative factor each time (instead of an additive factor). This solution is called **slow start**, though this is arguably an unintuitive name. In slow start, we start with a small rate that will almost always be much less than the actual bandwidth. Then, we increase the rate exponentially (e.g. doubling the rate each time) until we encounter loss. A safe rate to use is the one just before we encounter loss (we don't want to use a rate where we experienced loss). Formally, if loss occurs at rate R, then the safe rate is R/2.
+Щоб підтримувати повільний початок, але швидкий розгін, ми щоразу збільшуватимемо пропускну здатність на множник (а не на доданок). Таке рішення називається **повільним стартом** (slow start), хоча ця назва, мабуть, неінтуїтивна. За повільного старту ми починаємо з невеликої швидкості, яка майже завжди буде значно меншою за фактичну пропускну здатність. Потім ми збільшуємо швидкість експоненційно (наприклад, щоразу подвоюючи), доки не зіткнемося з втратою. Безпечною для використання є швидкість безпосередньо перед тією, за якої ми зіткнулися з втратою (ми не хочемо використовувати швидкість, за якої були втрати). Формально, якщо втрата сталася за швидкості R, то безпечна швидкість — R/2.
 
 <img width="700px" src="/assets/transport/3-060-slow-start.png">
 
 
-## Adjustments: Reacting to Congestion
+## Коригування: реакція на перевантаження
 
-Recall that after the discovery phase, we will be constantly adjusting the bandwidth, because the network itself is changing, and the available bandwidth is not constant.
+Пригадайте, що після фази виявлення ми постійно коригуватимемо пропускну здатність, бо сама мережа змінюється, і доступна пропускна здатність не стала.
 
-The final choice point is deciding how much we should decrease the bandwidth if congestion is detected, and how much we should increase the bandwidth if no congestion is detected.
+Остання точка вибору — вирішити, наскільки зменшувати пропускну здатність, якщо виявлено перевантаження, і наскільки збільшувати, якщо перевантаження не виявлено.
 
-Our decision will determine how quickly a host adapts to changes in the available bandwidth, which in turn determines how effectively bandwidth is consumed. If we took a long time to adapt to changes and find a good rate, we would spend a lot of time operating at sub-optimal bandwidth, which is inefficient. Slow adaptation can also lead to fairness issues. For example, if I'm using a link's entire bandwidth, and another connection is opened, I need to quickly adapt and decrease my bandwidth in order to share the link.
+Наше рішення визначатиме, як швидко хост пристосовується до змін доступної пропускної здатності, а це, своєю чергою, визначає, наскільки ефективно використовується пропускна здатність. Якби ми довго пристосовувалися до змін і шукали добру швидкість, ми б багато часу працювали з неоптимальною пропускною здатністю, що неефективно. Повільне пристосування також може призводити до проблем зі справедливістю. Наприклад, якщо я використовую всю пропускну здатність каналу і відкривається ще одне з'єднання, мені треба швидко пристосуватися й зменшити свою пропускну здатність, щоб поділитися каналом.
 
-Recall that our main goals in a congestion control algorithm are efficiency (use all available bandwidth) and fairness (connections share bandwidth equally). We will need to choose increase and decrease rules that achieve both of these goals.
+Пригадайте, що наші головні цілі в алгоритмі керування перевантаженням — ефективність (використовувати всю доступну пропускну здатність) і справедливість (з'єднання ділять пропускну здатність порівну). Нам доведеться обрати правила збільшення й зменшення, що досягають обох цих цілей.
 
-What rules can we choose from? At a high level, we can either react quickly or slowly. More specifically, fast changes are multiplicative, e.g. doubling or halving the rate on each iteration. Slow changes are additive, e.g. adding 1 to the rate or subtracting 1 from the rate on each iteration. These options create four possible alternatives:
+З яких правил можна обирати? На високому рівні ми можемо реагувати або швидко, або повільно. Конкретніше, швидкі зміни мультиплікативні, наприклад подвоєння чи зменшення швидкості вдвічі на кожній ітерації. Повільні зміни адитивні, наприклад додавання 1 до швидкості чи віднімання 1 від неї на кожній ітерації. Ці варіанти створюють чотири можливі альтернативи:
 
-**AIAD**: additive increase, additive decrease
+**AIAD**: адитивне збільшення, адитивне зменшення (additive increase, additive decrease)
 
-**AIMD**: additive increase, multiplicative decrease
+**AIMD**: адитивне збільшення, мультиплікативне зменшення (additive increase, multiplicative decrease)
 
-**MIAD**: multiplicative increase, additive decrease
+**MIAD**: мультиплікативне збільшення, адитивне зменшення (multiplicative increase, additive decrease)
 
-**MIMD**: multiplicative increase, multiplicative increase
+**MIMD**: мультиплікативне збільшення, мультиплікативне збільшення (multiplicative increase, multiplicative increase)
 
-Of these four alternatives, it turns out that AIMD (slow increase, fast decrease) is the best for achieving efficiency and fairness.
+Виявляється, із цих чотирьох альтернатив AIMD (повільне збільшення, швидке зменшення) найкраще досягає ефективності та справедливості.
 
-Intuitively, AIMD is a reasonable choice because sending too much is worse than sending too little. When our rate is too high, we cause congestion, and packets get dropped. When our rate is too low, we aren't using all the bandwidth, but at least we aren't causing congestion.
+Інтуїтивно AIMD — розумний вибір, бо надсилати забагато гірше, ніж надсилати замало. Коли наша швидкість зависока, ми спричиняємо перевантаження, і пакети відкидаються. Коли наша швидкість занизька, ми не використовуємо всієї пропускної здатності, але принаймні не спричиняємо перевантаження.
 
-AIMD leads to the behavior where we slowly increase the rate when there's no congestion, creeping up to the maximal bandwidth. Then, as soon as we exceed maximal bandwidth and detect congestion, we rapidly decrease. This way, we spend most of our time with the rate too low (preferable), and when the rate is too high (not preferable), we quickly decrease to avoid congestion.
+AIMD призводить до поведінки, за якої ми повільно збільшуємо швидкість, коли перевантаження немає, поступово підбираючись до максимальної пропускної здатності. Потім, щойно ми перевищуємо максимальну пропускну здатність і виявляємо перевантаження, ми швидко зменшуємо швидкість. Таким чином більшу частину часу ми проводимо із заниженою швидкістю (що краще), а коли швидкість зависока (що гірше), ми швидко її зменшуємо, щоб уникнути перевантаження.
 
 <img width="700px" src="/assets/transport/3-061-sawtooth.png">
 
 
-## Adjustments: Model
+## Коригування: модель
 
-Why is AIMD the best choice for achieving efficiency and fairness? Let's do a more detailed analysis.
+Чому AIMD — найкращий вибір для досягнення ефективності та справедливості? Проведімо детальніший аналіз.
 
-First, notice that all four options do a pretty good job at achieving efficiency. By increasing when we're below the optimal rate (not congested), and decreasing when we're above the optimal rate (congested), our rate should always be hovering around the optimal rate in the long run.
+По-перше, зауважте, що всі чотири варіанти доволі добре справляються з досягненням ефективності. Збільшуючи швидкість, коли ми нижче оптимальної (немає перевантаження), і зменшуючи, коли ми вище оптимальної (перевантаження), наша швидкість у довгостроковій перспективі завжди коливатиметься навколо оптимальної.
 
-However, it turns out that of these four options, AIMD is the only option that leads to fairness. To see why, let's consider a simple model where there are two connections going over a single link of capacity C. The two connections are sending at rates X1 and X2, respectively. We know that if X1+X2 is greater than C, the network is congested, and if X1+X2 is less than C, then the network is underloaded.
+Однак виявляється, що з цих чотирьох варіантів AIMD — єдиний, що веде до справедливості. Щоб зрозуміти чому, розгляньмо просту модель, де два з'єднання проходять одним каналом пропускної здатності C. Два з'єднання надсилають зі швидкостями X1 і X2 відповідно. Ми знаємо, що якщо X1+X2 більше за C, мережа перевантажена, а якщо X1+X2 менше за C, мережа недовантажена.
 
-To achieve efficiency, we want the link to be fully utilized, i.e. X1+X2 = C. To achieve fairness, we want X1 = X2, so that both connections are sharing the capacity equally.
+Для ефективності ми хочемо, щоб канал використовувався повністю, тобто X1+X2 = C. Для справедливості ми хочемо X1 = X2, щоб обидва з'єднання ділили пропускну здатність порівну.
 
-To visualize the space of possibilities, consider a 2D plot, where the x-axis is X1 (user 1's rate), and the y-axis is X2 (user 2's rate). Every point on this plot represents a possible scenario where each user is sending at a specific rate.
+Щоб унаочнити простір можливостей, розгляньте двовимірний графік, де вісь x — X1 (швидкість користувача 1), а вісь y — X2 (швидкість користувача 2). Кожна точка цього графіка відповідає можливому сценарію, за якого кожен користувач надсилає з певною швидкістю.
 
-Suppose C=1. To achieve maximum efficiency, we want X1+X2 = 1. We can plot this line on the graph. Every point along this line is using the full available bandwidth.
+Припустімо, C=1. Для максимальної ефективності ми хочемо X1+X2 = 1. Цю пряму можна нанести на графік. Кожна точка на цій прямій використовує всю доступну пропускну здатність.
 
 <img width="500px" src="/assets/transport/3-062-graph1.png">
 
-We know that the network is congested when X1+X2 is greater than 1. On the plot, this inequality is the half-plane above the line. We also know that the network is underused when X1+X2 is less than 1, which is represented by the half-plane below the line. This means that all points above the line represent a congested state, and all points below the line represent an underused state.
+Ми знаємо, що мережа перевантажена, коли X1+X2 більше за 1. На графіку ця нерівність — півплощина над прямою. Ми також знаємо, що мережа недовикористовується, коли X1+X2 менше за 1, що відповідає півплощині під прямою. Це означає, що всі точки над прямою відповідають перевантаженому стану, а всі точки під прямою — недовикористаному.
 
 <img width="500px" src="/assets/transport/3-063-graph2.png">
 
-To achieve fairness, we want X1 = X2. We can also plot this line. Every point along this line represents a fair state, where both users are using the same amount of bandwidth. Any point not along this line is unfair.
+Для справедливості ми хочемо X1 = X2. Цю пряму теж можна нанести. Кожна точка на цій прямій відповідає справедливому стану, де обидва користувачі використовують однакову пропускну здатність. Будь-яка точка поза цією прямою несправедлива.
 
-The ideal state occurs at the intersection of the two lines, when X1 = X2 = 0.5. This point falls on both lines, so it is both fair and efficient.
+Ідеальний стан — у точці перетину двох прямих, коли X1 = X2 = 0,5. Ця точка лежить на обох прямих, тож вона і справедлива, і ефективна.
 
-The point (0.2, 0.5) is inefficient, because we are only using 0.7 bandwidth. Graphically, we are below the efficiency line. The point (0.7, 0.5) is congested and therefore above the efficiency line. The point (0.7, 0.3) is efficient (on the efficiency line), but is not fair (not on the fairness line).
+Точка (0.2, 0.5) неефективна, бо ми використовуємо лише 0,7 пропускної здатності. Графічно ми під прямою ефективності. Точка (0.7, 0.5) перевантажена, тож вона над прямою ефективності. Точка (0.7, 0.3) ефективна (на прямій ефективності), але не справедлива (не на прямій справедливості).
 
 <img width="500px" src="/assets/transport/3-064-graph3.png">
 
-Recall that in our dynamic adjustment algorithm, every sender is independently running the same algorithm to determine their own rate. This means that if the two users detect underuse, both will increase their rate in the same way (additive or multiplicative, depending on our choice of rule). Similarly, if the two users detect congestion, both will decrease their rate in the same way.
+Пригадайте, що в нашому алгоритмі динамічного коригування кожен відправник незалежно виконує той самий алгоритм, щоб визначити власну швидкість. Це означає, що якщо два користувачі виявляють недовикористання, обидва збільшать швидкість однаково (адитивно чи мультиплікативно, залежно від обраного правила). Аналогічно, якщо два користувачі виявляють перевантаження, обидва зменшать швидкість однаково.
 
-What happens if both users additively increase or decrease their rate? If both users increase their rate by adding b, the state (x1, x2) would become (x1+b, x2+b). If both users decrease their rate by subtracting a, the state (x1, x2) would become (x1-a, x2-a).
+Що станеться, якщо обидва користувачі адитивно збільшують чи зменшують швидкість? Якщо обидва користувачі збільшують швидкість, додаючи b, стан (x1, x2) стане (x1+b, x2+b). Якщо обидва користувачі зменшують швидкість, віднімаючи a, стан (x1, x2) стане (x1-a, x2-a).
 
-On the graph, if we make an additive change, the point representing our state moves along a line with a slope of 1.
+На графіку, якщо ми робимо адитивну зміну, точка, що відповідає нашому стану, рухається вздовж прямої з нахилом 1.
 
 <img width="500px" src="/assets/transport/3-065-graph4.png">
 
-What happens if both users multiplicatively increase or decrease their rate? Multiplying by c transforms (x1, x2) to (cx1, cx2), and dividing by d transforms (x1, x2) to (x1/d, x2/d).
+Що станеться, якщо обидва користувачі мультиплікативно збільшують чи зменшують швидкість? Множення на c перетворює (x1, x2) на (cx1, cx2), а ділення на d перетворює (x1, x2) на (x1/d, x2/d).
 
-On the graph, if we make a multiplicative change, the point representing our state moves along a line with slope x2/x1. Equivalently, this is the line connecting (x1, x2) to the origin (0, 0).
+На графіку, якщо ми робимо мультиплікативну зміну, точка, що відповідає нашому стану, рухається вздовж прямої з нахилом x2/x1. Рівнозначно, це пряма, що з'єднує (x1, x2) з початком координат (0, 0).
 
 <img width="500px" src="/assets/transport/3-066-graph5.png">
 
-Now, we can apply this model to each of the four increase/decrease options, and see if they cause the point to approach, or move away from, the fairness line. Our goal is for the point to approach the fairness line as we adjust the rates.
+Тепер можна застосувати цю модель до кожного з чотирьох варіантів збільшення/зменшення й подивитися, чи наближають вони точку до прямої справедливості чи віддаляють від неї. Наша мета — щоб точка наближалася до прямої справедливості в міру коригування швидкостей.
 
 
-## Adjustments: AIAD Dynamics
+## Коригування: динаміка AIAD
 
-Consider adding 1 on each increase, and subtracting 2 on each decrease. Suppose we have capacity of C = 5. Then from a given starting point, our point would move as follows:
+Розгляньмо додавання 1 за кожного збільшення й віднімання 2 за кожного зменшення. Припустімо, пропускна здатність C = 5. Тоді з певної початкової точки наша точка рухатиметься так:
 
-X1 = 1, X2 = 3 (starting point, 4 less than 5, increase)
+X1 = 1, X2 = 3 (початкова точка, 4 менше за 5, збільшуємо)
 
-X1 = 2, X2 = 4 (6 more than 5, decrease)
+X1 = 2, X2 = 4 (6 більше за 5, зменшуємо)
 
-X1 = 0, X2 = 2 (2 less than 5, increase)
+X1 = 0, X2 = 2 (2 менше за 5, збільшуємо)
 
 X1 = 1, X2 = 3
 
-We've returned to where we started! Our initial allocation was not fair, and after a few iterations, we returned to the same unfair allocation.
+Ми повернулися туди, звідки почали! Наш початковий розподіл був несправедливим, і після кількох ітерацій ми повернулися до того самого несправедливого розподілу.
 
-In fact, if we look at the difference between X1 and X2 (fair gap is 0), the gap is the same (2) in every iteration. The iterations don't make our allocation any more or less fair.
+Насправді, якщо подивитися на різницю між X1 і X2 (справедлива різниця — 0), на кожній ітерації вона однакова (2). Ітерації не роблять наш розподіл ні справедливішим, ні менш справедливим.
 
-We can see this behavior graphically. From a given starting point, if we increase and decrease additively, we will always move along a line of slope 1, never getting any closer to the fairness line.
+Цю поведінку можна побачити графічно. З певної початкової точки, якщо ми збільшуємо й зменшуємо адитивно, ми завжди рухатимемося вздовж прямої з нахилом 1, ніколи не наближаючись до прямої справедливості.
 
 <img width="500px" src="/assets/transport/3-067-aiad.png">
 
-Do note, though, that our point oscillates around the efficiency line, as desired. All four options will have this behavior.
+Утім, зауважте, що наша точка, як і бажано, коливається навколо прямої ефективності. Усі чотири варіанти матимуть таку поведінку.
 
-We can also see this behavior algebraically. Suppose X1 and X2 are 5 apart (unfair allocation). If we add the same number to X1 and X2, the resulting X1' and X2' are still 5 apart (equally unfair). The same happens if we subtract the same number from both X1 and X2.
+Цю поведінку можна побачити й алгебраїчно. Припустімо, X1 і X2 відрізняються на 5 (несправедливий розподіл). Якщо додати те саме число до X1 і X2, отримані X1' і X2' однаково відрізнятимуться на 5 (так само несправедливо). Те саме відбувається, якщо відняти те саме число і від X1, і від X2.
 
-In summary, there is no way to close the fairness gap in this approach. If the allocation is initially unfair, it will stay unfair.
+Підсумуємо: за цього підходу неможливо закрити розрив у справедливості. Якщо розподіл спочатку несправедливий, він таким і залишиться.
 
-You might ask: What if we increased X1 by more (e.g. +2), and X2 by less (e.g. +1)? Remember, our decentralized approach means that everybody is running the same algorithm. Practically, we also have no way for a host to know how much it should add relative to other hosts.
+Ви можете запитати: що, як збільшувати X1 більше (наприклад, +2), а X2 менше (наприклад, +1)? Пам'ятайте, наш децентралізований підхід означає, що всі виконують той самий алгоритм. Практично хост також ніяк не може дізнатися, скільки йому додавати відносно інших хостів.
 
 
-## Adjustments: MIMD Dynamics
+## Коригування: динаміка MIMD
 
-Consider increasing by doubling, and decreasing by dividing by 4. Again, the capacity is C = 5. From a given starting point, the first few iterations would be:
+Розгляньмо збільшення подвоєнням і зменшення діленням на 4. Знову пропускна здатність C = 5. З певної початкової точки перші кілька ітерацій будуть такими:
 
-X1 = 0.5, X2 = 1 (1.5 less than 5, increase)
+X1 = 0.5, X2 = 1 (1,5 менше за 5, збільшуємо)
 
-X1 = 1, X2 = 2 (3 less than 5, increase)
+X1 = 1, X2 = 2 (3 менше за 5, збільшуємо)
 
-X1 = 2, X2 = 4 (6 more than 5, decrease)
+X1 = 2, X2 = 4 (6 більше за 5, зменшуємо)
 
 X1 = 0.5, X2 = 1
 
-Again, we've returned to where we started, with no improvement in fairness!
+Знову ми повернулися туди, звідки почали, без жодного покращення справедливості!
 
-We can see this behavior on the plot. When we multiplicatively increase or decrease the rate, we are moving along the line between the point and the origin, and we are never getting any closer to the fairness line.
+Цю поведінку можна побачити на графіку. Коли ми мультиплікативно збільшуємо чи зменшуємо швидкість, ми рухаємося вздовж прямої між точкою та початком координат і ніколи не наближаємося до прямої справедливості.
 
 <img width="500px" src="/assets/transport/3-068-mimd.png">
 
-Algebraically, consider the ratio between X2 and X1, i.e. X2/X1 (fair ratio would be 1). In the example above, the ratio is always 2, i.e. X2 always has twice the bandwidth of X1. This ratio stays the same even if we multiply or divide both X1 and X2 by constant factor. Our adjustments don't get us closer to a fair ratio of 1.
+Алгебраїчно розгляньте відношення між X2 і X1, тобто X2/X1 (справедливе відношення було б 1). У прикладі вище відношення завжди дорівнює 2, тобто X2 завжди має вдвічі більшу пропускну здатність, ніж X1. Це відношення залишається тим самим, навіть якщо помножити чи поділити і X1, і X2 на сталий множник. Наші коригування не наближають нас до справедливого відношення 1.
 
 
-## Adjustments: MIAD Dynamics
+## Коригування: динаміка MIAD
 
-This one is a little trickier. Consider increasing by doubling, and decreasing by subtracting 1. With C = 5, the first few iterations are:
+Цей випадок дещо складніший. Розгляньмо збільшення подвоєнням і зменшення відніманням 1. За C = 5 перші кілька ітерацій такі:
 
-X1 = 1, X2 = 3 (4 less than 5, increase)
+X1 = 1, X2 = 3 (4 менше за 5, збільшуємо)
 
-X1 = 2, X2 = 6 (8 more than 5, decrease)
+X1 = 2, X2 = 6 (8 більше за 5, зменшуємо)
 
-X1 = 1, X2 = 5 (6 more than 5, decrease)
+X1 = 1, X2 = 5 (6 більше за 5, зменшуємо)
 
-X1 = 0, X2 = 4 (4 less than 5, increase)
+X1 = 0, X2 = 4 (4 менше за 5, збільшуємо)
 
 X1 = 0, X2 = 8
 
-At this point, X1 has zero bandwidth. Every time we increase by doubling, X1 will still have zero bandwidth. We have actually created the most unfair situation, where X2 has all the bandwidth, and X1 has none.
+На цьому етапі X1 має нульову пропускну здатність. Щоразу, коли ми збільшуємо подвоєнням, X1 однаково матиме нульову пропускну здатність. Ми фактично створили найнесправедливішу ситуацію, де X2 має всю пропускну здатність, а X1 — жодної.
 
-More generally, if you start with an unfair allocation, MIAD will make the allocation even more unfair, eventually reaching a point where one person has all the bandwidth, and the other person has zero.
+Загальніше, якщо почати з несправедливого розподілу, MIAD зробить розподіл ще несправедливішим, зрештою досягаючи точки, де одна людина має всю пропускну здатність, а інша — нуль.
 
-To see this algebraically, consider the gaps between X1 and X2. When we increase by doubling, the size of the gap also doubles, from (X2 - X1) to (2 X2 - 2 X1) = 2(X2 - X1). But, when we subtract 1 from both X1 and X2, the gap stays the same. The gap either increases or stays the same, and given enough iterations of increasing and decreasing, the gap will reach maximal unfairness (one person has zero bandwidth forever).
+Щоб побачити це алгебраїчно, розгляньте розриви між X1 і X2. Коли ми збільшуємо подвоєнням, розмір розриву теж подвоюється: з (X2 - X1) до (2 X2 - 2 X1) = 2(X2 - X1). Але коли ми віднімаємо 1 і від X1, і від X2, розрив залишається тим самим. Розрив або зростає, або залишається тим самим, і за достатньої кількості ітерацій збільшення й зменшення розрив досягне максимальної несправедливості (одна людина назавжди має нульову пропускну здатність).
 
 
-## Adjustments: AIMD Dynamics
+## Коригування: динаміка AIMD
 
-Finally, consider increasing by adding 1, and decreasing by halving. With C = 5, the first few iterations are:
+Нарешті розгляньмо збільшення додаванням 1 і зменшення вдвічі. За C = 5 перші кілька ітерацій такі:
 
-X1 = 1, X2 = 2 (3 less than 5, increase)
+X1 = 1, X2 = 2 (3 менше за 5, збільшуємо)
 
-X1 = 2, X2 = 3 (5 not more than 5, increase)
+X1 = 2, X2 = 3 (5 не більше за 5, збільшуємо)
 
-X1 = 3, X2 = 4 (7 more than 5, decrease)
+X1 = 3, X2 = 4 (7 більше за 5, зменшуємо)
 
-X1 = 1.5, X2 = 2 (3.5 less than 5, increase)
+X1 = 1.5, X2 = 2 (3,5 менше за 5, збільшуємо)
 
-X1 = 2.5, X2 = 3 (5.5 more than 5, decrease)
+X1 = 2.5, X2 = 3 (5,5 більше за 5, зменшуємо)
 
-X1 = 1.25, X2 = 1.5 (2.75 less than 5, increase)
+X1 = 1.25, X2 = 1.5 (2,75 менше за 5, збільшуємо)
 
-X1 = 2.25, X2 = 2.5 (4.75 less than 5, increase)
+X1 = 2.25, X2 = 2.5 (4,75 менше за 5, збільшуємо)
 
-X1 = 3.25, X2 = 3.5 (6.75 more than 5, decrease)
+X1 = 3.25, X2 = 3.5 (6,75 більше за 5, зменшуємо)
 
-X1 = 1.625, X2 = 1.75 (less than 5, increase)
+X1 = 1.625, X2 = 1.75 (менше за 5, збільшуємо)
 
 X2 = 2.625, X2 = 2.75
 
-We can see that X1 and X2 are getting closer together, and in fact, they're approaching the fair allocation of X1 = X2 = 2.5.
+Ми бачимо, що X1 і X2 зближуються, і насправді вони наближаються до справедливого розподілу X1 = X2 = 2,5.
 
-Algebraically, we can see that the gap between X1 and X2 is decreasing. Specifically, when we add a constant to both numbers, the gap stays the same. But, when we halve both numbers, the gap also halves, from (X1 - X2) to (X1 / 2 - X2 / 2) = (X1 - X2) / 2. As we alternate increasing and decreasing, the gap will keep halving and approaching 0.
+Алгебраїчно видно, що розрив між X1 і X2 зменшується. Конкретно, коли ми додаємо сталу до обох чисел, розрив залишається тим самим. Але коли ми зменшуємо обидва числа вдвічі, розрив теж зменшується вдвічі: з (X1 - X2) до (X1 / 2 - X2 / 2) = (X1 - X2) / 2. Чергуючи збільшення й зменшення, розрив раз у раз зменшуватиметься вдвічі й наближатиметься до 0.
 
 <img width="500px" src="/assets/transport/3-069-aimd.png">
 
-We can see this graphically as well. When we multiplicatively decrease, we are moving along the line through the origin. This line is angled toward the fairness line, and moving downwards along this line means we're approaching the fairness line. As before, additive increases don't get us any closer to the fairness line, since we're moving along a line with slope 1 (parallel to fairness line). But the key realization is that adding don't move us any further, either. Our only two operations are moving closer, or not getting closer or further away. After many iterations, our point will slowly move closer toward the fairness line.
+Це можна побачити й графічно. Коли ми мультиплікативно зменшуємо, ми рухаємося вздовж прямої через початок координат. Ця пряма нахилена в бік прямої справедливості, і рух униз уздовж неї означає, що ми наближаємося до прямої справедливості. Як і раніше, адитивні збільшення не наближають нас до прямої справедливості, бо ми рухаємося вздовж прямої з нахилом 1 (паралельної прямій справедливості). Але ключове усвідомлення полягає в тому, що додавання й не віддаляє нас. Наші єдині дві операції — наблизитися або ні наблизитися, ні віддалитися. Після багатьох ітерацій наша точка повільно наближатиметься до прямої справедливості.
 
-In summary: AIAD and MIMD retain unfairness, and make no improvements toward fairness. MIAD increases unfairness, and AIMD converges toward fairness.
+Підсумуємо: AIAD і MIMD зберігають несправедливість і не покращують справедливості. MIAD збільшує несправедливість, а AIMD збігається до справедливості.
 
 <img width="800px" src="/assets/transport/3-070-aimd-sawtooth.png">

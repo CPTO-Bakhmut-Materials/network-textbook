@@ -1,87 +1,87 @@
 ---
-title: "ARP: Connecting Layers 2 and 3"
-parent: End-to-End
+title: "ARP: зв'язок рівнів 2 і 3"
+parent: "Наскрізне з'єднання"
 nav_order: 3
 layout: page-with-toc
 ---
 
-# ARP: Connecting Layers 2 and 3
+# ARP: зв'язок рівнів 2 і 3
 
-## Connecting Layers 2 and 3
+## Зв'язок рівнів 2 і 3
 
-Recall that packets get additional headers wrapped around them as they move down the stack, to lower layers. To send an IP packet, we first fill in its destination IP at Layer 3. Then, we pass that packet down to Layer 2, where we have to add a MAC address to send the packet along the link. What MAC address do we add?
+Пригадайте, що пакети загортаються в додаткові заголовки, коли рухаються стеком донизу, до нижчих рівнів. Щоб надіслати IP-пакет, ми спершу заповнюємо його IP-адресу призначення на рівні 3. Потім ми передаємо цей пакет донизу рівню 2, де маємо додати MAC-адресу, щоб надіслати пакет каналом. Яку MAC-адресу додати?
 
 <img width="800px" src="/assets/end-to-end/5-041-arp-blank-mac.png">
 
-First, we need to check if the destination IP is somebody in our own local network, or somebody in a different local network. To determine this, the sender's forwarding table will have an entry indicating the range of local IP addresses, sometimes called our **subnet**. For example, the entry might say that 192.0.2.0/24 is direct, which means all addresses between 192.0.2.0 and 192.0.2.255 are on the same local network. The table also has a default route, saying that all other non-local destinations should be forwarded to the router.
+Спершу нам треба перевірити, чи IP-адреса призначення належить комусь у нашій власній локальній мережі чи комусь в іншій локальній мережі. Щоб це визначити, таблиця пересилання відправника матиме запис, що вказує діапазон локальних IP-адрес, який іноді називають нашою **підмережею** (subnet). Наприклад, запис може казати, що 192.0.2.0/24 — прямий маршрут, тобто всі адреси від 192.0.2.0 до 192.0.2.255 перебувають у тій самій локальній мережі. Таблиця також має маршрут за замовчуванням, який каже, що всі інші, нелокальні пункти призначення слід пересилати маршрутизатору.
 
-If the destination IP is in our subnet, we need some way to translate between the destination IP address and that machine's corresponding MAC address. If the destination is outside our subnet, we need some way to translate the router's IP address (from the forwarding table) to its corresponding MAC address, so we can send the packet to the router.
+Якщо IP-адреса призначення в нашій підмережі, нам потрібен певний спосіб перетворити IP-адресу призначення на відповідну MAC-адресу цієї машини. Якщо пункт призначення поза нашою підмережею, нам потрібен певний спосіб перетворити IP-адресу маршрутизатора (з таблиці пересилання) на відповідну MAC-адресу, щоб надіслати пакет маршрутизатору.
 
-One naive solution is to broadcast every packet, so that the destination or router will definitely receive and process it. However, this is inefficient. It forces everyone to parse every packet (e.g. read the Layer 3 headers) to check if the packet is meant for them. Also, if the Layer 2 network has more than one link, the switches at Layer 2 have to flood the packet across all the links.
+Одне наївне рішення — розсилати кожен пакет широкомовно, щоб адресат чи маршрутизатор напевно отримав і обробив його. Однак це неефективно. Це змушує всіх розбирати кожен пакет (наприклад, читати заголовки рівня 3), щоб перевірити, чи пакет призначено їм. Крім того, якщо мережа рівня 2 має більше одного каналу, комутатори на рівні 2 мусять лавинно розсилати пакет усіма каналами.
 
-A better approach would be to translate the destination IP address to its corresponding MAC address (if local) or the router's MAC address (if non-local), and unicast the packet at Layer 2.
+Кращим підходом було б перетворити IP-адресу призначення на відповідну MAC-адресу (якщо пункт призначення локальний) чи MAC-адресу маршрутизатора (якщо нелокальний) і надіслати пакет одноадресно на рівні 2.
 
 
-## ARP: Address Resolution Protocol
+## ARP: протокол розв'язання адрес
 
-**ARP (Address Resolution Protocol)** allows machines to translate an IP address into its corresponding MAC address.
+**ARP** (Address Resolution Protocol, протокол розв'язання адрес) дає машинам змогу перетворювати IP-адресу на відповідну MAC-адресу.
 
-To request a translation, a machine can broadcast a soliciation message: "I have MAC address `f8:ff:c2:2b:36:16`. What is the MAC address of the machine with IP 192.0.2.1?"
+Щоб запросити перетворення, машина може широкомовно розіслати повідомлення-запит: «У мене MAC-адреса `f8:ff:c2:2b:36:16`. Яка MAC-адреса в машини з IP 192.0.2.1?»
 
-All machines who are not this IP address ignore the message. The user who has this IP address unicasts a reply to the sender's MAC address, saying ``I am 192.0.2.1, and my MAC address is `a2:ff:28:02:f2:10`.
+Усі машини, що не мають цієї IP-адреси, ігнорують повідомлення. Користувач, що має цю IP-адресу, одноадресно надсилає відповідь на MAC-адресу відправника: «Я — 192.0.2.1, і моя MAC-адреса — `a2:ff:28:02:f2:10`».
 
-Machines can also broadcast their own IP-to-MAC mapping to everybody, even if nobody asks.
+Машини також можуть широкомовно розсилати всім власне відображення IP–MAC, навіть якщо ніхто не питає.
 
-When you receive an IP-to-MAC mapping, you can add it to your local **ARP Table**, which caches these mappings for the future. The table also includes an expiry date for each entry, since IP addresses aren't permanently assigned to a computer. A different computer could get assigned the same IP address, or the same computer could change IP addresses. (TODO: interfaces?)
+Коли ви отримуєте відображення IP–MAC, ви можете додати його до своєї локальної **таблиці ARP** (ARP Table), яка кешує ці відображення на майбутнє. Таблиця також містить термін дії кожного запису, бо IP-адреси не призначаються комп'ютеру назавжди. Іншому комп'ютерові може бути призначено ту саму IP-адресу, або той самий комп'ютер може змінити IP-адресу. (TODO: interfaces?)
 
-Step 1:
+Крок 1:
 
 <img width="900px" src="/assets/end-to-end/5-042-arp1.png">
 
-Step 2:
+Крок 2:
 
 <img width="900px" src="/assets/end-to-end/5-043-arp2.png">
 
-Step 3:
+Крок 3:
 
 <img width="900px" src="/assets/end-to-end/5-044-arp3.png">
 
-Step 4:
+Крок 4:
 
 <img width="900px" src="/assets/end-to-end/5-045-arp4.png">
 
-Note that ARP runs directly on Layer 2, so all packets are sent and received over Ethernet, not IP.
+Зауважте, що ARP працює безпосередньо на рівні 2, тож усі пакети надсилаються й отримуються через Ethernet, а не IP.
 
 <img width="900px" src="/assets/end-to-end/5-046-arp5.png">
 
 
-## Connecting ARP and Forwarding Tables
+## Зв'язок ARP і таблиць пересилання
 
-Recall that in a router's forwarding table, we would sometimes include an entry indicating that a host is directly connected to the router.
+Пригадайте, що в таблицю пересилання маршрутизатора ми іноді включали запис, що вказує, що хост безпосередньо під'єднаний до маршрутизатора.
 
-In reality, the router's forwarding table contains a single entry, mapping the entire subnet's range of IP addresses to be direct. If the router receives a packet whose destination is in this local range, the router runs ARP to find the corresponding MAC address, and uses Layer 2 to send the packet to the correct host on the link.
+Насправді таблиця пересилання маршрутизатора містить один запис, що позначає весь діапазон IP-адрес підмережі як прямий. Якщо маршрутизатор отримує пакет, пункт призначення якого в цьому локальному діапазоні, маршрутизатор виконує ARP, щоб знайти відповідну MAC-адресу, і за допомогою рівня 2 надсилає пакет правильному хосту на каналі.
 
 <img width="600px" src="/assets/end-to-end/5-047-direct-route.png">
 
-This also helps us in the case where multiple hosts are connected on the same link. In our conceptual picture, we'd say that Host A is directly connected on Port 1. Multiple hosts might be on that link, so by using ARP, we can create a Layer 2 packet that gets unicast to only Host A, and not other computers on the link.
+Це також допомагає у випадку, коли на тому самому каналі під'єднано кілька хостів. У нашій концептуальній картині ми сказали б, що хост A безпосередньо під'єднаний до порту 1. На цьому каналі може бути кілька хостів, тож, використовуючи ARP, ми можемо створити пакет рівня 2, який одноадресно надсилається лише хосту A, а не іншим комп'ютерам на каналі.
 
-Given a forwarding entry that maps a subnet like 192.0.2.0/24 as direct, how can we determine if a given IP address falls in that range? This is where it's useful to write ranges using a netmask instead of slash notation. Recall that to write this range as a netmask, we set all fixed bits to 1 and all unfixed bits to 0, to get 255.255.255.0. Then the range is expressed as 192.0.2.0 with netmask 255.255.255.0.
+Маючи запис пересилання, що позначає підмережу на кшталт 192.0.2.0/24 як пряму, як визначити, чи належить певна IP-адреса цьому діапазону? Саме тут корисно записувати діапазони за допомогою маски мережі, а не запису через скісну риску. Пригадайте, що щоб записати цей діапазон як маску мережі, ми встановлюємо всі фіксовані біти в 1, а всі нефіксовані — в 0, і отримуємо 255.255.255.0. Тоді діапазон виражається як 192.0.2.0 з маскою 255.255.255.0.
 
-Now, to check if an address is in the range, we perform a bitwise AND of the address and the netmask. This causes all unfixed lower bits to get zeroed out, retaining only the fixed upper bits. Then, we check if the result matches 192.0.2.0 (the first address in the range, where all unfixed bits are 0).
+Тепер, щоб перевірити, чи адреса в діапазоні, ми виконуємо побітове І (AND) адреси та маски мережі. Це обнуляє всі нефіксовані молодші біти, зберігаючи лише фіксовані старші. Потім ми перевіряємо, чи збігається результат із 192.0.2.0 (першою адресою діапазону, де всі нефіксовані біти дорівнюють 0).
 
-Note that as packets get forwarded across hops, the Layer 2 destination will change to the MAC address of the next hop, so that packets can travel across links. However, the Layer 3 destination stays the same across each hop.
+Зауважте, що коли пакети пересилаються від переходу до переходу, адреса призначення рівня 2 змінюватиметься на MAC-адресу наступного переходу, щоб пакети могли проходити каналами. Однак адреса призначення рівня 3 на кожному переході залишається тією самою.
 
 <img width="700px" src="/assets/end-to-end/5-048-arp-filled-in-mac.png">
 
 
-## Neighbor Discovery in IPv6
+## Виявлення сусідів в IPv6
 
-ARP translates IPv4 addresses to MAC addresses. To translate IPv6 addresses to MAC addresses, we use a similar protocol called **neighbor discovery**.
+ARP перетворює адреси IPv4 на MAC-адреси. Щоб перетворювати адреси IPv6 на MAC-адреси, ми використовуємо схожий протокол під назвою **виявлення сусідів** (neighbor discovery).
 
-Instead of broadcasting the request for an IP-to-MAC translation, neighbor discovery instead multicasts the request to a specific group, and each computer listens on a specific group based on its IP address. For example,  everyone with an IP address ending in 12:3456 might listen on the group MAC address 33:33:FF:12:34:56, while everyone with an IP address ending in 78:90AB might listen on the group MAC address 33:33:FF:78:90:AB.
+Замість широкомовно розсилати запит на перетворення IP–MAC, виявлення сусідів натомість розсилає запит багатоадресно певній групі, а кожен комп'ютер слухає певну групу залежно від своєї IP-адреси. Наприклад, усі, чия IP-адреса закінчується на 12:3456, можуть слухати групову MAC-адресу 33:33:FF:12:34:56, а всі, чия IP-адреса закінчується на 78:90AB, — групову MAC-адресу 33:33:FF:78:90:AB.
 
-If I want the MAC address corresponding to the user with an IPv6 address ending in 12:3456, I can plug those IPv6 bits into the group MAC address to get 33:33:FF:12:34:56, and I know that the user with that IP address must be listening to this group MAC address.
+Якщо мені потрібна MAC-адреса користувача, чия адреса IPv6 закінчується на 12:3456, я можу підставити ці біти IPv6 у групову MAC-адресу й отримати 33:33:FF:12:34:56, і я знаю, що користувач із цією IP-адресою має слухати цю групову MAC-адресу.
 
 <img width="900px" src="/assets/end-to-end/5-049-neighbor-discovery.png">
 
-Some terminology: In the neighbor discovery protocol, the request for a mapping is called Neighbor Solicitation, and the reply containing the mapping is called Neighbor Advertisement.
+Трохи термінології: у протоколі виявлення сусідів запит на відображення називається запитом сусіда (Neighbor Solicitation), а відповідь із відображенням — оголошенням сусіда (Neighbor Advertisement).
